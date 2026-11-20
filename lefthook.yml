@@ -1,0 +1,27 @@
+pre-commit:
+  parallel: true
+  commands:
+    fmt:
+      glob: "**/*.rs"
+      run: rustfmt --edition 2024 --check {staged_files}
+    clippy:
+      glob: "**/*.rs"
+      run: mise run lint:clippy
+    machete:
+      glob: "{Cargo.toml,Cargo.lock,crates/*/Cargo.toml}"
+      run: mise run lint:machete
+    taplo:
+      glob: "**/*.toml"
+      run: mise run lint:taplo -- {staged_files}
+    typos:
+      run: mise run lint:typos -- {staged_files}
+    eslint:
+      root: apps/app/
+      glob: "*.{ts,tsx,js}"
+      run: pnpm exec eslint --max-warnings 0 {staged_files}
+pre-push:
+  parallel: true
+  commands:
+    deny:
+      glob: "{Cargo.toml,Cargo.lock,crates/*/Cargo.toml,deny.toml}"
+      run: mise run audit:deny

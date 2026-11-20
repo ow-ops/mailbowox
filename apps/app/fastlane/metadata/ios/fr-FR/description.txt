@@ -1,0 +1,18 @@
+mailbowox est une application de mail et de contacts qui se connecte à votre fournisseur via IMAP, SMTP et CardDAV.
+
+Mail
+- Plusieurs comptes, lus séparément ou ensemble dans une seule boîte de réception.
+- Conversations, recherche, marqueurs, archivage, déplacement et suppression avec annulation.
+- Écrivez, répondez et transférez avec des pièces jointes, et envoyez depuis les alias que vous ajoutez.
+- Les images distantes restent bloquées tant que vous ne les autorisez pas, et le HTML d’un message est nettoyé avant l’affichage.
+
+Contacts
+- Les carnets d’adresses de votre fournisseur.
+- Créez, modifiez et supprimez des contacts. Les changements sont synchronisés avec le serveur.
+
+Comptes et synchronisation
+- Les réglages sont trouvés automatiquement pour la plupart des fournisseurs.
+- La synchronisation, facultative, garde vos comptes sur tous vos appareils. Ils sont chiffrés sur votre appareil avant d’atteindre le serveur de synchronisation, qui ne peut pas les lire. Liez un nouvel appareil en scannant un code.
+- Si vous activez les notifications de nouveaux messages, la passerelle conserve votre mot de passe IMAP et peut accéder à votre boîte de réception. La notification indique seulement qu’un message est arrivé.
+
+mailbowox n’a ni publicité, ni statistiques, ni pistage. L’application est en anglais et en français. Les comptes Gmail et Outlook ne sont pas encore pris en charge.

@@ -1,0 +1,17 @@
+[files]
+extend-exclude = [
+  "Cargo.lock",
+  "pnpm-lock.yaml",
+  "target/",
+  "node_modules/",
+  "*.sqlite",
+  "*.db",
+  # French copy trips the English dictionary.
+  "apps/app/src/i18n/locales/fr/",
+  "apps/app/fastlane/metadata/*/fr-FR/",
+]
+
+[default.extend-words]
+# Simulator UDID and the SF Symbol name.
+udid = "udid"
+mappin = "mappin"

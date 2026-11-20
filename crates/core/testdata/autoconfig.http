@@ -1,0 +1,29 @@
+HTTP/1.1 200 OK
+Content-Type: text/xml
+Content-Length: 814
+
+<?xml version="1.0"?>
+<clientConfig version="1.1">
+  <emailProvider id="example.org">
+    <domain>example.org</domain>
+    <displayName>Example</displayName>
+    <incomingServer type="imap">
+      <hostname>imap.example.org</hostname>
+      <port>993</port>
+      <socketType>SSL</socketType>
+      <authentication>password-cleartext</authentication>
+      <username>%EMAILADDRESS%</username>
+    </incomingServer>
+    <incomingServer type="pop3">
+      <hostname>pop.example.org</hostname>
+      <port>110</port>
+      <socketType>plain</socketType>
+    </incomingServer>
+    <outgoingServer type="smtp">
+      <hostname>smtp.example.org</hostname>
+      <port>587</port>
+      <socketType>STARTTLS</socketType>
+      <username>%EMAILLOCALPART%</username>
+    </outgoingServer>
+  </emailProvider>
+</clientConfig>

@@ -1,0 +1,34 @@
+name: mailbowox-mailbox
+
+# Plain IMAP, submission and the 18080 HTTP port are opened by plan.ndjson; run ./setup.sh once.
+# Inside the container they listen on the published numbers, so a container on this network uses the same ports.
+services:
+  stalwart:
+    image: stalwartlabs/stalwart:v1.1.1
+    init: true
+    environment:
+      CONFIG_PATH: /etc/stalwart/config.json
+      STALWART_RECOVERY_ADMIN: admin:mailbowox-dev
+    ports:
+      - 127.0.0.1:1143:1143
+      - 127.0.0.1:1993:993
+      - 127.0.0.1:1587:1587
+      - 127.0.0.1:1465:465
+      - 127.0.0.1:18080:18080
+    volumes:
+      - ./config.json:/etc/stalwart/config.json:ro
+      - data:/var/lib/stalwart
+
+  cli:
+    image: ghcr.io/stalwartlabs/cli:2.0.0
+    profiles: [tools]
+    working_dir: /work
+    environment:
+      STALWART_URL: http://stalwart:8080
+      STALWART_USER: admin
+      STALWART_PASSWORD: mailbowox-dev
+    volumes:
+      - ./:/work:ro
+
+volumes:
+  data:

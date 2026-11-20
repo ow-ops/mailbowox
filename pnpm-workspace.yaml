@@ -1,0 +1,9 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+allowBuilds:
+  '@parcel/watcher': false
+  # The binary comes from the optional @sentry/cli-<platform> package; the script only
+  # downloads one when optional dependencies are disabled.
+  '@sentry/cli': false

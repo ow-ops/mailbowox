@@ -1,0 +1,14 @@
+appId: eu.owops.mailbowox
+name: The inbox lists synced mail and the reader blocks remote images
+---
+- runFlow: subflows/sign-in.yaml
+- assertVisible: ".*Quarterly numbers.*"
+- tapOn: ".*Quarterly numbers.*"
+- assertVisible: "The report is ready."
+- assertVisible: "1 remote image blocked, so Bob can't tell you opened this."
+- assertVisible: "Archive"
+- assertVisible: "Delete"
+- assertVisible: "Move"
+- tapOn: "More actions"
+- assertVisible: "Mark as unread"
+- assertVisible: "Reply all"

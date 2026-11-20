@@ -1,0 +1,66 @@
+[tools]
+rust = "1.100.0"
+node = "24"
+pnpm = "12.21.0"
+lefthook = "2.2.2"
+"aqua:EmbarkStudios/cargo-deny" = "0.22.0"
+"aqua:nextest-rs/nextest/cargo-nextest" = "0.9.152"
+"github:bnjbvr/cargo-machete" = "0.10.1"
+"aqua:crate-ci/typos" = "1.52.2"
+"aqua:tamasfe/taplo" = "0.10.0"
+"aqua:orhun/git-cliff" = "2.14.2"
+
+[env]
+RUST_BACKTRACE = "1"
+
+[tasks.fmt]
+description = "Format Rust and TOML"
+run = ["cargo fmt --all", "taplo fmt"]
+
+[tasks."lint:fmt"]
+description = "Check the Rust formatting"
+run = "cargo fmt --all -- --check"
+
+[tasks."lint:clippy"]
+description = "Run clippy"
+run = "cargo clippy --workspace --all-targets --all-features -- -D warnings"
+
+[tasks."lint:machete"]
+description = "Find unused Rust dependencies"
+run = "cargo machete"
+
+[tasks."lint:taplo"]
+description = "Check the TOML formatting"
+run = "taplo fmt --check"
+
+[tasks."lint:typos"]
+description = "Check spelling"
+run = "typos"
+
+[tasks."lint:app"]
+description = "Run the app's tsc, eslint and knip"
+run = ["pnpm --filter app exec tsc --noEmit", "pnpm --filter app lint", "cd apps/app && pnpm dlx knip@6.46.1"]
+
+[tasks.lint]
+description = "Run fmt, clippy, machete, taplo and typos, then the app's tsc, eslint and knip"
+depends = ["lint:fmt", "lint:clippy", "lint:machete", "lint:taplo", "lint:typos", "lint:app"]
+
+[tasks.test]
+description = "Run the Rust and app tests"
+run = ["cargo nextest run --workspace --all-features --no-fail-fast", "pnpm --filter app test"]
+
+[tasks."audit:deny"]
+description = "Run cargo-deny"
+run = "cargo deny --all-features check"
+
+[tasks."audit:npm"]
+description = "Audit the production npm dependencies"
+run = "pnpm audit --prod"
+
+[tasks.audit]
+description = "Run cargo-deny and audit the production npm dependencies"
+depends = ["audit:deny", "audit:npm"]
+
+[tasks.check]
+description = "Run all CI checks locally"
+depends = ["lint", "test", "audit"]

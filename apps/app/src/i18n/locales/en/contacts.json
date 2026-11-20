@@ -1,0 +1,61 @@
+{
+  "tab": "Contacts",
+  "empty": {
+    "title": "No contacts yet",
+    "undiscovered": "Find the contacts on your mail accounts to see them here.",
+    "none": "Your accounts have no address book. Pull down on this screen after adding one on your server.",
+    "noMatch": "No contact matches “{{query}}”."
+  },
+  "find": {
+    "action": "Find contacts",
+    "notFound": "No contacts server found for {{email}}."
+  },
+  "search": {
+    "placeholder": "Search contacts",
+    "label": "Search contacts"
+  },
+  "refreshFailed": "Couldn't refresh contacts",
+  "syncFailed": "Couldn't sync {{email}}",
+  "untitled": "(No name)",
+  "add": "New contact",
+  "detail": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this contact? It is removed from the server.",
+    "gone": "This contact no longer exists.",
+    "readOnly": "This address book is read only.",
+    "inBook": "In {{name}}",
+    "email": "Email {{email}}",
+    "emails": "Email",
+    "phones": "Phone"
+  },
+  "kind": {
+    "home": "Home",
+    "work": "Work",
+    "cell": "Mobile",
+    "fax": "Fax"
+  },
+  "form": {
+    "new": "New contact",
+    "edit": "Edit contact",
+    "save": "Save",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "company": "Company",
+    "email": "Email address",
+    "phone": "Phone number",
+    "addEmail": "Add an email address",
+    "addPhone": "Add a phone number",
+    "remove": "Remove {{value}}",
+    "kind": "Label: {{kind}}. Tap to change.",
+    "noKind": "none",
+    "addressBook": "Address book",
+    "inBook": "In {{name}}",
+    "discardTitle": "Discard this contact?",
+    "discard": "Discard",
+    "errors": {
+      "empty": "Enter a name, a company or an email address."
+    },
+    "saveFailed": "Couldn't save the contact"
+  }
+}

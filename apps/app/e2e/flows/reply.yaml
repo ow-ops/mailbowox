@@ -1,0 +1,16 @@
+appId: eu.owops.mailbowox
+name: A reply goes out, is filed in Sent and joins the conversation
+---
+- runFlow: subflows/sign-in.yaml
+- tapOn: ".*Lunch on Friday.*"
+- assertVisible: ".*ramen place at noon.*"
+- tapOn: "Reply"
+- inputText: "Noon works."
+- tapOn: "Send"
+# The copy synced from Sent shows under the message it answers, collapsed. The "Sent" toast can be gone before a
+# slow device looks, so the row is what proves the send.
+- extendedWaitUntil:
+    visible: ".*Alice, .*Noon works.*"
+    timeout: 20000
+- runScript:
+    file: ../scripts/reply-reached-bob.js

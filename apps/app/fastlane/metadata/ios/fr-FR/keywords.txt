@@ -1,0 +1,1 @@
+mail,courriel,imap,smtp,carddav,contacts,vie privée,boîte de réception,migadu,fastmail

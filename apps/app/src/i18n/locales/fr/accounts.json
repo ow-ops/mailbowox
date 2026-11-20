@@ -1,0 +1,99 @@
+{
+  "add": {
+    "title": "Ajouter un compte",
+    "headline": "Ajoutez votre compte mail",
+    "intro": "mailbowox se connecte directement à votre fournisseur en IMAP et SMTP. Votre mot de passe reste sur vos appareils, et n’en sort que chiffré, si vous activez la synchronisation ou les notifications.",
+    "name": "Votre nom",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "continue": "Continuer",
+    "signIn": "Se connecter",
+    "footer": "Tout fournisseur proposant IMAP et SMTP fonctionne. Gmail et Outlook ne sont pas encore pris en charge.",
+    "otherDevice": "Vous utilisez déjà mailbowox sur un autre appareil ? Récupérez vos comptes sans retaper de mot de passe.",
+    "join": "Rejoindre depuis un autre appareil",
+    "lookingUp": "Recherche des réglages du serveur pour {{domain}}. Cela peut prendre quelques secondes.",
+    "needs": {
+      "email": "Saisissez votre adresse e-mail pour continuer.",
+      "fullEmail": "Saisissez une adresse e-mail complète, comme nom@exemple.com.",
+      "password": "Saisissez votre mot de passe pour continuer.",
+      "imapHost": "Saisissez le serveur de courrier entrant.",
+      "imapPort": "Saisissez le port du courrier entrant, un nombre de 1 à 65535.",
+      "smtpHost": "Saisissez le serveur de courrier sortant.",
+      "smtpPort": "Saisissez le port du courrier sortant, un nombre de 1 à 65535.",
+      "username": "Saisissez votre identifiant.",
+      "davUrl": "Corrigez l’adresse du serveur de contacts sous Avancé."
+    },
+    "errors": {
+      "auth": "Le serveur a refusé cet identifiant ou ce mot de passe. Certains fournisseurs demandent un mot de passe d’application.",
+      "discovery": "Impossible de trouver les réglages de cette adresse. Saisissez-les ci-dessous.",
+      "duplicate": "Ce compte est déjà ajouté."
+    }
+  },
+  "relay": {
+    "headline": "Passer par un relais",
+    "intro": "Un navigateur ne peut pas ouvrir lui-même de connexion mail : mailbowox passe donc par un relais, qui transmet la connexion chiffrée sans pouvoir la lire.",
+    "through": "Connexion par le relais {{host}}.",
+    "change": "Changer de relais"
+  },
+  "servers": {
+    "found": {
+      "autoconfig": "Réglages publiés par votre fournisseur",
+      "ispdb": "Réglages issus de la base de fournisseurs de Thunderbird",
+      "provider": "Réglages issus de la liste de fournisseurs de mailbowox",
+      "srv": "Réglages publiés dans le DNS de votre domaine",
+      "mx": "Réglages du fournisseur qui reçoit le courrier de votre domaine",
+      "probe": "Trouvés en essayant les noms de serveur courants"
+    },
+    "notFound": "Aucun réglage trouvé pour {{domain}}. Les pages d’aide de votre fournisseur les indiquent.",
+    "probeNote": "Ces serveurs ont répondu, mais rien de la part de votre fournisseur ne les confirme. Ne vous connectez que s’ils vous semblent corrects.",
+    "summary": {
+      "imap": "Réception : {{host}}, port {{port}}, {{security}}",
+      "smtp": "Envoi : {{host}}, port {{port}}, {{security}}",
+      "username": "Identifiant : {{username}}"
+    },
+    "edit": "Modifier les réglages du serveur",
+    "imap": "Courrier entrant (IMAP)",
+    "smtp": "Courrier sortant (SMTP)",
+    "host": "Serveur",
+    "hostLabel": "Serveur {{protocol}}",
+    "port": "Port",
+    "portLabel": "Port {{protocol}}",
+    "securityLabel": "Sécurité de la connexion {{protocol}}",
+    "security": {
+      "tls": "TLS",
+      "startTls": "STARTTLS",
+      "plain": "Aucune"
+    },
+    "securityHint": "TLS et STARTTLS chiffrent tous deux la connexion : choisissez celui qu’indique votre fournisseur. TLS utilise en général les ports 993 et 465, STARTTLS les ports 143 et 587.",
+    "securityPlainHint": "Aucune envoie tout en clair, pour un serveur de test local uniquement.",
+    "username": "Identifiant",
+    "advanced": "Avancé",
+    "davUrlInvalid": "Saisissez l’adresse complète, commençant par https://.",
+    "carddav": "URL du serveur de contacts (CardDAV)",
+    "carddavPlaceholder": "https://dav.exemple.com",
+    "carddavHint": "Laissez vide pour trouver le serveur de contacts à partir de votre adresse e-mail."
+  },
+  "signIn": {
+    "steps": {
+      "incoming": "Vérification du courrier entrant",
+      "outgoing": "Vérification du courrier sortant",
+      "contacts": "Recherche des contacts"
+    },
+    "state": {
+      "pending": "en attente",
+      "active": "en cours",
+      "done": "terminé",
+      "failed": "échec"
+    },
+    "stepState": "{{step}} : {{state}}",
+    "failed": {
+      "incoming": "Le courrier entrant n’a pas fonctionné avec {{host}} sur le port {{port}}.",
+      "outgoing": "Le courrier entrant fonctionne, mais pas le courrier sortant avec {{host}} sur le port {{port}}.",
+      "contacts": "Le courrier fonctionne, mais le serveur de contacts {{url}} n’a pas répondu comme prévu. Corrigez son adresse sous Avancé, ou effacez-la."
+    }
+  },
+  "errors": {
+    "removed": "Ce compte a été supprimé.",
+    "missingPassword": "Le mot de passe de {{email}} est absent de cet appareil. Supprimez le compte puis ajoutez-le à nouveau."
+  }
+}

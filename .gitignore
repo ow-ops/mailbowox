@@ -1,0 +1,18 @@
+node_modules/
+/target/
+.DS_Store
+.env
+.env.local
+
+# fastlane and bundler
+fastlane/report.xml
+/vendor/bundle
+/.bundle
+
+# signing material
+*.jks
+*.p8
+*.p12
+*.keystore
+/gateway.db*
+/notes/

@@ -1,0 +1,99 @@
+{
+  "add": {
+    "title": "Add account",
+    "headline": "Add your mail account",
+    "intro": "mailbowox connects straight to your provider over IMAP and SMTP. Your password stays on your devices, and leaves them only encrypted, if you turn on sync or notifications.",
+    "name": "Your name",
+    "email": "Email address",
+    "password": "Password",
+    "continue": "Continue",
+    "signIn": "Sign in",
+    "footer": "Any provider with IMAP and SMTP works. Gmail and Outlook are not supported yet.",
+    "otherDevice": "Already use mailbowox on another device? Bring your accounts over without typing a password.",
+    "join": "Join from another device",
+    "lookingUp": "Looking up the server settings for {{domain}}. This can take a few seconds.",
+    "needs": {
+      "email": "Enter your email address to continue.",
+      "fullEmail": "Enter a full email address, like name@example.com.",
+      "password": "Enter your password to continue.",
+      "imapHost": "Enter the incoming mail server.",
+      "imapPort": "Enter the incoming mail port, a number from 1 to 65535.",
+      "smtpHost": "Enter the outgoing mail server.",
+      "smtpPort": "Enter the outgoing mail port, a number from 1 to 65535.",
+      "username": "Enter your username.",
+      "davUrl": "Fix the contacts server address under Advanced."
+    },
+    "errors": {
+      "auth": "The server rejected this username or password. Some providers need an app password.",
+      "discovery": "Couldn't look up the settings for this address. Enter them below.",
+      "duplicate": "This account is already added."
+    }
+  },
+  "relay": {
+    "headline": "Connect through a relay",
+    "intro": "A browser can't open mail connections itself, so mailbowox passes them through a relay, which forwards the encrypted connection without being able to read it.",
+    "through": "Connecting through the relay at {{host}}.",
+    "change": "Change relay"
+  },
+  "servers": {
+    "found": {
+      "autoconfig": "Settings published by your provider",
+      "ispdb": "Settings from Thunderbird's provider database",
+      "provider": "Settings from mailbowox's list of providers",
+      "srv": "Settings published in your domain's DNS",
+      "mx": "Settings of the provider that receives your domain's mail",
+      "probe": "Found by trying common server names"
+    },
+    "notFound": "No settings found for {{domain}}. Your provider's help pages list them.",
+    "probeNote": "These servers answered, but nothing from your provider confirms them. Sign in only if they look right.",
+    "summary": {
+      "imap": "Incoming: {{host}}, port {{port}}, {{security}}",
+      "smtp": "Outgoing: {{host}}, port {{port}}, {{security}}",
+      "username": "Username: {{username}}"
+    },
+    "edit": "Edit server settings",
+    "imap": "Incoming mail (IMAP)",
+    "smtp": "Outgoing mail (SMTP)",
+    "host": "Server",
+    "hostLabel": "{{protocol}} server",
+    "port": "Port",
+    "portLabel": "{{protocol}} port",
+    "securityLabel": "{{protocol}} connection security",
+    "security": {
+      "tls": "TLS",
+      "startTls": "STARTTLS",
+      "plain": "None"
+    },
+    "securityHint": "TLS and STARTTLS both encrypt the connection: pick the one your provider lists. TLS usually runs on ports 993 and 465, STARTTLS on 143 and 587.",
+    "securityPlainHint": "None sends everything unencrypted, for a local test server only.",
+    "username": "Username",
+    "advanced": "Advanced",
+    "davUrlInvalid": "Enter the full address, starting with https://.",
+    "carddav": "Contacts server (CardDAV) URL",
+    "carddavPlaceholder": "https://dav.example.com",
+    "carddavHint": "Leave empty to find the contacts server from your email address."
+  },
+  "signIn": {
+    "steps": {
+      "incoming": "Checking incoming mail",
+      "outgoing": "Checking outgoing mail",
+      "contacts": "Finding contacts"
+    },
+    "state": {
+      "pending": "waiting",
+      "active": "in progress",
+      "done": "done",
+      "failed": "failed"
+    },
+    "stepState": "{{step}}: {{state}}",
+    "failed": {
+      "incoming": "Incoming mail didn't work with {{host}} on port {{port}}.",
+      "outgoing": "Incoming mail works, but outgoing mail didn't work with {{host}} on port {{port}}.",
+      "contacts": "Mail works, but the contacts server at {{url}} didn't answer as expected. Fix its address under Advanced, or clear it."
+    }
+  },
+  "errors": {
+    "removed": "This account was removed.",
+    "missingPassword": "The password for {{email}} is missing on this device. Remove the account and add it again."
+  }
+}

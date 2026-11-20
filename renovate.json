@@ -1,0 +1,44 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommitTypeAll(chore)",
+    ":gitSignOff",
+    "helpers:pinGitHubActionDigests",
+    "docker:pinDigests"
+  ],
+  "minimumReleaseAge": "1 day",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 5am on monday"]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "The Rust version the workflows install",
+      "managerFilePatterns": ["/^\\.forgejo/workflows/.+\\.ya?ml$/"],
+      "matchStrings": ["toolchain: (?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "rust",
+      "packageNameTemplate": "rust-lang/rust",
+      "datasourceTemplate": "github-releases"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Keep the Rust toolchain, mise.toml and the gateway build image in step",
+      "matchDepNames": ["rust"],
+      "groupName": "rust toolchain"
+    },
+    {
+      "description": "Group all minor and patch updates into a single PR",
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-non-major"
+    },
+    {
+      "description": "No breaking '!' on major updates; a dep/CI bump must not force a product major",
+      "matchUpdateTypes": ["major"],
+      "commitMessagePrefix": "{{semanticCommitType}}({{semanticCommitScope}}):"
+    }
+  ]
+}

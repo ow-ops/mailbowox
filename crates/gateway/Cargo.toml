@@ -1,0 +1,47 @@
+[package]
+name = "mailbowox-gateway"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+axum = { version = "0.8.9", features = ["ws"] }
+axum-prometheus = "0.10.1"
+backon = { version = "1.6.0", default-features = false, features = ["std"] }
+chacha20poly1305 = "0.11.0"
+client-ip = "0.2.1"
+getrandom = "0.4.3"
+headers = "0.4.2"
+hex = "0.4.3"
+hkdf = "0.13.0"
+hmac = "0.13.0"
+ip_rfc = "0.1.0"
+mailbowox-core = { path = "../core" }
+metrics = "0.24.6"
+push-delivery = { git = "https://git.ow-ops.eu/ow-ops/kit", rev = "917af9dfe4c53ccb6713b42f43adcf2a16fada44" }
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls", "json", "http2"] }
+rustls = { version = "0.23.46", default-features = false, features = ["ring"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+sha2 = "0.11.1"
+sqlx = { version = "0.9.1", default-features = false, features = ["any", "macros", "migrate", "postgres", "runtime-tokio", "sqlite", "tls-rustls-ring-webpki"] }
+subtle = "2.6.1"
+tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread", "net", "signal", "sync", "time", "io-util"] }
+tokio-happy-eyeballs = "0.1.0"
+tower-http = { version = "0.7.1", features = ["cors", "timeout"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", default-features = false, features = ["env-filter", "fmt"] }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+base64 = "0.23.1"
+futures-util = "0.3.34"
+reqwest = { version = "0.13.5", default-features = false }
+ring = "0.17.14"
+sqlx = { version = "0.9.1", default-features = false, features = ["postgres", "runtime-tokio"] }
+tempfile = "3.27.0"
+tokio = { version = "1.54.1", features = ["test-util"] }
+tokio-tungstenite = "0.30.0"
+tower = { version = "0.5.3", features = ["util"] }

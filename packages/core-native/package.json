@@ -1,0 +1,43 @@
+{
+  "name": "@mailbowox/core-native",
+  "version": "0.1.0",
+  "private": true,
+  "description": "UniFFI bindings for the mailbowox core",
+  "main": "./src/index.tsx",
+  "types": "./src/index.tsx",
+  "react-native": "./src/index.tsx",
+  "browser": "./src/index.web.ts",
+  "scripts": {
+    "ubrn:ios": "ubrn build ios --config ubrn.config.yaml --and-generate",
+    "ubrn:android": "ubrn build android --config ubrn.config.yaml --and-generate",
+    "ubrn:web": "ubrn build wasm2 --config ubrn.config.yaml --profile wasm && wasm-opt -Oz --skip-pass=inlining-optimizing --skip-pass=memory-packing src/generated-web/mailbowox_core.wasm -o src/generated-web/mailbowox_core.wasm",
+    "ubrn:clean": "rm -rf cpp android ios src/generated src/generated-web src/index.tsx src/NativeCoreNative.ts build *.podspec"
+  },
+  "dependencies": {
+    "@ubjs/core": "0.31.0-7",
+    "@ubjs/wasm": "0.31.0-7",
+    "uniffi-bindgen-react-native": "0.31.0-7"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "codegenConfig": {
+    "name": "CoreNativeSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "eu.owops.mailbowox.core"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.ow-ops.eu/ow-ops/mailbowox.git"
+  },
+  "author": "Erwan Leboucher",
+  "homepage": "https://git.ow-ops.eu/ow-ops/mailbowox",
+  "license": "MIT",
+  "devDependencies": {
+    "binaryen": "132.0.0"
+  }
+}

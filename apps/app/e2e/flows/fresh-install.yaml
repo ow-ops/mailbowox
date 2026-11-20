@@ -1,0 +1,27 @@
+appId: eu.owops.mailbowox
+name: A fresh install opens on the sign-in screen
+---
+# Runs first, and signs in once for the flows after it.
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- extendedWaitUntil:
+    visible: "Add your mail account"
+    timeout: 60000
+# Debug build: Android's splash hand-off times out loading from Metro, the window keeps animating
+# and every tap waits ~10 s. Home and back clears it.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - pressKey: home
+      - launchApp:
+          stopApp: false
+- runFlow:
+    file: subflows/account-form.yaml
+    env:
+      NAME: "Alice"
+      EMAIL: "alice@mailbowox.test"
+- extendedWaitUntil:
+    visible: ".*Lunch on Friday.*"
+    timeout: 20000

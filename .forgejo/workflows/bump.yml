@@ -1,0 +1,93 @@
+---
+name: Bump version
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "auto (infer from commits), patch, minor, major, or explicit X.Y.Z"
+        required: true
+        default: "auto"
+        type: string
+
+concurrency:
+  group: bump
+  cancel-in-progress: false
+
+env:
+  # renovate: datasource=github-releases depName=orhun/git-cliff
+  GIT_CLIFF_VERSION: "2.14.2"
+
+jobs:
+  bump:
+    runs-on: docker
+    steps:
+      - uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          # User PAT (content:write), so the tag push triggers release.yml.
+          # The Actions token's pushes never trigger workflows (recursion guard).
+          token: ${{ secrets.FORGE_TOKEN }}
+
+      - name: Install git-cliff
+        run: |
+          set -euo pipefail
+          ASSET="git-cliff-${GIT_CLIFF_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+          BASE="https://github.com/orhun/git-cliff/releases/download/v${GIT_CLIFF_VERSION}"
+          curl -fsSL -O "${BASE}/${ASSET}"
+          curl -fsSL -O "${BASE}/${ASSET}.sha512"
+          sha512sum -c "${ASSET}.sha512"
+          tar -xzf "${ASSET}" -C /tmp
+          install -m 0755 "/tmp/git-cliff-${GIT_CLIFF_VERSION}/git-cliff" /usr/local/bin/git-cliff
+
+      - name: Compute next version
+        id: version
+        env:
+          INPUT: ${{ inputs.bump }}
+        run: |
+          set -euo pipefail
+          case "$INPUT" in
+            auto)
+              NEXT="$(git-cliff --config cliff.toml --bumped-version)"
+              ;;
+            major|minor|patch)
+              NEXT="$(git-cliff --config cliff.toml --bump "$INPUT" --bumped-version)"
+              ;;
+            [0-9]*.[0-9]*.[0-9]*) NEXT="$INPUT" ;;
+            v[0-9]*) NEXT="$INPUT" ;;
+            *) echo "Unknown bump input: $INPUT" >&2; exit 1 ;;
+          esac
+          NEXT="${NEXT#v}"
+          if [ -z "$NEXT" ]; then
+            echo "git-cliff returned empty version" >&2; exit 1
+          fi
+          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "tag=v$NEXT" >> "$GITHUB_OUTPUT"
+          echo "Next version: v$NEXT"
+
+      - name: Update the app version and the changelog
+        env:
+          NEXT: ${{ steps.version.outputs.next }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          node -e '
+            const fs = require("fs");
+            const path = "apps/app/app.json";
+            const config = JSON.parse(fs.readFileSync(path, "utf8"));
+            config.expo.version = process.env.NEXT;
+            fs.writeFileSync(path, JSON.stringify(config, null, 2) + "\n");
+          '
+          git-cliff --config cliff.toml --tag "$TAG" --output CHANGELOG.md
+
+      - name: Commit and push tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git config user.name "forgejo-actions[bot]"
+          git config user.email "actions@git.ow-ops.eu"
+          git add apps/app/app.json CHANGELOG.md
+          git commit -m "chore(release): ${TAG}"
+          git tag -a "${TAG}" -m "Release ${TAG}"
+          git push origin "HEAD:${GITHUB_REF_NAME}" "${TAG}"

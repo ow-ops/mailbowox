@@ -1,0 +1,34 @@
+appId: eu.owops.mailbowox
+name: Two accounts share All inboxes, and a reply goes out from the account the mail was sent to
+---
+- runFlow: subflows/sign-in.yaml
+- tapOn: "Settings"
+- tapOn: "Add account"
+- runFlow:
+    file: subflows/account-form.yaml
+    env:
+      NAME: "Bob"
+      EMAIL: "bob@mailbowox.test"
+- extendedWaitUntil:
+    visible: "bob@mailbowox.test"
+    timeout: 20000
+- tapOn: "Mail"
+- assertVisible: "All inboxes"
+# Rows in All inboxes name their account.
+- extendedWaitUntil:
+    visible: ".*Weekend hike.*Bob account.*"
+    timeout: 20000
+- assertVisible: ".*Lunch on Friday.*Alice account.*"
+- tapOn: ".*Weekend hike.*"
+- assertVisible: ".*Bring water.*"
+- tapOn: "Reply"
+# The From line starts on bob, the account the mail was sent to; the script below checks it went out from bob.
+- assertVisible: "bob@mailbowox.test"
+- inputText: "Count me in."
+- tapOn: "Send"
+# The copy synced from Sent joins the conversation; the "Sent" toast can be gone before a slow device looks.
+- extendedWaitUntil:
+    visible: ".*Bob, .*Count me in.*"
+    timeout: 20000
+- runScript:
+    file: ../scripts/reply-reached-alice.js

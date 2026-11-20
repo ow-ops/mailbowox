@@ -1,0 +1,8 @@
+# The integration tests share dev/mailbox's accounts, and a write by one changes what another
+# reads back (a collection's ctag, a mailbox's UIDs), so those binaries run one test at a time.
+[test-groups]
+mailbox = { max-threads = 1 }
+
+[[profile.default.overrides]]
+filter = "kind(test) | test(/watcher::tests/) | binary(gateway)"
+test-group = "mailbox"

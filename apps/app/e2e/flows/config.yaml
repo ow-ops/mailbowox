@@ -1,0 +1,12 @@
+# Flows share the sign-in that fresh-install.yaml does, so they run in this order: a fresh install first, and the
+# flow that adds bob last, since a second account turns every view into All inboxes.
+executionOrder:
+  flowsOrder:
+    - A fresh install opens on the sign-in screen
+    - An account opens its own settings, and removing it asks first
+    - An alias is added in the account settings, and a message goes out from it
+    - Rows swipe to archive with undo, select in bulk, and search the cache and the server
+    - The inbox lists synced mail and the reader blocks remote images
+    - A reply goes out, is filed in Sent and joins the conversation
+    - A contact on the CardDAV server shows in Contacts and is suggested while addressing a message
+    - Two accounts share All inboxes, and a reply goes out from the account the mail was sent to

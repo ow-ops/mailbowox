@@ -1,0 +1,18 @@
+mailbowox is a mail and contacts app that connects to your provider over IMAP, SMTP and CardDAV.
+
+Mail
+- Several accounts, read separately or together in one inbox.
+- Conversations, search, flags, archive, move and delete with undo.
+- Write, reply and forward with attachments, and send from the aliases you add.
+- Remote images stay blocked until you allow them, and the HTML of a message is cleaned before it is shown.
+
+Contacts
+- Address books from your provider.
+- Create, edit and delete contacts. Changes sync back to the server.
+
+Accounts and sync
+- Settings are found automatically for most providers.
+- Optional sync keeps your accounts on all your devices. They are encrypted on your device before they reach the sync server, which cannot read them. Link a new device by scanning a code.
+- Optional new-mail notifications use a gateway that stores your IMAP password and can access your inbox. The notification only says that mail arrived.
+
+mailbowox has no ads, analytics or tracking. The app is in English and French. Gmail and Outlook accounts are not supported yet.

@@ -1,0 +1,61 @@
+{
+  "tab": "Contacts",
+  "empty": {
+    "title": "Aucun contact",
+    "undiscovered": "Recherchez les contacts de vos comptes de messagerie pour les voir ici.",
+    "none": "Vos comptes n’ont aucun carnet d’adresses. Tirez cet écran vers le bas après en avoir créé un sur votre serveur.",
+    "noMatch": "Aucun contact ne correspond à « {{query}} »."
+  },
+  "find": {
+    "action": "Rechercher les contacts",
+    "notFound": "Aucun serveur de contacts trouvé pour {{email}}."
+  },
+  "search": {
+    "placeholder": "Rechercher un contact",
+    "label": "Rechercher un contact"
+  },
+  "refreshFailed": "Impossible d’actualiser les contacts",
+  "syncFailed": "Impossible de synchroniser {{email}}",
+  "untitled": "(Sans nom)",
+  "add": "Nouveau contact",
+  "detail": {
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "deleteConfirm": "Supprimer ce contact ? Il est supprimé du serveur.",
+    "gone": "Ce contact n’existe plus.",
+    "readOnly": "Ce carnet d’adresses est en lecture seule.",
+    "inBook": "Dans {{name}}",
+    "email": "Écrire à {{email}}",
+    "emails": "E-mail",
+    "phones": "Téléphone"
+  },
+  "kind": {
+    "home": "Domicile",
+    "work": "Travail",
+    "cell": "Mobile",
+    "fax": "Fax"
+  },
+  "form": {
+    "new": "Nouveau contact",
+    "edit": "Modifier le contact",
+    "save": "Enregistrer",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "company": "Société",
+    "email": "Adresse e-mail",
+    "phone": "Numéro de téléphone",
+    "addEmail": "Ajouter une adresse e-mail",
+    "addPhone": "Ajouter un numéro de téléphone",
+    "remove": "Retirer {{value}}",
+    "kind": "Étiquette : {{kind}}. Touchez pour changer.",
+    "noKind": "aucune",
+    "addressBook": "Carnet d’adresses",
+    "inBook": "Dans {{name}}",
+    "discardTitle": "Abandonner ce contact ?",
+    "discard": "Abandonner",
+    "errors": {
+      "empty": "Saisissez un nom, une société ou une adresse e-mail."
+    },
+    "saveFailed": "Impossible d’enregistrer le contact"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "title": {
+    "new": "Nouveau message",
+    "reply": "Répondre",
+    "replyAll": "Répondre à tous",
+    "forward": "Transférer"
+  },
+  "send": "Envoyer",
+  "from": "De",
+  "fromLine": "De {{email}}",
+  "to": "À",
+  "cc": "Cc",
+  "bcc": "Cci",
+  "addCopies": "Ajouter Cc ou Cci",
+  "subject": "Objet",
+  "body": "Message",
+  "attach": "Joindre des fichiers",
+  "drop": "Déposez les fichiers à joindre",
+  "saveDraft": "Enregistrer le brouillon",
+  "removeAttachment": "Retirer {{name}}",
+  "attachmentLoading": "Téléchargement depuis le message d’origine en cours.",
+  "forwardFailed": "Impossible de joindre {{name}}",
+  "attachmentsNotKept": "Impossible de garder les pièces jointes avec le brouillon",
+  "attachmentsNotRestored": "Impossible de rouvrir les pièces jointes du brouillon",
+  "removeRecipient": "Retirer {{email}}",
+  "addRecipient": "Ajouter {{name}}, {{email}}",
+  "removeInvalidRecipient": "{{email}} n’est pas une adresse valide. La retirer.",
+  "closeTitle": "Enregistrer ce message en brouillon ?",
+  "discard": "Abandonner",
+  "keepEditing": "Continuer à écrire",
+  "sending": "Envoi…",
+  "sent": "Envoyé",
+  "queued": "Pas de connexion. Ce message sera envoyé dès que vous serez de nouveau en ligne.",
+  "unconfirmed": "Il a peut-être déjà été envoyé. Il attend dans la boîte d’envoi que vous le renvoyiez.",
+  "draftSaved": "Brouillon enregistré",
+  "errors": {
+    "noDrafts": "Ce compte n’a pas de boîte Brouillons."
+  },
+  "quote": {
+    "wrote": "Le {{date}}, {{name}} a écrit :",
+    "forwarded": "---------- Message transféré ----------",
+    "from": "De : {{list}}",
+    "date": "Date : {{date}}",
+    "subject": "Objet : {{subject}}",
+    "to": "À : {{list}}"
+  }
+}

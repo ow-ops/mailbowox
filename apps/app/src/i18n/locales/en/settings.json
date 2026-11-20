@@ -1,0 +1,183 @@
+{
+  "tab": "Settings",
+  "accounts": {
+    "title": "Accounts",
+    "add": "Add account",
+    "remove": "Remove account",
+    "removeConfirm": "Remove {{email}}? Its mail stays on the server; only this device forgets it."
+  },
+  "account": {
+    "name": "Name",
+    "email": "Email",
+    "servers": "Servers",
+    "server": "{{host}}, port {{port}}, {{security}}",
+    "identities": "Send-from addresses",
+    "identitiesHint": "Other addresses of this account you can write from, such as an alias on your own domain. Your mail server has to accept them.",
+    "addIdentity": "Add an address",
+    "contacts": "Contacts",
+    "color": "Colour",
+    "colorHint": "Marks mail from {{label}} where accounts appear together, as in All inboxes.",
+    "colors": {
+      "lavender": "Lavender",
+      "green": "Green",
+      "amber": "Amber",
+      "rose": "Rose"
+    }
+  },
+  "identity": {
+    "title": "Send-from address",
+    "email": "Email address",
+    "name": "Display name (optional)",
+    "save": "Save",
+    "remove": "Remove address",
+    "duplicate": "This address is already used by this account."
+  },
+  "signature": {
+    "title": "Signature",
+    "none": "None",
+    "placeholder": "Signature text",
+    "hint": "Added to new messages, and above the quoted text of replies, sent from {{email}} or its other addresses.",
+    "save": "Save"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "toggle": "New mail notifications",
+    "explanation": "Off until you turn it on. To tell you about new mail, the mailbowox notification server keeps an encrypted copy of this account's password and uses it to watch the inbox. A notification only says that mail arrived, never who sent it or what it says.",
+    "browser": "Shown by this browser while mailbowox is open in a tab. Nothing is sent to a server.",
+    "browserDenied": "Notifications are blocked for this site in the browser’s settings.",
+    "newMail": "New mail",
+    "newMails_one": "{{count}} new message",
+    "newMails_other": "{{count}} new messages",
+    "channel": "New mail",
+    "permissionDenied": "Notifications are turned off for mailbowox in the system settings.",
+    "refused": "The mail server refused the password.",
+    "failed": "The notification server couldn't take this account (error {{status}})."
+  },
+  "contacts": {
+    "none": "No contacts found yet"
+  },
+  "devices": {
+    "title": "Devices",
+    "sync": "Sync",
+    "off": "Off",
+    "offHint": "Sync keeps your accounts and settings on every device you use. They're encrypted on this device before they're stored on the sync server, which can't read them.",
+    "onHint": "Your accounts are encrypted on this device before they're stored on the sync server, which can't read them.",
+    "server": "Sync server",
+    "joinDevice": "Join from another device",
+    "syncing": "Syncing…",
+    "syncedAt": "Synced {{time}}",
+    "notSynced": "Not synced yet",
+    "syncNow": "Sync now",
+    "linkDevice": "Link a new device",
+    "turnOff": "Turn off sync",
+    "turnOffConfirm": "Turn off sync on this device? Your accounts stay here, and other devices keep syncing.",
+    "delete": "Delete synced data",
+    "deleteConfirm": "Delete your accounts from the sync server? Sync turns off on every device. Your accounts stay on each of them.",
+    "gateway": "Sync server address",
+    "gatewayPlaceholder": "https://sync.example.com",
+    "gatewayHint": "The mailbowox sync server that keeps your encrypted accounts. It never sees your passwords.",
+    "email": "Recovery email",
+    "passphrase": "Passphrase",
+    "deriving": "Securing your passphrase. This takes a few seconds.",
+    "setup": {
+      "title": "Set up sync",
+      "headline": "Sync your accounts",
+      "intro": "Your accounts and passwords are encrypted on this device with a key only your devices hold. To recover them on a new device without another one at hand, you enter your recovery email and this passphrase.",
+      "emailHint": "You type this address with the passphrase to unlock the vault on a new device. It is never sent anywhere.",
+      "confirm": "Repeat passphrase",
+      "tooShort": "Use at least {{count}} characters.",
+      "mismatch": "The passphrases don’t match.",
+      "passphraseHint": "Nobody can reset this passphrase. If you lose it and every linked device, the vault can’t be opened.",
+      "submit": "Turn on sync",
+      "done": "Sync is on"
+    },
+    "link": {
+      "title": "Link a device",
+      "headline": "Scan this code",
+      "intro": "On the new device, open mailbowox, choose Join from another device and scan this code.",
+      "qrLabel": "Linking code for a new device",
+      "waiting": "Waiting for the new device. The code changes every two minutes.",
+      "compareHeadline": "Compare the codes",
+      "compare": "Accept only if the new device shows the same number.",
+      "match": "Codes match",
+      "noMatch": "They don’t match",
+      "doneHeadline": "Device linked",
+      "done": "The new device now has your accounts and keeps them in sync.",
+      "close": "Done"
+    },
+    "join": {
+      "title": "Join",
+      "headline": "Bring your accounts over",
+      "intro": "Scan the code from a device that already syncs, or unlock the vault with your passphrase.",
+      "method": "How to join",
+      "methods": {
+        "scan": "Scan a code",
+        "passphrase": "Passphrase"
+      },
+      "scanHint": "On your other device, open Settings, Devices, Link a new device.",
+      "foreignCode": "That isn’t a mailbowox linking code.",
+      "cameraNeeded": "mailbowox needs the camera to scan the code on your other device.",
+      "allowCamera": "Allow camera",
+      "cameraBlocked": "Camera access is off for mailbowox. Turn it on in system settings, or use your passphrase.",
+      "connecting": "Connecting to your other device…",
+      "compare": "Check that your other device shows this number, then accept there.",
+      "waiting": "Waiting for your other device…",
+      "scanAgain": "Scan again",
+      "unlock": "Unlock"
+    },
+    "errors": {
+      "unreachable": "Couldn’t reach the sync server at {{gateway}}. Check the address and your connection.",
+      "gateway": "The sync server answered with an error ({{status}}).",
+      "decrypt": "This vault couldn’t be decrypted. Check the passphrase, or link again from your other device.",
+      "newerVersion": "This vault was saved by a newer version of mailbowox. Update the app to keep syncing.",
+      "unreadable": "The vault on the sync server isn’t in a format mailbowox understands.",
+      "noVault": "No vault matches this email and passphrase on this sync server.",
+      "busy": "Another device kept changing the vault. Try again in a moment.",
+      "expired": "The other device didn’t answer in time. Scan a new code.",
+      "off": "Sync is off on this device.",
+      "deleted": "The synced data was deleted from another device, so sync is off. Your accounts are still here."
+    }
+  },
+  "reading": {
+    "title": "Reading",
+    "conversations": "Group by conversation",
+    "conversationsDetail": "Shows a message and its replies, yours included, as one row."
+  },
+  "privacy": {
+    "title": "Privacy",
+    "remoteContent": "Remote content",
+    "remoteHint": "Remote images let senders see when and where you open their mail.",
+    "remote": {
+      "ask": "Ask each time",
+      "never": "Never load"
+    },
+    "remoteSenders": "Senders whose images always load",
+    "remoteSendersCount_one": "{{count}} sender",
+    "remoteSendersCount_other": "{{count}} senders",
+    "remoteSendersHint": "Images from these senders load without asking. Choose one to go back to asking.",
+    "stopLoading": "Stop loading automatically"
+  },
+  "crashReports": {
+    "title": "Crash reports",
+    "toggle": "Send crash reports",
+    "explanation": "Off by default. When on, a crash sends the error to the developers with the app version, device model and system version. Email addresses, server names, IP addresses and links are removed from the error first."
+  },
+  "relay": {
+    "title": "Web relay",
+    "hint": "In the browser, mailbowox reaches your mail servers through a relay. The connection stays encrypted between this tab and your provider, so the relay can't read your mail.",
+    "url": "Relay address",
+    "token": "Access code",
+    "tokenHint": "Whoever runs the relay gives you this code.",
+    "needsUrl": "Enter the relay address to continue.",
+    "needsToken": "Enter the access code to continue.",
+    "save": "Save relay",
+    "saved": "Relay saved",
+    "invalid": "Enter the relay address, starting with https:// or http://.",
+    "unreachable": "Nothing answered at {{url}}. Check the address, and that the relay is running."
+  },
+  "about": {
+    "title": "About",
+    "version": "Version",
+    "privacy": "mailbowox talks to your mail servers directly. No server of ours reads your mail, and the app collects no analytics."
+  }
+}

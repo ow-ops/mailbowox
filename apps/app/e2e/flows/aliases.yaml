@@ -1,0 +1,41 @@
+appId: eu.owops.mailbowox
+name: An alias is added in the account settings, and a message goes out from it
+---
+- runFlow: subflows/sign-in.yaml
+- tapOn: "Settings"
+- tapOn: "Alice.*"
+- tapOn: "Add an address"
+# The field focuses itself, but text sent before the keyboard is up loses its first letters.
+- tapOn: "Email address"
+- inputText: "hello@mailbowox.test"
+- tapOn: "Display name.*"
+- inputText: "Hello"
+- tapOn: "Save"
+- assertVisible: "hello@mailbowox.test.*"
+# The account screen sits above the tabs: the iOS back button carries the title of the screen below it.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "Settings"
+- tapOn: "Mail"
+- tapOn: "New message"
+- tapOn: "To"
+- inputText: "bob@mailbowox.test"
+- tapOn: "From alice@mailbowox.test"
+- tapOn: "hello@mailbowox.test, Hello"
+- assertVisible: "From hello@mailbowox.test"
+- tapOn: "Subject"
+- inputText: "Sent from my alias"
+- tapOn: "Send"
+# Back on the inbox once the message is out; the "Sent" toast can be gone before a slow device looks.
+- extendedWaitUntil:
+    visible: ".*Lunch on Friday.*"
+    timeout: 20000
+- runScript:
+    file: ../scripts/alias-reached-bob.js

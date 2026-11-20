@@ -1,0 +1,9 @@
+rust:
+  directory: ../..
+  manifestPath: crates/core/Cargo.toml
+wasm2:
+  ts: src/generated-web
+android:
+  targets:
+    - arm64-v8a
+    - x86_64

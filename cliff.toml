@@ -1,0 +1,47 @@
+# https://git-cliff.org/docs/configuration
+
+[changelog]
+header = "# Changelog\n"
+body = """
+{% if version %}\
+    ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+    ## [unreleased]
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+    ### {{ group | striptags | trim | upper_first }}
+    {% for commit in commits %}
+        - {% if commit.scope %}*({{ commit.scope }})* {% endif %}\
+            {% if commit.breaking %}[**breaking**] {% endif %}\
+            {{ commit.message | split(pat="\n") | first | upper_first }}\
+    {% endfor %}
+{% endfor %}
+"""
+trim = true
+
+[bump]
+# Only soften 0.x bumps. Past 1.0.0 a breaking (`!`) commit forces a major, so
+# dep and CI updates must not carry `!` (see renovate.json).
+features_always_bump_minor = false
+breaking_always_bump_major = false
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+protect_breaking_commits = false
+commit_parsers = [
+  { message = "^feat", group = "<!-- 0 -->Features" },
+  { message = "^fix", group = "<!-- 1 -->Bug fixes" },
+  { message = "^refactor", group = "<!-- 2 -->Refactor" },
+  { message = "^doc", group = "<!-- 3 -->Documentation" },
+  { message = "^perf", group = "<!-- 4 -->Performance" },
+  { message = "^test", group = "<!-- 5 -->Tests" },
+  { message = "^chore\\(release\\)", skip = true },
+  { message = "^chore\\(deps.*\\)", skip = true },
+  { message = "^(chore|ci|build)", group = "<!-- 6 -->Maintenance" },
+  { message = "^revert", group = "<!-- 7 -->Reverts" },
+]
+filter_commits = true
+topo_order_commits = true
+sort_commits = "oldest"

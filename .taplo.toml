@@ -1,0 +1,4 @@
+include = ["*.toml", "crates/**/*.toml", "dev/**/*.toml"]
+
+[formatting]
+column_width = 160

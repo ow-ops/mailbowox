@@ -1,0 +1,47 @@
+{
+  "title": {
+    "new": "New message",
+    "reply": "Reply",
+    "replyAll": "Reply all",
+    "forward": "Forward"
+  },
+  "send": "Send",
+  "from": "From",
+  "fromLine": "From {{email}}",
+  "to": "To",
+  "cc": "Cc",
+  "bcc": "Bcc",
+  "addCopies": "Add Cc or Bcc",
+  "subject": "Subject",
+  "body": "Message",
+  "attach": "Attach files",
+  "drop": "Drop files to attach",
+  "saveDraft": "Save draft",
+  "removeAttachment": "Remove {{name}}",
+  "attachmentLoading": "Still downloading from the original message.",
+  "forwardFailed": "Couldn't attach {{name}}",
+  "attachmentsNotKept": "Couldn't keep the attachments with the draft",
+  "attachmentsNotRestored": "Couldn't reopen the draft's attachments",
+  "removeRecipient": "Remove {{email}}",
+  "addRecipient": "Add {{name}}, {{email}}",
+  "removeInvalidRecipient": "{{email}} is not a valid address. Remove it.",
+  "closeTitle": "Save this message as a draft?",
+  "discard": "Discard",
+  "keepEditing": "Keep editing",
+  "sending": "Sending…",
+  "sent": "Sent",
+  "queued": "No connection. This message will be sent when you're back online.",
+  "unconfirmed": "It may already have been sent. It's waiting in the outbox for you to send it again.",
+  "draftSaved": "Draft saved",
+  "errors": {
+    "noDrafts": "This account has no Drafts mailbox."
+  },
+  "quote": {
+    "wrote": "On {{date}}, {{name}} wrote:",
+    "forwarded": "---------- Forwarded message ----------",
+    "from": "From: {{list}}",
+    "date": "Date: {{date}}",
+    "subject": "Subject: {{subject}}",
+    "to": "To: {{list}}"
+  }
+}

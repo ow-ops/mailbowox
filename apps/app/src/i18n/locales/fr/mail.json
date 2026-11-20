@@ -1,0 +1,137 @@
+{
+  "tab": "Mail",
+  "compose": "Nouveau message",
+  "allInboxes": "Toutes les boîtes de réception",
+  "allUnread": "Tous les non lus",
+  "roles": {
+    "inbox": "Boîte de réception",
+    "drafts": "Brouillons",
+    "sent": "Envoyés",
+    "archive": "Archives",
+    "flagged": "Suivis",
+    "all": "Tous les messages",
+    "junk": "Indésirables",
+    "trash": "Corbeille"
+  },
+  "mailboxes": {
+    "title": "Boîtes aux lettres",
+    "switch": "{{title}}, changer de boîte",
+    "unreadLabel": "{{label}}, {{count}} non lus"
+  },
+  "move": {
+    "title": "Déplacer vers"
+  },
+  "list": {
+    "empty": "Aucun message ici.",
+    "refreshFailed": "Impossible de relever le courrier",
+    "syncFailed": "Synchronisation impossible pour {{email}}",
+    "notSynced": "Rien n’a encore été synchronisé",
+    "syncAgain": "Synchroniser à nouveau"
+  },
+  "outbox": {
+    "waiting": "En attente d’envoi",
+    "sending": "Envoi en cours…",
+    "failed": "Envoi impossible",
+    "cancel": "Annuler",
+    "cancelLabel": "Annuler l’envoi de {{subject}}",
+    "unconfirmed": "Peut-être déjà envoyé",
+    "sendAgain": "Renvoyer",
+    "sendAgainLabel": "Renvoyer {{subject}}",
+    "errors": {
+      "invalid": "Une partie du message n’est pas valide.",
+      "unconfirmed": "La connexion a été coupée avant que le serveur ne confirme l'envoi. Renvoyez-le seulement si les destinataires ne l'ont pas reçu.",
+      "refused": "Le serveur ne l’a pas accepté."
+    }
+  },
+  "row": {
+    "unread": "Non lu",
+    "to": "À {{people}}",
+    "me": "Moi",
+    "nobody": "Personne",
+    "noSubject": "Sans objet",
+    "messages_one": "{{count}} message",
+    "messages_other": "{{count}} messages",
+    "hasAttachments": "Contient des pièces jointes",
+    "flagged": "Suivi",
+    "remoteBlocked": "Images distantes bloquées",
+    "account": "Compte {{label}}"
+  },
+  "actions": {
+    "archive": "Archiver",
+    "delete": "Supprimer",
+    "deleteForever_one": "Supprimer définitivement ce message ?",
+    "deleteForever_other": "Supprimer définitivement ces {{count}} messages ?",
+    "move": "Déplacer",
+    "flag": "Suivre",
+    "unflag": "Ne plus suivre",
+    "markRead": "Marquer comme lu",
+    "markUnread": "Marquer comme non lu",
+    "reply": "Répondre",
+    "replyAll": "Répondre à tous",
+    "forward": "Transférer",
+    "more": "Plus d’actions",
+    "read": "Lu",
+    "unread": "Non lu",
+    "archived": "Archivé",
+    "trashed": "Placé dans la corbeille",
+    "moved": "Déplacé vers {{mailbox}}",
+    "undo": "Annuler",
+    "undoFailed": "Impossible de remettre les messages"
+  },
+  "reader": {
+    "select": "Choisissez un message pour le lire ici.",
+    "gone": "Ce message n’est plus dans cette boîte.",
+    "offline": "Vous êtes hors ligne et ce message n’est pas encore enregistré sur cet appareil.",
+    "to": "À : {{list}}",
+    "cc": "Cc : {{list}}",
+    "showRecipients": "Affiche tous les destinataires",
+    "hideRecipients": "Masque la liste des destinataires",
+    "expand": "Affiche ce message",
+    "earlier_one": "{{count}} message plus ancien",
+    "earlier_other": "{{count}} messages plus anciens",
+    "remoteBlocked_one": "{{count}} image distante bloquée : {{name}} ne peut pas savoir que vous avez ouvert ce message.",
+    "remoteBlocked_other": "{{count}} images distantes bloquées : {{name}} ne peut pas savoir que vous avez ouvert ce message.",
+    "remoteNever_one": "{{count}} image distante bloquée.",
+    "remoteNever_other": "{{count}} images distantes bloquées.",
+    "theSender": "l’expéditeur",
+    "loadRemote": "Charger les images",
+    "remoteLoaded": "Images chargées : {{name}} peut savoir que vous avez ouvert ce message.",
+    "alwaysLoad": "Toujours charger",
+    "alwaysLoadFrom": "Toujours charger les images de {{name}}",
+    "attachment": "Pièce jointe",
+    "openAttachment": "{{name}}, {{size}}. Ouvre la pièce jointe.",
+    "body": "Message",
+    "allRead": "Tout est lu dans {{mailbox}}",
+    "unreadIn_one": "non lu dans {{mailbox}}",
+    "unreadIn_other": "non lus dans {{mailbox}}"
+  },
+  "select": {
+    "start": "Sélectionner",
+    "title": "Sélectionner des messages",
+    "count_one": "{{count}} sélectionné",
+    "count_other": "{{count}} sélectionnés",
+    "all": "Tout sélectionner",
+    "none": "Tout désélectionner",
+    "done": "OK"
+  },
+  "search": {
+    "placeholder": "Rechercher",
+    "label": "Rechercher dans le courrier",
+    "scope": "Rechercher dans",
+    "everywhere": "Toutes les boîtes",
+    "nothing": "Aucun résultat pour « {{query}} ».",
+    "operators": "Vous pouvez aussi chercher avec from:, to:, subject:, is:unread, is:starred et has:attachment.",
+    "server": "Recherche sur le serveur…",
+    "serverFailed": "Impossible d’interroger le serveur"
+  },
+  "shortcuts": {
+    "title": "Raccourcis clavier",
+    "move": "Message suivant ou précédent",
+    "open": "Ouvrir le message",
+    "back": "Revenir à la liste",
+    "flag": "Suivre ou ne plus suivre",
+    "all": "Tous les raccourcis clavier",
+    "enter": "Entrée",
+    "escape": "Échap"
+  }
+}

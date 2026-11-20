@@ -1,0 +1,50 @@
+appId: eu.owops.mailbowox
+name: Rows swipe to archive with undo, select in bulk, and search the cache and the server
+---
+- runFlow: subflows/sign-in.yaml
+- assertVisible: ".*Lunch on Friday.*"
+# A full trailing swipe archives (creating Archive when the server has none); Undo moves it back.
+- swipe:
+    from:
+      text: ".*Lunch on Friday.*"
+    direction: LEFT
+- assertVisible: "Archived"
+# On Android, Maestro's tap on the element reports success but never reaches sonner's action button, while a tap
+# on the same point does (as does adb input). The point is where the Undo button sits on the e2e emulator.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          point: "84%,84%"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - waitForAnimationToEnd
+      - tapOn: "Undo"
+- extendedWaitUntil:
+    visible: ".*Lunch on Friday.*"
+    timeout: 10000
+# A leading swipe toggles read.
+- swipe:
+    from:
+      text: ".*Quarterly numbers.*"
+    direction: RIGHT
+- assertVisible: ".*Quarterly numbers.*"
+- tapOn: "Select"
+- tapOn: ".*Quarterly numbers.*"
+- assertVisible: "1 selected"
+- tapOn: "Select all"
+- assertVisible: "Deselect all"
+- tapOn: "Deselect all"
+- assertVisible: "Select messages"
+- tapOn: "Done"
+- assertVisible: "Select"
+# iOS shows the search field with its placeholder; Android shows a search icon labelled by the system.
+- tapOn: "Search mail|Search"
+- inputText: "ramen"
+- assertVisible: ".*Lunch on Friday.*"
+- assertNotVisible: ".*Quarterly numbers.*"
+- tapOn: "All mailboxes"
+- assertVisible: ".*Lunch on Friday.*"

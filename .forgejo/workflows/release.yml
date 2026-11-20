@@ -1,0 +1,457 @@
+---
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      image:
+        description: Image to publish
+        type: choice
+        options: [web, gateway]
+        default: web
+        required: true
+
+concurrency:
+  group: ${{ forgejo.workflow }}-${{ forgejo.ref }}
+  cancel-in-progress: false
+
+env:
+  NIGHTLY_KEEP: 10
+  NDK_VERSION: 29.0.14206865
+  CARGO_BUILD_JOBS: '2'
+  CARGO_NDK_VERSION: 4.1.2
+  # Of that version's x86_64-unknown-linux-gnu archive; change both together.
+  CARGO_NDK_SHA256: 9451622c4567e8abb2c8005001855e32901c0b716ccdd3a173a4375fd03426e1
+  # renovate: datasource=github-releases depName=orhun/git-cliff
+  GIT_CLIFF_VERSION: 2.14.2
+  CARGO_INCREMENTAL: 0
+  SCCACHE_BUCKET: ow-oops-sccache
+  SCCACHE_S3_KEY_PREFIX: mailbowox
+  SCCACHE_ENDPOINT: https://s3.gra.io.cloud.ovh.net
+  SCCACHE_REGION: gra
+  SCCACHE_S3_USE_SSL: 'true'
+
+jobs:
+  checks:
+    uses: ./.forgejo/workflows/checks.yml
+    secrets: inherit
+    with:
+      skip-web: ${{ (forgejo.event_name == 'push' && forgejo.ref_type == 'branch') || inputs.image == 'web' }}
+
+  gateway-changes:
+    if: (forgejo.event_name == 'push' && forgejo.ref_type == 'branch') || inputs.image == 'gateway'
+    runs-on: docker
+    outputs:
+      publish: ${{ steps.paths.outputs.publish }}
+    steps:
+      - uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: forgejo.event_name == 'push'
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: paths
+        env:
+          BEFORE: ${{ forgejo.event.before }}
+        run: |
+          if [ "$FORGEJO_EVENT_NAME" = workflow_dispatch ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo 'publish=true' >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$BEFORE" HEAD -- crates/ Cargo.toml Cargo.lock .forgejo/workflows/gateway-image.yml; then
+            echo 'publish=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'publish=true' >> "$GITHUB_OUTPUT"
+          fi
+
+  gateway-image:
+    if: needs.gateway-changes.outputs.publish == 'true'
+    needs: [checks, gateway-changes]
+    uses: ./.forgejo/workflows/gateway-image.yml
+    secrets: inherit
+
+  web-image:
+    needs: checks
+    uses: ./.forgejo/workflows/web-image.yml
+    secrets: inherit
+    with:
+      publish: ${{ (forgejo.event_name == 'push' && forgejo.ref_type == 'branch') || inputs.image == 'web' }}
+
+  android:
+    name: Build and publish the ${{ matrix.artifact }}
+    if: forgejo.event_name == 'push'
+    needs: checks
+    runs-on: docker
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        artifact: [apk, aab]
+    env:
+      ARTIFACT: ${{ matrix.artifact }}
+      EXPO_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN }}
+      RUSTC_WRAPPER: ${{ secrets.SCCACHE_AWS_ACCESS_KEY_ID != '' && 'sccache' || '' }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_AWS_SECRET_ACCESS_KEY }}
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}/apps/app
+    steps:
+      - name: Checkout
+        uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve release
+        uses: https://git.ow-ops.eu/ow-ops/kit/.forgejo/actions/resolve-release@main
+        with:
+          prefix: MAILBOWOX
+          app-json: apps/app/app.json
+
+      - name: Pick the ABIs
+        run: |-
+          abis=arm64-v8a,x86_64
+          [ "${MAILBOWOX_CHANNEL}" = stable ] || abis=arm64-v8a
+          echo "ANDROID_ABIS=${abis}" >> "${GITHUB_ENV}"
+
+      - name: Install build dependencies
+        run: |-
+          sudo_cmd=()
+          [ "$(id -u)" -eq 0 ] || sudo_cmd=(sudo)
+          "${sudo_cmd[@]}" apt-get update
+          "${sudo_cmd[@]}" apt-get install --no-install-recommends -y build-essential ccache libclang-dev pkg-config unzip
+
+      - name: Setup Java
+        uses: https://github.com/actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Android SDK
+        uses: https://github.com/android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: platform-tools build-tools;37.0.0 platforms;android-37.0 cmake;3.22.1 ndk;${{ env.NDK_VERSION }}
+
+      - name: Setup Rust
+        uses: https://git.ow-ops.eu/ow-ops/kit/.forgejo/actions/rust@main
+        with:
+          toolchain: 1.100.0
+          targets: aarch64-linux-android,x86_64-linux-android
+          cache-key: android
+
+      - name: Install cargo-ndk
+        run: |-
+          archive="${RUNNER_TEMP}/cargo-ndk.tgz"
+          curl -fsSL -o "${archive}" "https://github.com/bbqsrc/cargo-ndk/releases/download/v${CARGO_NDK_VERSION}/cargo-ndk-x86_64-unknown-linux-gnu-v${CARGO_NDK_VERSION}.tgz"
+          echo "${CARGO_NDK_SHA256}  ${archive}" | sha256sum -c -
+          tar -xzf "${archive}" --strip-components=1 -C "${HOME}/.cargo/bin"
+
+      - name: Setup
+        uses: https://git.ow-ops.eu/ow-ops/kit/.forgejo/actions/setup@main
+
+      # ubrn compiles its own CLI on first use, into its folder under node_modules.
+      # Restored and saved in separate steps so a failed build still saves it.
+      - name: Restore the ubrn CLI
+        id: ubrn-cache
+        uses: https://github.com/actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: node_modules/.pnpm/uniffi-bindgen-react-native@*/node_modules/uniffi-bindgen-react-native/target
+          key: ubrn-cli-${{ runner.os }}-${{ hashFiles('packages/core-native/package.json') }}
+
+      - name: Size the build to the pod
+        uses: https://git.ow-ops.eu/ow-ops/kit/.forgejo/actions/android-build-env@main
+
+      - name: Build the core
+        working-directory: ${{ github.workspace }}/packages/core-native
+        run: |-
+          export NDK_HOME="${ANDROID_HOME}/ndk/${NDK_VERSION}"
+          export ANDROID_NDK_HOME="${NDK_HOME}"
+          CARGO_BUILD_JOBS="${COMPILE_JOBS}" pnpm ubrn:android --release
+
+      - name: Save the ubrn CLI
+        if: ${{ always() && steps.ubrn-cache.outputs.cache-hit != 'true' }}
+        uses: https://github.com/actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: node_modules/.pnpm/uniffi-bindgen-react-native@*/node_modules/uniffi-bindgen-react-native/target
+          key: ${{ steps.ubrn-cache.outputs.cache-primary-key }}
+
+      - name: Setup ccache
+        uses: https://github.com/hendrikmuhs/ccache-action@dbeefd73e8e2ffc1bbc412570072735eb4db3607 # v1.2.25
+        with:
+          key: android-${{ matrix.artifact }}
+          max-size: 2G
+          job-summary: ''
+
+      # Nightlies ship to Play under the store package too.
+      - name: Generate native project
+        run: |-
+          channel="${MAILBOWOX_CHANNEL}"
+          [ "${ARTIFACT}" = aab ] && channel=stable
+          MAILBOWOX_CHANNEL="${channel}" pnpm exec expo prebuild --platform android --no-install
+
+      - name: Setup Gradle
+        uses: https://github.com/gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-provider: basic
+
+      # The user home properties win over the generated project ones.
+      - name: Configure Gradle
+        run: |-
+          mkdir -p "${HOME}/.gradle"
+          cat > "${HOME}/.gradle/gradle.properties" <<'EOF'
+          org.gradle.caching=true
+          org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g
+          EOF
+
+      # Fails the step before the job timeout, which would skip the cache saves.
+      - name: Build APK
+        if: ${{ matrix.artifact == 'apk' }}
+        timeout-minutes: 70
+        env:
+          ANDROID_KEY_BASE64: ${{ secrets.ANDROID_KEY_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_DISABLE_AUTO_UPLOAD: ${{ secrets.SENTRY_ORG == '' || secrets.SENTRY_PROJECT == '' || secrets.SENTRY_AUTH_TOKEN == '' }}
+        run: |-
+          cd android
+          base64 -d <<< "${ANDROID_KEY_BASE64}" > "${RUNNER_TEMP}/release.p12"
+          ./gradlew assembleRelease --console=plain --max-workers="${BUILD_CPUS}" \
+            -PreactNativeArchitectures="${ANDROID_ABIS}" \
+            -Pandroid.injected.signing.store.file="${RUNNER_TEMP}/release.p12" \
+            -Pandroid.injected.signing.store.password="${ANDROID_KEY_PASSWORD}" \
+            -Pandroid.injected.signing.key.alias="${ANDROID_KEY_ALIAS}" \
+            -Pandroid.injected.signing.key.password="${ANDROID_KEY_PASSWORD}"
+
+      - name: Verify APK
+        if: ${{ matrix.artifact == 'apk' }}
+        run: |-
+          apk=android/app/build/outputs/apk/release/app-release.apk
+          apksigner="$(find "${ANDROID_HOME}/build-tools" -name apksigner -type f | sort | tail -n 1)"
+          "${apksigner}" verify --print-certs "${apk}"
+          mkdir -p "${GITHUB_WORKSPACE}/dist/release"
+          mv "${apk}" "${GITHUB_WORKSPACE}/dist/release/mailbowox-${MAILBOWOX_VERSION}-android-universal.apk"
+
+      - name: Generate the Obtainium config
+        if: ${{ matrix.artifact == 'apk' }}
+        uses: https://git.ow-ops.eu/ow-ops/kit/.forgejo/actions/obtainium@main
+        with:
+          version: ${{ env.MAILBOWOX_VERSION }}
+          tag: ${{ env.TAG }}
+          output: dist/channel/obtainium.json
+          name: mailbowox
+          id: eu.owops.mailbowox
+          about: A mail, calendar and contacts client
+
+      - name: Stage release assets
+        if: ${{ matrix.artifact == 'apk' }}
+        working-directory: ${{ github.workspace }}
+        env:
+          GIT_SHA: ${{ forgejo.sha }}
+        run: |-
+          cp dist/channel/obtainium.json dist/release/
+          if [ "${MAILBOWOX_CHANNEL}" = stable ]; then
+            echo "RELEASE_TITLE=${TAG}"
+            echo "PRERELEASE=false"
+            echo "CHANNEL=latest"
+            echo "CHANNEL_TITLE=Latest stable"
+          else
+            echo "RELEASE_TITLE=Nightly build ${TAG#nightly-}"
+            echo "RELEASE_NOTES=Nightly build from main at ${GIT_SHA}"
+            echo "PRERELEASE=true"
+            echo "CHANNEL=nightly"
+            echo "CHANNEL_TITLE=Nightly channel"
+          fi >> "${GITHUB_ENV}"
+
+      - name: Generate release notes
+        if: ${{ matrix.artifact == 'apk' && forgejo.ref_type == 'tag' }}
+        working-directory: ${{ github.workspace }}
+        run: |-
+          asset="git-cliff-${GIT_CLIFF_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+          base="https://github.com/orhun/git-cliff/releases/download/v${GIT_CLIFF_VERSION}"
+          curl -fsSL -O "${base}/${asset}"
+          curl -fsSL -O "${base}/${asset}.sha512"
+          sha512sum -c "${asset}.sha512"
+          tar -xzf "${asset}" -C "${RUNNER_TEMP}"
+          delimiter="EOF_$(openssl rand -hex 16)"
+          {
+            echo "RELEASE_NOTES<<${delimiter}"
+            "${RUNNER_TEMP}/git-cliff-${GIT_CLIFF_VERSION}/git-cliff" --config cliff.toml --latest --strip all
+            echo "${delimiter}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Publish release
+        if: ${{ matrix.artifact == 'apk' }}
+        uses: https://code.forgejo.org/actions/forgejo-release@98265452477dafb3f0f27ba9c462c90b18cb44fd # v2.13.4
+        with:
+          direction: upload
+          token: ${{ secrets.FORGE_TOKEN }}
+          tag: ${{ env.TAG }}
+          title: ${{ env.RELEASE_TITLE }}
+          release-notes: ${{ env.RELEASE_NOTES }}
+          prerelease: ${{ env.PRERELEASE }}
+          release-dir: dist/release
+          override: true
+
+      # Obtainium reads its config from the channel release.
+      - name: Publish the channel release
+        if: ${{ matrix.artifact == 'apk' }}
+        uses: https://code.forgejo.org/actions/forgejo-release@98265452477dafb3f0f27ba9c462c90b18cb44fd # v2.13.4
+        with:
+          direction: upload
+          token: ${{ secrets.FORGE_TOKEN }}
+          tag: ${{ env.CHANNEL }}
+          title: ${{ env.CHANNEL_TITLE }}
+          release-notes: Obtainium config for ${{ env.MAILBOWOX_VERSION }}. The APK lives on the ${{ env.TAG }} release.
+          prerelease: ${{ env.PRERELEASE }}
+          release-dir: dist/channel
+          override: true
+
+      - name: Prune old nightlies
+        if: ${{ matrix.artifact == 'apk' && env.MAILBOWOX_CHANNEL == 'nightly' }}
+        uses: https://git.ow-ops.eu/ow-ops/kit/.forgejo/actions/prune-nightlies@main
+        with:
+          token: ${{ secrets.FORGE_TOKEN }}
+          keep: ${{ env.NIGHTLY_KEEP }}
+          current-tag: ${{ env.TAG }}
+
+      - name: Setup Ruby
+        if: ${{ matrix.artifact == 'aab' && secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        uses: https://github.com/ruby/setup-ruby@f9c4492e86def3e644ab32a0ef185eda5b0c20d0 # v1.342.0
+        with:
+          ruby-version: '4.0'
+          bundler-cache: true
+          working-directory: ${{ github.workspace }}/apps/app
+
+      - name: Build AAB
+        if: ${{ matrix.artifact == 'aab' && secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        timeout-minutes: 70
+        env:
+          ANDROID_KEY_BASE64: ${{ secrets.ANDROID_KEY_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_DISABLE_AUTO_UPLOAD: ${{ secrets.SENTRY_ORG == '' || secrets.SENTRY_PROJECT == '' || secrets.SENTRY_AUTH_TOKEN == '' }}
+        run: |-
+          base64 -d <<< "${ANDROID_KEY_BASE64}" > "${RUNNER_TEMP}/release.p12"
+          ANDROID_KEYSTORE_PATH="${RUNNER_TEMP}/release.p12" bundle exec fastlane android build
+
+      - name: Upload to Google Play
+        if: ${{ matrix.artifact == 'aab' && secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |-
+          track=beta
+          [ "${MAILBOWOX_CHANNEL}" = stable ] && track=production
+          bundle exec fastlane android upload "track:${track}"
+
+      - name: Remove the signing key
+        if: ${{ always() }}
+        run: rm -f "${RUNNER_TEMP}/release.p12"
+
+  ios:
+    name: Build and upload to TestFlight
+    needs: checks
+    if: ${{ forgejo.event_name == 'push' && secrets.APP_STORE_API_KEY_BASE64 != '' && secrets.APP_STORE_API_KEY_ID != '' && secrets.APP_STORE_API_ISSUER_ID != '' }}
+    runs-on: macos
+    timeout-minutes: 90
+    env:
+      APPLE_API_KEY: ${{ secrets.APP_STORE_API_KEY_ID }}
+      APPLE_API_ISSUER: ${{ secrets.APP_STORE_API_ISSUER_ID }}
+      BUNDLE_PATH: vendor/bundle
+      LANG: en_US.UTF-8
+      RUSTUP_TOOLCHAIN: 1.100.0
+      EXPO_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN }}
+      RUSTC_WRAPPER: ${{ secrets.SCCACHE_AWS_ACCESS_KEY_ID != '' && 'sccache' || '' }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_AWS_SECRET_ACCESS_KEY }}
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}/apps/app
+    steps:
+      - name: Checkout
+        uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve release
+        uses: https://git.ow-ops.eu/ow-ops/kit/.forgejo/actions/resolve-release@main
+        with:
+          prefix: MAILBOWOX
+          app-json: apps/app/app.json
+
+      # Nightlies upload to the stable App Store app, so they build under its name.
+      - name: Build under the stable name
+        run: echo "MAILBOWOX_CHANNEL=stable" >> "${GITHUB_ENV}"
+
+      - name: Setup Rust
+        uses: https://git.ow-ops.eu/ow-ops/kit/.forgejo/actions/rust@main
+        with:
+          toolchain: ${{ env.RUSTUP_TOOLCHAIN }}
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim
+          cache-key: ios
+
+      - name: Install CocoaPods and Ruby
+        run: |-
+          command -v pod > /dev/null || brew install cocoapods
+          ruby_bin="$(brew --prefix)/opt/ruby/bin"
+          [ -x "${ruby_bin}/ruby" ] || brew install ruby
+          echo "${ruby_bin}" >> "${GITHUB_PATH}"
+
+      - name: Setup
+        uses: https://git.ow-ops.eu/ow-ops/kit/.forgejo/actions/setup@main
+
+      - name: Install gems
+        run: bundle install --jobs 4
+
+      - name: Build the core
+        working-directory: ${{ github.workspace }}/packages/core-native
+        run: pnpm ubrn:ios --release
+
+      - name: Generate native project
+        run: |-
+          pnpm exec expo prebuild --platform ios --clean --no-install
+          cd ios
+          pod install
+
+      - name: Write the App Store Connect API key
+        run: |-
+          key_dir="${HOME}/.appstoreconnect/private_keys"
+          key="${key_dir}/AuthKey_${APPLE_API_KEY}.p8"
+          mkdir -p "${key_dir}"
+          (umask 077 && base64 -d <<< "${APP_STORE_API_KEY_BASE64}" > "${key}")
+          echo "APPLE_API_KEY_PATH=${key}" >> "${GITHUB_ENV}"
+        env:
+          APP_STORE_API_KEY_BASE64: ${{ secrets.APP_STORE_API_KEY_BASE64 }}
+
+      - name: Build IPA
+        run: bundle exec fastlane ios build
+        env:
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_DISABLE_AUTO_UPLOAD: ${{ secrets.SENTRY_ORG == '' || secrets.SENTRY_PROJECT == '' || secrets.SENTRY_AUTH_TOKEN == '' }}
+
+      - name: Upload to TestFlight
+        run: bundle exec fastlane ios upload
+        env:
+          TESTFLIGHT_GROUPS: ${{ vars.TESTFLIGHT_GROUPS }}
+
+      - name: Update the App Store listing
+        if: ${{ forgejo.ref_type == 'tag' }}
+        run: bundle exec fastlane ios metadata
+        env:
+          APP_REVIEW_DEMO_USER: ${{ secrets.APP_REVIEW_DEMO_USER }}
+          APP_REVIEW_DEMO_PASSWORD: ${{ secrets.APP_REVIEW_DEMO_PASSWORD }}
+
+      - name: Remove the App Store Connect API key
+        if: ${{ always() }}
+        run: rm -f "${HOME}/.appstoreconnect/private_keys/AuthKey_${APPLE_API_KEY}.p8"

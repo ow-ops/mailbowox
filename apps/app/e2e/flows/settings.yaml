@@ -1,0 +1,17 @@
+appId: eu.owops.mailbowox
+name: An account opens its own settings, and removing it asks first
+---
+- runFlow: subflows/sign-in.yaml
+- tapOn: "Settings"
+# iOS draws section titles in capitals.
+- assertVisible: "(?i)reading"
+- assertVisible: "Group by conversation.*"
+- tapOn: "Alice.*"
+- assertVisible: "Incoming mail \\(IMAP\\).*"
+- assertVisible: "Contacts.*"
+- scrollUntilVisible:
+    element: "Remove account"
+- tapOn: "Remove account"
+- assertVisible: "Remove alice@mailbowox.test\\?.*"
+- tapOn: "Cancel"
+- assertVisible: "Remove account"

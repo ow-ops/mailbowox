@@ -1,0 +1,19 @@
+/* What the browser draws itself, in the theme's colours: useBrowserTheme sets the variables. */
+:where(:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+::selection {
+  background-color: var(--selection);
+}
+
+input,
+textarea {
+  caret-color: var(--focus);
+}
+
+* {
+  scrollbar-color: var(--scrollbar) transparent;
+  scrollbar-width: thin;
+}

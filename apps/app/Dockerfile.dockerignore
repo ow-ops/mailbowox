@@ -1,0 +1,24 @@
+*
+!Cargo.toml
+!Cargo.lock
+!crates
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!apps
+!packages
+**/node_modules
+**/target
+**/.expo
+**/.env*.local
+apps/app/ios
+apps/app/android
+apps/app/dist
+# What ubrn generates; the build makes its own.
+packages/core-native/cpp
+packages/core-native/ios
+packages/core-native/android/*
+!packages/core-native/android/proguard-rules.pro
+packages/core-native/build
+packages/core-native/src/*
+!packages/core-native/src/index.web.ts

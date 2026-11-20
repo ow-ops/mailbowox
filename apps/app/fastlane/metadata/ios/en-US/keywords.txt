@@ -1,0 +1,1 @@
+email,imap,smtp,carddav,contacts,privacy,inbox,self-hosted,migadu,fastmail

@@ -1,0 +1,7 @@
+{"@type":"upsert","object":"Domain","matchOn":["name"],"value":{"dom":{"name":"mailbowox.test","certificateManagement":{"@type":"Manual"}}}}
+{"@type":"update","object":"SystemSettings","value":{"defaultHostname":"mail.mailbowox.test","defaultDomainId":"#dom"}}
+{"@type":"upsert","object":"NetworkListener","matchOn":["name"],"value":{"imap":{"name":"imap","protocol":"imap","bind":{"[::]:1143":true},"useTls":false},"submission":{"name":"submission","protocol":"smtp","bind":{"[::]:1587":true},"useTls":false},"http":{"name":"http","protocol":"http","bind":{"[::]:8080":true,"[::]:18080":true},"useTls":false}}}
+{"@type":"upsert","object":"Account","matchOn":["name"],"value":{"alice":{"@type":"User","name":"alice","domainId":"#dom","aliases":{"0":{"name":"hello","domainId":"#dom"}},"credentials":{"0":{"@type":"Password","secret":"mailbowox-dev"}}},"bob":{"@type":"User","name":"bob","domainId":"#dom","credentials":{"0":{"@type":"Password","secret":"mailbowox-dev"}}}}}
+{"@type":"update","object":"Imap","value":{"allowPlainTextAuth":true}}
+{"@type":"update","object":"MtaStageAuth","value":{"saslMechanisms":{"match":{"0":{"if":"local_port != 25","then":"[plain, login]"}},"else":"false"}}}
+{"@type":"upsert","object":"MtaInboundThrottle","matchOn":["description"],"value":{"addr":{"description":"Sender address to recipient throttle","enable":false},"ip":{"description":"Sender IP throttle","enable":false}}}

@@ -1,0 +1,54 @@
+appId: eu.owops.mailbowox
+---
+# Adds the account ${EMAIL} (password mailbowox-dev) on the local server through the manual form.
+- tapOn: "Your name"
+- inputText: ${NAME}
+- tapOn: "Email address"
+- inputText: ${EMAIL}
+- tapOn: "Password"
+- inputText: "mailbowox-dev"
+- pressKey: Enter
+- assertVisible: "No settings found for mailbowox.test.*"
+# Security first, while no keyboard covers the form; picking it also resets the port.
+- tapOn:
+    text: "None"
+    index: 0
+- scrollUntilVisible:
+    element: "Username"
+    centerElement: true
+- tapOn:
+    text: "None"
+    index: 1
+- runFlow:
+    file: field.yaml
+    env:
+      LABEL: "IMAP server"
+      VALUE: "127.0.0.1"
+- runFlow:
+    file: field.yaml
+    env:
+      LABEL: "IMAP port"
+      VALUE: "1143"
+- runFlow:
+    file: field.yaml
+    env:
+      LABEL: "SMTP server"
+      VALUE: "127.0.0.1"
+- runFlow:
+    file: field.yaml
+    env:
+      LABEL: "SMTP port"
+      VALUE: "1587"
+- scrollUntilVisible:
+    element: "Advanced"
+    centerElement: true
+- tapOn: "Advanced"
+- runFlow:
+    file: field.yaml
+    env:
+      LABEL: "Contacts server \\(CardDAV\\) URL"
+      VALUE: "http://127.0.0.1:18080"
+- scrollUntilVisible:
+    element: "Sign in"
+    centerElement: true
+- tapOn: "Sign in"

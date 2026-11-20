@@ -1,0 +1,6 @@
+{
+  "name": "mailbowox",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@12.21.0"
+}

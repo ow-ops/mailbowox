@@ -1,0 +1,9 @@
+appId: eu.owops.mailbowox
+---
+# Centring keeps the field above the keyboard of the previous one.
+- scrollUntilVisible:
+    element: ${LABEL}
+    centerElement: true
+- tapOn: ${LABEL}
+- eraseText
+- inputText: ${VALUE}

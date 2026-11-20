@@ -1,0 +1,26 @@
+{
+  "cancel": "Cancel",
+  "retry": "Try again",
+  "errorTitle": "Something went wrong",
+  "actionFailed": "That didn't go through",
+  "details": "Details",
+  "errors": {
+    "auth": "The server didn't accept the username or password. Some providers need an app password.",
+    "plainPort": "This server doesn't encrypt connections on this port: it needs STARTTLS, or TLS on its encrypted port (usually 993 for incoming mail, 465 for outgoing).",
+    "noStartTls": "This server doesn't offer STARTTLS on this port: it needs TLS, usually on port 993 for incoming mail and 465 for outgoing.",
+    "certificate": "The server's certificate isn't trusted, so the app didn't connect. It may have expired or be self-signed.",
+    "tls": "Couldn't set up a secure connection to the server.",
+    "relay": "The web relay couldn't open a connection to the server. Check the server name and port, and the relay in Settings.",
+    "unreachable": "Couldn't reach the server. Check your connection, and the server name and port.",
+    "server": "The server returned an error. Try again in a moment.",
+    "device": "Couldn't read or save data on this device."
+  },
+  "databaseTooNew": "The {{name}} database was written by a newer version of this app. Update the app to open it.",
+  "offline": {
+    "title": "You're offline",
+    "detail": "Showing what's saved on this device."
+  },
+  "time": {
+    "dayMonth": "MMM d"
+  }
+}

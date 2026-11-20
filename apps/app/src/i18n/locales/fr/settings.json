@@ -1,0 +1,183 @@
+{
+  "tab": "Réglages",
+  "accounts": {
+    "title": "Comptes",
+    "add": "Ajouter un compte",
+    "remove": "Supprimer le compte",
+    "removeConfirm": "Supprimer {{email}} ? Le courrier reste sur le serveur ; seul cet appareil l’oublie."
+  },
+  "account": {
+    "name": "Nom",
+    "email": "E-mail",
+    "servers": "Serveurs",
+    "server": "{{host}}, port {{port}}, {{security}}",
+    "identities": "Adresses d’envoi",
+    "identitiesHint": "Autres adresses de ce compte depuis lesquelles écrire, comme un alias sur votre propre domaine. Votre serveur de messagerie doit les accepter.",
+    "addIdentity": "Ajouter une adresse",
+    "contacts": "Contacts",
+    "color": "Couleur",
+    "colorHint": "Signale le courrier de {{label}} là où les comptes se mélangent, comme dans Toutes les boîtes de réception.",
+    "colors": {
+      "lavender": "Lavande",
+      "green": "Vert",
+      "amber": "Ambre",
+      "rose": "Rose"
+    }
+  },
+  "identity": {
+    "title": "Adresse d’envoi",
+    "email": "Adresse e-mail",
+    "name": "Nom affiché (facultatif)",
+    "save": "Enregistrer",
+    "remove": "Supprimer l’adresse",
+    "duplicate": "Ce compte utilise déjà cette adresse."
+  },
+  "signature": {
+    "title": "Signature",
+    "none": "Aucune",
+    "placeholder": "Texte de la signature",
+    "hint": "Ajoutée aux nouveaux messages, et au-dessus du texte cité des réponses, envoyés depuis {{email}} ou ses autres adresses.",
+    "save": "Enregistrer"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "toggle": "Notifications de nouveaux messages",
+    "explanation": "Désactivées tant que vous ne les activez pas. Pour vous signaler les nouveaux messages, le serveur de notifications mailbowox garde une copie chiffrée du mot de passe de ce compte et s’en sert pour surveiller la boîte de réception. Une notification indique seulement qu’un message est arrivé, jamais qui l’envoie ni ce qu’il dit.",
+    "browser": "Affichées par ce navigateur tant que mailbowox est ouvert dans un onglet. Rien n’est envoyé à un serveur.",
+    "browserDenied": "Les notifications sont bloquées pour ce site dans les réglages du navigateur.",
+    "newMail": "Nouveau message",
+    "newMails_one": "{{count}} nouveau message",
+    "newMails_other": "{{count}} nouveaux messages",
+    "channel": "Nouveaux messages",
+    "permissionDenied": "Les notifications de mailbowox sont désactivées dans les réglages du système.",
+    "refused": "Le serveur mail a refusé le mot de passe.",
+    "failed": "Le serveur de notifications n’a pas pu prendre ce compte (erreur {{status}})."
+  },
+  "contacts": {
+    "none": "Aucun contact trouvé pour l’instant"
+  },
+  "devices": {
+    "title": "Appareils",
+    "sync": "Synchronisation",
+    "off": "Désactivée",
+    "offHint": "La synchronisation garde vos comptes et réglages sur tous vos appareils. Ils sont chiffrés sur cet appareil avant d’être stockés sur le serveur de synchronisation, qui ne peut pas les lire.",
+    "onHint": "Vos comptes sont chiffrés sur cet appareil avant d’être stockés sur le serveur de synchronisation, qui ne peut pas les lire.",
+    "server": "Serveur de synchronisation",
+    "joinDevice": "Rejoindre depuis un autre appareil",
+    "syncing": "Synchronisation…",
+    "syncedAt": "Synchronisé {{time}}",
+    "notSynced": "Pas encore synchronisé",
+    "syncNow": "Synchroniser",
+    "linkDevice": "Associer un nouvel appareil",
+    "turnOff": "Désactiver la synchronisation",
+    "turnOffConfirm": "Désactiver la synchronisation sur cet appareil ? Vos comptes restent ici, et les autres appareils continuent de se synchroniser.",
+    "delete": "Supprimer les données synchronisées",
+    "deleteConfirm": "Supprimer vos comptes du serveur de synchronisation ? La synchronisation se désactive sur tous les appareils. Vos comptes restent sur chacun d’eux.",
+    "gateway": "Adresse du serveur de synchronisation",
+    "gatewayPlaceholder": "https://sync.exemple.com",
+    "gatewayHint": "Le serveur de synchronisation mailbowox qui garde vos comptes chiffrés. Il ne voit jamais vos mots de passe.",
+    "email": "E-mail de récupération",
+    "passphrase": "Phrase secrète",
+    "deriving": "Sécurisation de votre phrase secrète. Cela prend quelques secondes.",
+    "setup": {
+      "title": "Synchronisation",
+      "headline": "Synchronisez vos comptes",
+      "intro": "Vos comptes et mots de passe sont chiffrés sur cet appareil avec une clé que seuls vos appareils détiennent. Pour les récupérer sur un nouvel appareil sans en avoir un autre sous la main, vous saisirez votre e-mail de récupération et cette phrase secrète.",
+      "emailHint": "Vous saisirez cette adresse avec la phrase secrète pour ouvrir le coffre sur un nouvel appareil. Elle n’est jamais envoyée.",
+      "confirm": "Répétez la phrase secrète",
+      "tooShort": "Utilisez au moins {{count}} caractères.",
+      "mismatch": "Les phrases secrètes ne correspondent pas.",
+      "passphraseHint": "Personne ne peut réinitialiser cette phrase secrète. Si vous la perdez ainsi que tous vos appareils associés, le coffre ne pourra plus être ouvert.",
+      "submit": "Activer la synchronisation",
+      "done": "Synchronisation activée"
+    },
+    "link": {
+      "title": "Associer un appareil",
+      "headline": "Scannez ce code",
+      "intro": "Sur le nouvel appareil, ouvrez mailbowox, choisissez Rejoindre depuis un autre appareil et scannez ce code.",
+      "qrLabel": "Code d’association pour un nouvel appareil",
+      "waiting": "En attente du nouvel appareil. Le code change toutes les deux minutes.",
+      "compareHeadline": "Comparez les codes",
+      "compare": "N’acceptez que si le nouvel appareil affiche le même nombre.",
+      "match": "Les codes correspondent",
+      "noMatch": "Ils ne correspondent pas",
+      "doneHeadline": "Appareil associé",
+      "done": "Le nouvel appareil a maintenant vos comptes et les garde synchronisés.",
+      "close": "Terminé"
+    },
+    "join": {
+      "title": "Rejoindre",
+      "headline": "Récupérez vos comptes",
+      "intro": "Scannez le code d’un appareil déjà synchronisé, ou ouvrez le coffre avec votre phrase secrète.",
+      "method": "Méthode",
+      "methods": {
+        "scan": "Scanner un code",
+        "passphrase": "Phrase secrète"
+      },
+      "scanHint": "Sur votre autre appareil, ouvrez Réglages, Appareils, Associer un nouvel appareil.",
+      "foreignCode": "Ce n’est pas un code d’association mailbowox.",
+      "cameraNeeded": "mailbowox a besoin de l’appareil photo pour scanner le code de votre autre appareil.",
+      "allowCamera": "Autoriser l’appareil photo",
+      "cameraBlocked": "L’accès à l’appareil photo est désactivé pour mailbowox. Activez-le dans les réglages du système, ou utilisez votre phrase secrète.",
+      "connecting": "Connexion à votre autre appareil…",
+      "compare": "Vérifiez que votre autre appareil affiche ce nombre, puis acceptez sur celui-ci.",
+      "waiting": "En attente de votre autre appareil…",
+      "scanAgain": "Scanner à nouveau",
+      "unlock": "Déverrouiller"
+    },
+    "errors": {
+      "unreachable": "Impossible de joindre le serveur de synchronisation {{gateway}}. Vérifiez l’adresse et votre connexion.",
+      "gateway": "Le serveur de synchronisation a répondu par une erreur ({{status}}).",
+      "decrypt": "Ce coffre n’a pas pu être déchiffré. Vérifiez la phrase secrète, ou associez à nouveau depuis votre autre appareil.",
+      "newerVersion": "Ce coffre a été enregistré par une version plus récente de mailbowox. Mettez l’application à jour pour continuer à synchroniser.",
+      "unreadable": "Le coffre sur le serveur de synchronisation n’est pas dans un format que mailbowox comprend.",
+      "noVault": "Aucun coffre ne correspond à cet e-mail et cette phrase secrète sur ce serveur de synchronisation.",
+      "busy": "Un autre appareil modifiait le coffre en même temps. Réessayez dans un instant.",
+      "expired": "L’autre appareil n’a pas répondu à temps. Scannez un nouveau code.",
+      "off": "La synchronisation est désactivée sur cet appareil.",
+      "deleted": "Les données synchronisées ont été supprimées depuis un autre appareil : la synchronisation est désactivée. Vos comptes sont toujours ici."
+    }
+  },
+  "reading": {
+    "title": "Lecture",
+    "conversations": "Regrouper par conversation",
+    "conversationsDetail": "Affiche un message et ses réponses, y compris les vôtres, sur une seule ligne."
+  },
+  "privacy": {
+    "title": "Confidentialité",
+    "remoteContent": "Contenu distant",
+    "remoteHint": "Les images distantes permettent aux expéditeurs de savoir quand et où vous ouvrez leurs messages.",
+    "remote": {
+      "ask": "Demander à chaque fois",
+      "never": "Ne jamais charger"
+    },
+    "remoteSenders": "Expéditeurs dont les images se chargent toujours",
+    "remoteSendersCount_one": "{{count}} expéditeur",
+    "remoteSendersCount_other": "{{count}} expéditeurs",
+    "remoteSendersHint": "Les images de ces expéditeurs se chargent sans demander. Choisissez-en un pour qu’on vous redemande.",
+    "stopLoading": "Ne plus charger automatiquement"
+  },
+  "crashReports": {
+    "title": "Rapports de plantage",
+    "toggle": "Envoyer les rapports de plantage",
+    "explanation": "Désactivé par défaut. Activé, un plantage envoie l’erreur aux développeurs avec la version de l’application, le modèle de l’appareil et la version du système. Les adresses e-mail, noms de serveurs, adresses IP et liens en sont d’abord retirés."
+  },
+  "relay": {
+    "title": "Relais web",
+    "hint": "Dans le navigateur, mailbowox joint vos serveurs mail par un relais. La connexion reste chiffrée entre cet onglet et votre fournisseur : le relais ne peut pas lire votre courrier.",
+    "url": "Adresse du relais",
+    "token": "Code d’accès",
+    "tokenHint": "La personne qui gère le relais vous donne ce code.",
+    "needsUrl": "Saisissez l’adresse du relais pour continuer.",
+    "needsToken": "Saisissez le code d’accès pour continuer.",
+    "save": "Enregistrer le relais",
+    "saved": "Relais enregistré",
+    "invalid": "Saisissez l’adresse du relais, en commençant par https:// ou http://.",
+    "unreachable": "Rien n’a répondu à {{url}}. Vérifiez l’adresse et que le relais fonctionne."
+  },
+  "about": {
+    "title": "À propos",
+    "version": "Version",
+    "privacy": "mailbowox communique directement avec vos serveurs mail. Aucun de nos serveurs ne lit votre courrier, et l’app ne collecte aucune statistique."
+  }
+}

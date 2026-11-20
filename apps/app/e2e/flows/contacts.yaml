@@ -1,0 +1,15 @@
+appId: eu.owops.mailbowox
+name: A contact on the CardDAV server shows in Contacts and is suggested while addressing a message
+---
+- runFlow: subflows/sign-in.yaml
+- tapOn: "Contacts"
+- extendedWaitUntil:
+    visible: ".*Élodie Marchand.*"
+    timeout: 20000
+- tapOn: "Mail"
+- tapOn: "New message"
+# The composer opens on the To field, so the typing lands there.
+- inputText: "elod"
+- assertVisible: "Add Élodie Marchand.*"
+- tapOn: "Add Élodie Marchand.*"
+- assertNotVisible: "Add Élodie Marchand.*"

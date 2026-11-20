@@ -1,0 +1,1 @@
+Mail et contacts pour tout fournisseur IMAP et CardDAV. Vos messages vont directement de votre fournisseur à votre appareil.

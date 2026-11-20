@@ -1,0 +1,26 @@
+{
+  "cancel": "Annuler",
+  "retry": "Réessayer",
+  "errorTitle": "Une erreur est survenue",
+  "actionFailed": "L’action n’a pas abouti",
+  "details": "Détails",
+  "errors": {
+    "auth": "Le serveur n’a pas accepté l’identifiant ou le mot de passe. Certains fournisseurs demandent un mot de passe d’application.",
+    "plainPort": "Ce serveur ne chiffre pas les connexions sur ce port : il faut STARTTLS, ou TLS sur son port chiffré (en général 993 pour la réception, 465 pour l’envoi).",
+    "noStartTls": "Ce serveur ne propose pas STARTTLS sur ce port : il faut TLS, en général sur le port 993 pour la réception et 465 pour l’envoi.",
+    "certificate": "Le certificat du serveur n’est pas reconnu, la connexion n’a donc pas été établie. Il a peut-être expiré ou est auto-signé.",
+    "tls": "Impossible d’établir une connexion sécurisée avec le serveur.",
+    "relay": "Le relais web n’a pas pu ouvrir de connexion vers le serveur. Vérifiez le nom et le port du serveur, ainsi que le relais dans les Réglages.",
+    "unreachable": "Impossible de joindre le serveur. Vérifiez votre connexion, ainsi que le nom et le port du serveur.",
+    "server": "Le serveur a renvoyé une erreur. Réessayez dans un instant.",
+    "device": "Impossible de lire ou d’enregistrer les données sur cet appareil."
+  },
+  "databaseTooNew": "La base {{name}} a été écrite par une version plus récente de l’application. Mettez l’application à jour pour l’ouvrir.",
+  "offline": {
+    "title": "Vous êtes hors ligne",
+    "detail": "Affichage de ce qui est enregistré sur cet appareil."
+  },
+  "time": {
+    "dayMonth": "d MMM"
+  }
+}

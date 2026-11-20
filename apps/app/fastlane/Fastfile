@@ -1,0 +1,124 @@
+skip_docs
+
+ROOT = File.expand_path("..", Dir.pwd)
+AAB = File.join(ROOT, "android/app/build/outputs/bundle/release/app-release.aab")
+IPA = File.join(ROOT, "ios/build/ipa/mailbowox.ipa")
+
+platform :android do
+  desc "Build the signed release AAB"
+  lane :build do
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      project_dir: File.join(ROOT, "android"),
+      flags: "--console=plain --max-workers=#{ENV.fetch("BUILD_CPUS", "1")}",
+      properties: {
+        "reactNativeArchitectures" => ENV.fetch("ANDROID_ABIS", "arm64-v8a,x86_64"),
+        "android.injected.signing.store.file" => ENV.fetch("ANDROID_KEYSTORE_PATH"),
+        "android.injected.signing.store.password" => ENV.fetch("ANDROID_KEY_PASSWORD"),
+        "android.injected.signing.key.alias" => ENV.fetch("ANDROID_KEY_ALIAS"),
+        "android.injected.signing.key.password" => ENV.fetch("ANDROID_KEY_PASSWORD"),
+      }
+    )
+  end
+
+  desc "Upload an AAB to Google Play (options: aab, track)"
+  lane :upload do |options|
+    upload_to_play_store(
+      json_key_data: ENV.fetch("PLAY_SERVICE_ACCOUNT_JSON"),
+      aab: options.fetch(:aab, AAB),
+      skip_upload_apk: true,
+      track: options.fetch(:track, "internal"),
+      # Play only takes drafts until the app has been published once.
+      release_status: "draft",
+      metadata_path: File.join(ROOT, "fastlane/metadata/android"),
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+end
+
+platform :ios do
+  # Archives unsigned and signs at export through the API key, so no certificate is needed on the build Mac.
+  desc "Build the signed App Store IPA"
+  lane :build do
+    archive = File.join(ROOT, "ios/build/mailbowox.xcarchive")
+    team = JSON.parse(File.read(File.join(ROOT, "app.json"))).dig("expo", "ios", "appleTeamId")
+    common = {
+      workspace: File.join(ROOT, "ios/mailbowox.xcworkspace"),
+      scheme: "mailbowox",
+      configuration: "Release",
+      export_method: "app-store",
+      skip_profile_detection: true,
+      archive_path: archive,
+      derived_data_path: File.join(ROOT, "ios/build/derived"),
+      output_directory: File.dirname(IPA),
+      output_name: File.basename(IPA, ".ipa"),
+    }
+    build_app(**common, skip_codesigning: true, skip_package_ipa: true)
+    keep_entitlements(archive, team)
+    # The ad-hoc signed archive carries no team, so name it for the export.
+    build_app(
+      **common,
+      skip_build_archive: true,
+      export_team_id: team,
+      export_xcargs: [
+        "-allowProvisioningUpdates",
+        "-authenticationKeyPath", ENV.fetch("APPLE_API_KEY_PATH"),
+        "-authenticationKeyID", ENV.fetch("APPLE_API_KEY"),
+        "-authenticationKeyIssuerID", ENV.fetch("APPLE_API_ISSUER"),
+      ].shelljoin
+    )
+  end
+
+  desc "Upload an IPA to TestFlight (options: ipa)"
+  lane :upload do |options|
+    app_store_connect_api_key(
+      key_id: ENV.fetch("APPLE_API_KEY"),
+      issuer_id: ENV.fetch("APPLE_API_ISSUER"),
+      key_filepath: ENV.fetch("APPLE_API_KEY_PATH")
+    )
+    groups = ENV.fetch("TESTFLIGHT_GROUPS", "").split(",")
+    # Without groups the build still reaches the internal testers.
+    external = groups.empty? ? {} : { distribute_external: true, groups: groups, notify_external_testers: true }
+    upload_to_testflight(
+      ipa: options.fetch(:ipa, IPA),
+      changelog: last_git_commit[:message],
+      **external
+    )
+  end
+
+  desc "Update the App Store listing, age rating and review information"
+  lane :metadata do
+    app_store_connect_api_key(
+      key_id: ENV.fetch("APPLE_API_KEY"),
+      issuer_id: ENV.fetch("APPLE_API_ISSUER"),
+      key_filepath: ENV.fetch("APPLE_API_KEY_PATH")
+    )
+    upload_to_app_store(
+      app_version: ENV.fetch("MAILBOWOX_VERSION"),
+      metadata_path: File.join(ROOT, "fastlane/metadata/ios"),
+      app_rating_config_path: File.join(ROOT, "fastlane/age_rating.json"),
+      app_review_information: {
+        demo_user: ENV.fetch("APP_REVIEW_DEMO_USER", nil),
+        demo_password: ENV.fetch("APP_REVIEW_DEMO_PASSWORD", nil)
+      }.compact,
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      precheck_include_in_app_purchases: false,
+      force: true
+    )
+  end
+end
+
+# Export keeps only entitlements already in a signature (tauri-apps/tauri#15663), so ad-hoc sign the app with its own first.
+def keep_entitlements(archive, team)
+  text = File.read(File.join(ROOT, "ios/mailbowox/mailbowox.entitlements"))
+    .gsub(/\$\((AppIdentifierPrefix|TeamIdentifierPrefix)\)/, "#{team}.")
+    .sub("<string>development</string>", "<string>production</string>")
+  Dir.mktmpdir do |dir|
+    entitlements = File.join(dir, "mailbowox.entitlements")
+    File.write(entitlements, text)
+    sh("codesign", "--force", "--sign", "-", "--entitlements", entitlements, File.join(archive, "Products/Applications/mailbowox.app"))
+  end
+end

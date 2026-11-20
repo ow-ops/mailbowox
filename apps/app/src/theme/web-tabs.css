@@ -1,0 +1,23 @@
+/* NativeTabs on web renders Radix tabs with browser-default focus. */
+[role='tab']:focus:not(:focus-visible) {
+  outline: none;
+}
+
+[role='tab']:focus-visible {
+  outline: 2px solid var(--expo-router-tabs-active-text-color, currentColor);
+  outline-offset: -2px;
+}
+
+/* Wide windows navigate from the sidebar instead (useWebSidebar). */
+@media (min-width: 1024px) {
+  [role='tablist'][aria-label='Main'] {
+    display: none;
+  }
+}
+
+/* Narrower tabs, so all four fit on a phone. */
+@media (max-width: 480px) {
+  [role='tablist'][aria-label='Main'] [role='tab'] {
+    padding: 0 12px;
+  }
+}

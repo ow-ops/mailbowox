@@ -1,0 +1,62 @@
+[package]
+name = "mailbowox-core"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[dependencies]
+ammonia = "4.2.5"
+async-lock = "3.4.1"
+base64 = "0.23.1"
+calcard = { version = "0.3.14", default-features = false }
+futures-util = { version = "0.3.34", default-features = false, features = ["alloc"] }
+io-http = { version = "0.8.0", default-features = false }
+io-imap = { version = "0.11.2", default-features = false }
+io-pim-discovery = { version = "0.14.0", default-features = false, features = ["autoconfig", "rfc6186", "rfc6764"] }
+psl = "2.1.258"
+io-sasl = { version = "0.2.0", default-features = false }
+io-smtp = { version = "0.9.0", default-features = false }
+io-webdav = { version = "0.11.0", default-features = false }
+mail-builder = { version = "2.0.1", default-features = false }
+mail-parser = { version = "1.0.1", features = ["full_encoding"] }
+rustls = { version = "0.23.46", default-features = false, features = ["std", "tls12", "ring", "logging"] }
+secrecy = "0.10.3"
+serde = { version = "1.0.229", features = ["derive"] }
+thiserror = "2.0.21"
+uniffi = "=0.31"
+url = "2.5.7"
+uuid = { version = "1.18.1", features = ["v4"] }
+web-time = "1.1.0"
+webpki-roots = "1.0.12"
+percent-encoding = "2.3.2"
+
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+futures-util = { version = "0.3.31", default-features = false, features = ["io", "sink"] }
+# calcard pulls in ahash, which needs getrandom 0.3's browser backend.
+getrandom = { version = "0.3", features = ["wasm_js"] }
+gloo-net = { version = "0.8.0", default-features = false, features = ["json", "websocket", "io-util"] }
+gloo-timers = { version = "0.4.1", features = ["futures"] }
+hex = "0.4.3"
+# Nothing installs a logger on the web, so compile the log calls out.
+log = { version = "0.4.35", features = ["release_max_level_off"] }
+ring = { version = "0.17.14", features = ["wasm32_unknown_unknown_js"] }
+rustls-pki-types = { version = "1.16.0", features = ["web"] }
+uniffi = { version = "=0.31", features = ["wasm-unstable-single-threaded"] }
+uniffi-runtime-wasm = "0.31.0-7"
+uuid = { version = "1.18.1", features = ["js"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { version = "1.48.0", features = ["rt-multi-thread", "net", "time", "macros", "io-util", "sync"] }
+tokio-happy-eyeballs = "0.1.0"
+uniffi = { version = "=0.31", features = ["tokio"] }
+
+[dev-dependencies]
+proptest = "1.12.0"
+tokio = { version = "1.48.0", features = ["rt-multi-thread", "macros", "time"] }
+
+[lints]
+workspace = true

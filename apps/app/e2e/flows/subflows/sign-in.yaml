@@ -1,0 +1,16 @@
+appId: eu.owops.mailbowox
+---
+# The fresh-install flow signs in; the flows after it restart the app onto the inbox.
+- launchApp
+- extendedWaitUntil:
+    visible: ".*Lunch on Friday.*"
+    timeout: 60000
+# Debug build: Android's splash hand-off times out loading from Metro, the window keeps animating
+# and every tap waits ~10 s. Home and back clears it.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - pressKey: home
+      - launchApp:
+          stopApp: false

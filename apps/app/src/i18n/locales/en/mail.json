@@ -1,0 +1,137 @@
+{
+  "tab": "Mail",
+  "compose": "New message",
+  "allInboxes": "All inboxes",
+  "allUnread": "All unread",
+  "roles": {
+    "inbox": "Inbox",
+    "drafts": "Drafts",
+    "sent": "Sent",
+    "archive": "Archive",
+    "flagged": "Flagged",
+    "all": "All mail",
+    "junk": "Junk",
+    "trash": "Trash"
+  },
+  "mailboxes": {
+    "title": "Mailboxes",
+    "switch": "{{title}}, change mailbox",
+    "unreadLabel": "{{label}}, {{count}} unread"
+  },
+  "move": {
+    "title": "Move to"
+  },
+  "list": {
+    "empty": "No messages here.",
+    "refreshFailed": "Couldn't check for new mail",
+    "syncFailed": "Can't sync {{email}}",
+    "notSynced": "Nothing has synced yet",
+    "syncAgain": "Sync again"
+  },
+  "outbox": {
+    "waiting": "Waiting to send",
+    "sending": "Sending…",
+    "failed": "Couldn't send",
+    "cancel": "Cancel",
+    "cancelLabel": "Cancel sending {{subject}}",
+    "unconfirmed": "Might already be sent",
+    "sendAgain": "Send again",
+    "sendAgainLabel": "Send {{subject}} again",
+    "errors": {
+      "invalid": "Part of the message isn't valid.",
+      "unconfirmed": "The connection dropped before the server confirmed it. Send it again only if the recipients didn't get it.",
+      "refused": "The server didn't accept it."
+    }
+  },
+  "row": {
+    "unread": "Unread",
+    "to": "To {{people}}",
+    "me": "Me",
+    "nobody": "Nobody",
+    "noSubject": "No subject",
+    "messages_one": "{{count}} message",
+    "messages_other": "{{count}} messages",
+    "hasAttachments": "Has attachments",
+    "flagged": "Flagged",
+    "remoteBlocked": "Remote images blocked",
+    "account": "{{label}} account"
+  },
+  "actions": {
+    "archive": "Archive",
+    "delete": "Delete",
+    "deleteForever_one": "Delete this message for good?",
+    "deleteForever_other": "Delete these {{count}} messages for good?",
+    "move": "Move",
+    "flag": "Flag",
+    "unflag": "Remove flag",
+    "markRead": "Mark as read",
+    "markUnread": "Mark as unread",
+    "reply": "Reply",
+    "replyAll": "Reply all",
+    "forward": "Forward",
+    "more": "More actions",
+    "read": "Read",
+    "unread": "Unread",
+    "archived": "Archived",
+    "trashed": "Moved to Trash",
+    "moved": "Moved to {{mailbox}}",
+    "undo": "Undo",
+    "undoFailed": "Couldn't put the messages back"
+  },
+  "reader": {
+    "select": "Choose a message to read it here.",
+    "gone": "This message is no longer in this mailbox.",
+    "offline": "You're offline, and this message isn't saved on this device yet.",
+    "to": "To: {{list}}",
+    "cc": "Cc: {{list}}",
+    "showRecipients": "Shows every recipient",
+    "hideRecipients": "Hides the recipient list",
+    "expand": "Shows this message",
+    "earlier_one": "{{count}} earlier message",
+    "earlier_other": "{{count}} earlier messages",
+    "remoteBlocked_one": "{{count}} remote image blocked, so {{name}} can't tell you opened this.",
+    "remoteBlocked_other": "{{count}} remote images blocked, so {{name}} can't tell you opened this.",
+    "remoteNever_one": "{{count}} remote image blocked.",
+    "remoteNever_other": "{{count}} remote images blocked.",
+    "theSender": "the sender",
+    "loadRemote": "Load images",
+    "remoteLoaded": "Images loaded, so {{name}} can tell you opened this.",
+    "alwaysLoad": "Always load",
+    "alwaysLoadFrom": "Always load images from {{name}}",
+    "attachment": "Attachment",
+    "openAttachment": "{{name}}, {{size}}. Opens the attachment.",
+    "body": "Message",
+    "allRead": "Nothing unread in {{mailbox}}",
+    "unreadIn_one": "unread in {{mailbox}}",
+    "unreadIn_other": "unread in {{mailbox}}"
+  },
+  "select": {
+    "start": "Select",
+    "title": "Select messages",
+    "count_one": "{{count}} selected",
+    "count_other": "{{count}} selected",
+    "all": "Select all",
+    "none": "Deselect all",
+    "done": "Done"
+  },
+  "search": {
+    "placeholder": "Search mail",
+    "label": "Search mail",
+    "scope": "Search in",
+    "everywhere": "All mailboxes",
+    "nothing": "Nothing matches “{{query}}”.",
+    "operators": "You can also search with from:, to:, subject:, is:unread, is:starred and has:attachment.",
+    "server": "Searching the server…",
+    "serverFailed": "Couldn't search the server"
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "move": "Next or previous message",
+    "open": "Open the message",
+    "back": "Back to the list",
+    "flag": "Flag or remove the flag",
+    "all": "All keyboard shortcuts",
+    "enter": "Enter",
+    "escape": "Esc"
+  }
+}
