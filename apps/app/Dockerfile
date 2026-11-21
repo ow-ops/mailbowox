@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
 
 # Build from the repo root: docker build -f apps/app/Dockerfile .
 
@@ -30,9 +30,9 @@ ARG EXPO_PUBLIC_SENTRY_DSN=
 ARG EXPO_PUBLIC_RELAY_URL=
 RUN cd apps/app && EXPO_PUBLIC_SENTRY_DSN=$EXPO_PUBLIC_SENTRY_DSN EXPO_PUBLIC_RELAY_URL=$EXPO_PUBLIC_RELAY_URL pnpm exec expo export -p web
 
-FROM caddy:2.11-alpine AS caddy
+FROM caddy:2.11-alpine@sha256:003a97808e781aa9f7e75cc2f43d34d461099031faf5e20faefb9f61126836f0 AS caddy
 
-FROM alpine:3.24
+FROM alpine:3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
 RUN adduser -D -u 10001 -h /nonexistent -s /sbin/nologin app
 COPY --from=caddy /usr/bin/caddy /usr/bin/caddy
 COPY apps/app/Caddyfile /etc/caddy/Caddyfile
