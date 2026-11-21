@@ -54,6 +54,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "eu.owops.mailbowox",
+      "googleServicesFile": "./google-services.json",
       "allowBackup": false,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
