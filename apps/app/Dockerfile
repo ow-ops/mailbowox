@@ -27,7 +27,8 @@ COPY packages ./packages
 COPY apps ./apps
 RUN cd packages/core-native && CC_wasm32_unknown_unknown=clang pnpm ubrn:web
 ARG EXPO_PUBLIC_SENTRY_DSN=
-RUN cd apps/app && EXPO_PUBLIC_SENTRY_DSN=$EXPO_PUBLIC_SENTRY_DSN pnpm exec expo export -p web
+ARG EXPO_PUBLIC_RELAY_URL=
+RUN cd apps/app && EXPO_PUBLIC_SENTRY_DSN=$EXPO_PUBLIC_SENTRY_DSN EXPO_PUBLIC_RELAY_URL=$EXPO_PUBLIC_RELAY_URL pnpm exec expo export -p web
 
 FROM caddy:2.11-alpine AS caddy
 

@@ -38,6 +38,7 @@ jobs:
           file: apps/app/Dockerfile
           build-args: |
             EXPO_PUBLIC_SENTRY_DSN=${{ vars.SENTRY_DSN }}
+            EXPO_PUBLIC_RELAY_URL=https://mailbowox-gateway.erwanleboucher.dev
           push: true
           provenance: false
           tags: |
