@@ -103,9 +103,3 @@ impl From<io::Error> for CoreError {
         }
     }
 }
-
-impl From<rustls::Error> for CoreError {
-    fn from(err: rustls::Error) -> Self {
-        Self::tls((&err).into(), err)
-    }
-}

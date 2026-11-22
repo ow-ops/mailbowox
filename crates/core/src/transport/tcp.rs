@@ -1,14 +1,11 @@
 use std::{future::Future, io, time::Duration};
 
-use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt},
-    net::{TcpStream, lookup_host},
-};
+use tokio::net::{TcpStream, lookup_host};
 
-use super::{AddrFilter, Pipe};
+use super::AddrFilter;
 use crate::error::CoreError;
 
-pub struct TcpPipe(TcpStream);
+pub type Pipe = TcpStream;
 
 #[allow(
     clippy::unnecessary_wraps,
@@ -18,7 +15,7 @@ pub fn configure_relay(_url: &str, _token: String) -> Result<(), CoreError> {
     Ok(())
 }
 
-pub async fn connect(host: &str, port: u16, allowed: Option<AddrFilter>) -> io::Result<TcpPipe> {
+pub async fn connect(host: &str, port: u16, allowed: Option<AddrFilter>) -> io::Result<Pipe> {
     let addrs: Vec<_> = lookup_host((host, port)).await?.collect();
     if let Some(allowed) = allowed
         && !addrs.iter().all(|addr| allowed(addr.ip()))
@@ -30,7 +27,7 @@ pub async fn connect(host: &str, port: u16, allowed: Option<AddrFilter>) -> io::
     }
     let stream = tokio_happy_eyeballs::connect(&addrs[..]).await?;
     stream.set_nodelay(true)?;
-    Ok(TcpPipe(stream))
+    Ok(stream)
 }
 
 /// Runs `future` for at most `duration`; `None` when it ran out of time.
@@ -40,18 +37,4 @@ pub async fn timeout<T>(duration: Duration, future: impl Future<Output = T>) -> 
 
 pub async fn sleep(duration: Duration) {
     tokio::time::sleep(duration).await;
-}
-
-impl Pipe for TcpPipe {
-    async fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.0.read(buf).await
-    }
-
-    async fn write_all(&mut self, bytes: &[u8]) -> io::Result<()> {
-        self.0.write_all(bytes).await
-    }
-
-    async fn close(&mut self) -> io::Result<()> {
-        self.0.shutdown().await
-    }
 }

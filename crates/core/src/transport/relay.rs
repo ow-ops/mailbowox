@@ -7,13 +7,14 @@ use std::{
 };
 
 use futures_util::{
-    AsyncReadExt, AsyncWriteExt, SinkExt,
+    SinkExt,
     future::{Either, select},
 };
 use gloo_net::websocket::{State, futures::WebSocket};
+use tokio_util::compat::{Compat, FuturesAsyncReadCompatExt};
 use url::Url;
 
-use super::{AddrFilter, Pipe};
+use super::AddrFilter;
 use crate::error::CoreError;
 
 struct Relay {
@@ -44,9 +45,9 @@ pub fn configure_relay(url: &str, token: String) -> Result<(), CoreError> {
     Ok(())
 }
 
-pub struct RelayPipe(WebSocket);
+pub type Pipe = Compat<WebSocket>;
 
-pub async fn connect(host: &str, port: u16, _allowed: Option<AddrFilter>) -> io::Result<RelayPipe> {
+pub async fn connect(host: &str, port: u16, _allowed: Option<AddrFilter>) -> io::Result<Pipe> {
     let (url, protocols) = {
         let relay = RELAY.read().unwrap_or_else(PoisonError::into_inner);
         let Some(relay) = relay.as_ref() else {
@@ -77,7 +78,7 @@ pub async fn connect(host: &str, port: u16, _allowed: Option<AddrFilter>) -> io:
             format!("the web relay refused {host}:{port}"),
         ));
     }
-    Ok(RelayPipe(socket))
+    Ok(socket.compat())
 }
 
 /// Runs `future` for at most `duration`; `None` when it ran out of time.
@@ -90,18 +91,4 @@ pub async fn timeout<T>(duration: Duration, future: impl Future<Output = T>) -> 
 
 pub async fn sleep(duration: Duration) {
     gloo_timers::future::sleep(duration).await;
-}
-
-impl Pipe for RelayPipe {
-    async fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.0.read(buf).await
-    }
-
-    async fn write_all(&mut self, bytes: &[u8]) -> io::Result<()> {
-        self.0.write_all(bytes).await
-    }
-
-    async fn close(&mut self) -> io::Result<()> {
-        AsyncWriteExt::close(&mut self.0).await
-    }
 }
