@@ -9,7 +9,7 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { usePref } from '@/prefs/store';
-import { HOSTED_RELAY_URL, isRelayUrl, relayReachable, saveRelay } from '@/utils/relay';
+import { HOSTED_RELAY_URL, isRelayUrl, relayReachable, relayRefusesCode, saveRelay } from '@/utils/relay';
 import { showToast } from '@/utils/toast';
 
 type Props = { submitLabel: string; variant: 'primary' | 'outline'; onSaved: () => void };
@@ -25,6 +25,7 @@ export function RelayForm({ submitLabel, variant, onSaved }: Props) {
     mutationFn: async (entered: { url: string; token: string }) => {
       if (!isRelayUrl(entered.url)) return 'invalid';
       if (!(await relayReachable(entered.url))) return 'unreachable';
+      if (await relayRefusesCode(entered.url, entered.token)) return 'refused';
       try {
         saveRelay(entered.url, entered.token);
       } catch {

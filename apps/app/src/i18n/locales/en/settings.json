@@ -173,7 +173,8 @@
     "save": "Save relay",
     "saved": "Relay saved",
     "invalid": "Enter the relay address, starting with https:// or http://.",
-    "unreachable": "Nothing answered at {{url}}. Check the address, and that the relay is running."
+    "unreachable": "Nothing answered at {{url}}. Check the address, and that the relay is running.",
+    "refused": "The relay didn't accept this access code. Check it with whoever runs the relay."
   },
   "about": {
     "title": "About",

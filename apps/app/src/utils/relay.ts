@@ -8,14 +8,34 @@ const CHECK_TIMEOUT = 8000;
 
 export const isRelayUrl = (url: string) => /^https?:\/\/[^\s/]+/i.test(url);
 
+const endpoint = (url: string, path: string) => new URL(path, url.endsWith('/') ? url : `${url}/`);
+
 export async function relayReachable(url: string) {
-  const base = url.endsWith('/') ? url : `${url}/`;
   try {
-    const response = await fetch(new URL('healthz', base), { signal: AbortSignal.timeout(CHECK_TIMEOUT) });
+    const response = await fetch(endpoint(url, 'healthz'), { signal: AbortSignal.timeout(CHECK_TIMEOUT) });
     return response.ok;
   } catch {
     return false;
   }
+}
+
+// Only a 401 is a refusal: a gateway without /relay/check fails the request on CORS, and may well take the code.
+export async function relayRefusesCode(url: string, token: string) {
+  try {
+    const response = await fetch(endpoint(url, 'relay/check'), {
+      method: 'POST',
+      body: token,
+      signal: AbortSignal.timeout(CHECK_TIMEOUT),
+    });
+    return response.status === 401;
+  } catch {
+    return false;
+  }
+}
+
+export async function savedRelayRefusesCode() {
+  const { relayUrl, relayToken } = getPrefs();
+  return !!relayUrl && (await relayRefusesCode(relayUrl, relayToken));
 }
 
 // Hands the saved relay to the core: at start, and when another device's settings arrive.

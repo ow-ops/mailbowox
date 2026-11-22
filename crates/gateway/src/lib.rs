@@ -29,6 +29,8 @@ use tower_http::timeout::TimeoutLayer;
 /// The longest an api request may take, its body included: a registration logs in to an IMAP
 /// server, and a client that stops sending must not hold its connection open.
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(60);
+/// Far more than an access code needs.
+const MAX_CODE_BYTES: usize = 1024;
 
 pub use config::{ApnsConfig, Config, PushConfig, Roles};
 
@@ -136,11 +138,16 @@ async fn build(
         token_digests,
         permits,
     });
+    let any_origin = CorsLayer::new().allow_origin(Any);
     // The web app fetches it to check a relay address before using it; it tells no origin anything.
-    let health = get(health).layer(CorsLayer::new().allow_origin(Any));
+    let health = get(health).layer(any_origin.clone());
     let mut router = Router::new().route("/healthz", health);
     if roles.relay {
-        router = router.route("/relay", get(relay::handler));
+        let check = Router::new()
+            .route("/relay/check", post(relay::check))
+            .layer(DefaultBodyLimit::max(MAX_CODE_BYTES))
+            .layer(any_origin);
+        router = router.route("/relay", get(relay::handler)).merge(check);
     }
     if let Some(limits) = limits {
         let vault = Router::new()

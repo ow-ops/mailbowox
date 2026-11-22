@@ -26,6 +26,7 @@
     "errors": {
       "auth": "Le serveur a refusé cet identifiant ou ce mot de passe. Certains fournisseurs demandent un mot de passe d’application.",
       "discovery": "Impossible de trouver les réglages de cette adresse. Saisissez-les ci-dessous.",
+      "relayRefused": "Le relais a refusé votre code d’accès : impossible de chercher les réglages des serveurs.",
       "duplicate": "Ce compte est déjà ajouté."
     }
   },

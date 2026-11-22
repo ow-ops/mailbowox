@@ -477,6 +477,29 @@ async fn vault_cors_and_health() {
     assert_eq!(health.headers()["access-control-allow-origin"], "*");
 }
 
+#[tokio::test]
+async fn relay_check_tells_any_origin_whether_the_access_code_is_good() {
+    let dir = tempfile::tempdir().unwrap();
+    let router = app(config(dir.path(), false, vec![443]).await)
+        .await
+        .unwrap();
+    for (code, expected) in [
+        ("secret", StatusCode::NO_CONTENT),
+        ("other", StatusCode::NO_CONTENT),
+        ("wrong", StatusCode::UNAUTHORIZED),
+        ("", StatusCode::UNAUTHORIZED),
+    ] {
+        let request = Request::post("/relay/check")
+            .header("origin", "https://self-hosted.example")
+            .header("content-type", "text/plain;charset=UTF-8")
+            .body(Body::from(code))
+            .unwrap();
+        let response = router.clone().oneshot(request).await.unwrap();
+        assert_eq!(response.status(), expected, "{code:?}");
+        assert_eq!(response.headers()["access-control-allow-origin"], "*");
+    }
+}
+
 /// dev/mailbox's Stalwart, which CI reaches by its compose service name.
 fn imap_host() -> String {
     std::env::var("MAILBOWOX_TEST_HOST").unwrap_or_else(|_| "127.0.0.1".into())

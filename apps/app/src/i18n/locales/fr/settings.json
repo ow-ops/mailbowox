@@ -173,7 +173,8 @@
     "save": "Enregistrer le relais",
     "saved": "Relais enregistré",
     "invalid": "Saisissez l’adresse du relais, en commençant par https:// ou http://.",
-    "unreachable": "Rien n’a répondu à {{url}}. Vérifiez l’adresse et que le relais fonctionne."
+    "unreachable": "Rien n’a répondu à {{url}}. Vérifiez l’adresse et que le relais fonctionne.",
+    "refused": "Le relais n’a pas accepté ce code d’accès. Vérifiez-le auprès de la personne qui gère le relais."
   },
   "about": {
     "title": "À propos",

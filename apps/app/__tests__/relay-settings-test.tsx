@@ -45,6 +45,26 @@ describe('relay form', () => {
     expect(onSaved).not.toHaveBeenCalled();
   });
 
+  it('keeps the old relay when the new one refuses the access code', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({ status: 401 });
+    const onSaved = await save('https://relay.example/mail');
+
+    expect(await screen.findByText(/didn't accept this access code/)).toBeOnTheScreen();
+    expect(String(fetchMock.mock.calls[1][0])).toBe('https://relay.example/mail/relay/check');
+    expect(fetchMock.mock.calls[1][1]).toMatchObject({ method: 'POST', body: 'code' });
+    expect(core.configureRelay).not.toHaveBeenCalled();
+    expect(setPref).not.toHaveBeenCalled();
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it('saves a relay too old to check the access code', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: true }).mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    const onSaved = await save('https://relay.example');
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(setPref).toHaveBeenCalledWith('relayToken', 'code');
+  });
+
   it('says what Continue is waiting for', async () => {
     const user = userEvent.setup();
     await renderWithQueries(<RelayForm submitLabel="Continue" variant="primary" onSaved={jest.fn()} />);

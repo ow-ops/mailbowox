@@ -1,8 +1,10 @@
 import { screen, userEvent, waitFor } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 
 import AddAccountScreen from '@/app/add-account';
 import { addAccount, hasAccount } from '@/accounts/store';
 import { core } from '@/core';
+import { savedRelayRefusesCode } from '@/utils/relay';
 import { renderWithQueries } from '../jest/render';
 
 jest.mock('@mailbowox/core-native', () => {
@@ -26,6 +28,7 @@ jest.mock('@/accounts/store', () => ({
   hasAccount: jest.fn(() => false),
   useAccounts: () => [{ id: 'a' }],
 }));
+jest.mock('@/utils/relay', () => ({ ...jest.requireActual('@/utils/relay'), savedRelayRefusesCode: jest.fn() }));
 jest.mock('@/accounts/use-account-color', () => ({ pinAccountColor: jest.fn() }));
 jest.mock('expo-router', () => ({ router: { canGoBack: () => true, back: jest.fn(), replace: jest.fn(), push: jest.fn() } }));
 
@@ -107,6 +110,24 @@ describe('add account', () => {
     });
     expect(verifyIncoming).toHaveBeenCalledWith(config);
     expect(verifyOutgoing).toHaveBeenCalledWith(config);
+  });
+
+  it('blames a refused access code, not the domain, and offers to change the relay', async () => {
+    const platform = jest.replaceProperty(Platform, 'OS', 'web');
+    discover.mockResolvedValue(undefined);
+    (savedRelayRefusesCode as jest.Mock).mockResolvedValue(true);
+    const user = userEvent.setup();
+    await renderWithQueries(<AddAccountScreen />);
+    await fill(user, 'me@example.org', 'secret');
+    await user.press(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(await screen.findByText(/relay refused your access code/)).toBeOnTheScreen();
+    expect(screen.queryByText(/No settings found/)).toBeNull();
+    expect(screen.queryByLabelText('IMAP server')).toBeNull();
+
+    await user.press(screen.getByRole('button', { name: 'Change relay' }));
+    expect(await screen.findByLabelText('Access code')).toBeOnTheScreen();
+    platform.restore();
   });
 
   it('labels servers found by guessing, and asks the user to check them', async () => {

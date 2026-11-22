@@ -13,7 +13,7 @@ pnpm web
 
 ## Web relay
 
-On web the app reaches mail servers through the gateway's `/relay`. First run asks for the relay address and access code (one of the gateway's `GATEWAY_TOKENS`) and checks that `/healthz` answers before saving.
+On web the app reaches mail servers through the gateway's `/relay`. First run asks for the relay address and access code (one of the gateway's `GATEWAY_TOKENS`) and checks that `/healthz` answers and that `/relay/check` doesn't refuse the code before saving.
 
 - `EXPO_PUBLIC_RELAY_URL` pre-fills the relay address at build time, for a hosted web build. The access code is still asked for: the gateway opens no connection without one.
 

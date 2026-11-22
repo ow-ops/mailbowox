@@ -105,6 +105,15 @@ pub async fn handler(
         })
 }
 
+/// Browsers hide why a WebSocket upgrade was refused, so the web app posts the code here to learn
+/// whether it is good. The body is plain text, which needs no CORS preflight.
+pub async fn check(State(state): State<Arc<AppState>>, code: String) -> StatusCode {
+    match match_token(&state.token_digests, &code) {
+        Some(_) => StatusCode::NO_CONTENT,
+        None => StatusCode::UNAUTHORIZED,
+    }
+}
+
 pub async fn resolve(
     host: &str,
     port: u16,

@@ -23,6 +23,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { isEmail } from '@/mail/address';
 import { explainError } from '@/core/errors';
 import { handlesError } from '@/utils/query-client';
+import { savedRelayRefusesCode } from '@/utils/relay';
 import { usePref } from '@/prefs/store';
 
 type Protocol = 'imap' | 'smtp';
@@ -154,8 +155,13 @@ function AccountForm({ firstRun, onChangeRelay }: { firstRun: boolean; onChangeR
 
   const discover = useMutation({
     meta: handlesError,
-    mutationFn: () => core.discover(email.trim()),
-    onSuccess: (found) => {
+    mutationFn: async () => {
+      const found = await core.discover(email.trim());
+      // Discovery skips every lookup that fails, so a relay refusing them all looks like a domain without settings.
+      return { found, refused: !found && Platform.OS === 'web' && (await savedRelayRefusesCode()) };
+    },
+    onSuccess: ({ found, refused }) => {
+      if (refused) return;
       setServers(found ? fromDiscovered(found, email) : blank(email));
       setSource(found?.source ?? null);
       setEditing(!found?.imap || !found.smtp);
@@ -310,6 +316,20 @@ function AccountForm({ firstRun, onChangeRelay }: { firstRun: boolean; onChangeR
             {t('accounts.add.errors.discovery')}
           </ThemedText>
           <ErrorExplanation {...explainError(discover.error)} />
+        </View>
+      )}
+
+      {discover.data?.refused && (
+        <View style={styles.failure} accessibilityLiveRegion="polite">
+          <ThemedText type="label" themeColor="danger">
+            {t('accounts.add.errors.relayRefused')}
+          </ThemedText>
+          {/* The first run already has this button under the intro. */}
+          {!firstRun && (
+            <View style={styles.inlineAction}>
+              <Button label={t('accounts.relay.change')} variant="outline" size="small" onPress={onChangeRelay} />
+            </View>
+          )}
         </View>
       )}
 

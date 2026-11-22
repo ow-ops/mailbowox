@@ -26,6 +26,7 @@
     "errors": {
       "auth": "The server rejected this username or password. Some providers need an app password.",
       "discovery": "Couldn't look up the settings for this address. Enter them below.",
+      "relayRefused": "The relay refused your access code, so the server settings couldn't be looked up.",
       "duplicate": "This account is already added."
     }
   },
