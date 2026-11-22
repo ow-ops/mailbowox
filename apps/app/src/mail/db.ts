@@ -1,5 +1,3 @@
-import type * as SQLite from 'expo-sqlite';
-
 import type {
   Address,
   KnownMessage,
@@ -10,6 +8,7 @@ import type {
   SyncResult,
   SyncState,
 } from '@/core';
+import type { Database } from '@/db/migrate';
 
 import { database, nowSeconds, transaction } from './database';
 import type { MailboxGeneration, MailboxRef, MailItem, MessageRef, StoredItem } from './refs';
@@ -89,7 +88,7 @@ export async function getKnown({ account, mailbox, uidValidity }: MailboxGenerat
   return rows.map((row) => ({ uid: row.uid, flags: JSON.parse(row.flags) as KnownMessage['flags'] }));
 }
 
-async function loadThreadIndex(db: SQLite.SQLiteDatabase, account: string, summaries: MessageSummary[]) {
+async function loadThreadIndex(db: Database, account: string, summaries: MessageSummary[]) {
   const ids = summaries.flatMap(threadIds);
   const subjects = summaries.map((s) => baseSubject(s.subject));
   const [idRows, subjectRows] = await Promise.all([
@@ -109,7 +108,7 @@ async function loadThreadIndex(db: SQLite.SQLiteDatabase, account: string, summa
 }
 
 async function saveThreadIndex(
-  db: SQLite.SQLiteDatabase,
+  db: Database,
   account: string,
   index: ThreadIndex,
   merges: (readonly [string, string])[],
@@ -137,7 +136,7 @@ async function saveThreadIndex(
   }
 }
 
-async function noteAddresses(db: SQLite.SQLiteDatabase, account: string, { from, to, cc, date }: MessageSummary) {
+async function noteAddresses(db: Database, account: string, { from, to, cc, date }: MessageSummary) {
   for (const { name, email } of [...from, ...to, ...cc]) {
     await db.runAsync(
       `INSERT INTO addresses (account, email, name, seen_at) VALUES (?, ?, ?, ?)
@@ -153,7 +152,7 @@ async function noteAddresses(db: SQLite.SQLiteDatabase, account: string, { from,
 }
 
 // Every write goes through here so each message gets its conversation id as it lands.
-async function upsert(db: SQLite.SQLiteDatabase, account: string, items: MailItem[]) {
+async function upsert(db: Database, account: string, items: MailItem[]) {
   if (items.length === 0) return;
   const index = await loadThreadIndex(db, account, items.map((item) => item.summary));
   const { threads, merges } = assignThreads(
@@ -181,7 +180,7 @@ async function upsert(db: SQLite.SQLiteDatabase, account: string, items: MailIte
 
 // A conversation with no message left has no use for its ids and subject. One that arrives again starts
 // from its own ids, as it did the first time.
-async function forgetEmptyThreads(db: SQLite.SQLiteDatabase, account: string) {
+async function forgetEmptyThreads(db: Database, account: string) {
   for (const table of ['thread_ids', 'thread_subjects']) {
     await db.runAsync(
       `DELETE FROM ${table} WHERE account = ? AND thread NOT IN (SELECT thread FROM messages WHERE account = ?)`,
@@ -194,19 +193,19 @@ async function forgetEmptyThreads(db: SQLite.SQLiteDatabase, account: string) {
 const MESSAGE = 'account = ? AND mailbox = ? AND uid = ? AND uid_validity = ?';
 const messageArgs = ({ account, mailbox, uid, uidValidity }: MessageRef) => [account, mailbox, uid, uidValidity] as const;
 
-async function remove(db: SQLite.SQLiteDatabase, ref: MessageRef) {
+async function remove(db: Database, ref: MessageRef) {
   await db.runAsync(`DELETE FROM messages WHERE ${MESSAGE}`, ...messageArgs(ref));
   await db.runAsync(`DELETE FROM bodies WHERE ${MESSAGE}`, ...messageArgs(ref));
 }
 
-async function clearMailbox(db: SQLite.SQLiteDatabase, { account, mailbox }: MailboxRef) {
+async function clearMailbox(db: Database, { account, mailbox }: MailboxRef) {
   for (const table of ['messages', 'bodies', 'sync_state']) {
     await db.runAsync(`DELETE FROM ${table} WHERE account = ? AND mailbox = ?`, account, mailbox);
   }
   await forgetEmptyThreads(db, account);
 }
 
-async function cachedGeneration(db: SQLite.SQLiteDatabase, { account, mailbox }: MailboxRef) {
+async function cachedGeneration(db: Database, { account, mailbox }: MailboxRef) {
   const row = await db.getFirstAsync<{ uid_validity: number | null }>(
     `SELECT COALESCE(
       (SELECT uid_validity FROM sync_state WHERE account = ?1 AND mailbox = ?2),
@@ -470,7 +469,7 @@ export async function getBody(ref: MessageRef, allowRemote: boolean) {
 
 // Keeps the most recently opened bodies up to BODY_CACHE_BYTES, and always the latest one, even when it alone
 // is over the limit. Flagged messages keep theirs and do not count.
-async function evictBodies(db: SQLite.SQLiteDatabase) {
+async function evictBodies(db: Database) {
   await db.runAsync(
     `DELETE FROM bodies WHERE rowid IN (
        SELECT rowid FROM (

@@ -23,6 +23,7 @@ Install [Obtainium](https://obtainium.imranr.dev), then tap **Add to Obtainium**
 | Path | What it holds |
 | --- | --- |
 | `apps/app` | Expo app (expo-router, zustand, TanStack Query, expo-sqlite). Strings are in `src/i18n/locales/{en,fr}`. |
+| `apps/desktop` | Tauri shell that runs the web build as a desktop app, with a relay and SQLite of its own. See its [README](apps/desktop/README.md). |
 | `crates/core` | Rust core: IMAP, SMTP and CardDAV clients, MIME parsing and sanitising, server discovery. Exposed through UniFFI. |
 | `packages/core-native` | Generated React Native and WASM bindings for the core (`uniffi-bindgen-react-native`). |
 | `crates/gateway` | axum service: WebSocket-to-TCP relay for the web build, encrypted sync vault, IMAP IDLE watcher for push pings. See its [README](crates/gateway/README.md). |

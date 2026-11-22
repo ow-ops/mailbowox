@@ -1,7 +1,6 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Platform } from 'react-native';
 
 import { useAccounts } from '@/accounts/store';
 import { AccountDot } from '@/components/account-mark';
@@ -12,6 +11,7 @@ import { SegmentedControl } from '@/components/segmented-control';
 import { Row, Section, SettingsScreen, ToggleRow } from '@/components/settings';
 import { ThemedText } from '@/components/themed-text';
 import { PREF_OPTIONS, setPref, usePref } from '@/prefs/store';
+import { asksForRelay } from '@/utils/relay';
 
 export default function SettingsTab() {
   const { t } = useTranslation();
@@ -65,7 +65,7 @@ export default function SettingsTab() {
         )}
       </Section>
 
-      {Platform.OS === 'web' && <RelaySettings />}
+      {asksForRelay() && <RelaySettings />}
 
       <CrashReportSettings />
 

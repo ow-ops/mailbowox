@@ -1,7 +1,5 @@
-import type * as SQLite from 'expo-sqlite';
-
 import type { AddressBook, Contact, ContactSyncResult, ContactSyncState, ContactTag, ContactValue } from '@/core';
-import { lazyDatabase } from '@/db/migrate';
+import { lazyDatabase, type Database } from '@/db/migrate';
 import { transactionQueue } from '@/db/transactions';
 import { normalize } from '@/utils/text';
 
@@ -80,7 +78,7 @@ export async function getAddressBooks() {
   return rows.map(toBook);
 }
 
-async function removeBookContacts(db: SQLite.SQLiteDatabase, { account, book }: BookRef) {
+async function removeBookContacts(db: Database, { account, book }: BookRef) {
   await db.runAsync('DELETE FROM contacts WHERE account = ? AND book = ?', account, book);
 }
 
@@ -139,7 +137,7 @@ const searchText = (contact: Contact) =>
       .join('\n'),
   );
 
-async function upsert(db: SQLite.SQLiteDatabase, { account, book }: BookRef, contact: Contact) {
+async function upsert(db: Database, { account, book }: BookRef, contact: Contact) {
   await db.runAsync(
     `INSERT OR REPLACE INTO contacts (account, href, book, uid, etag, name, given, family, organization, emails, phones,
        photo, vcard, sort, search)

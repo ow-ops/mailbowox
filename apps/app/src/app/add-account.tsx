@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -23,7 +23,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { isEmail } from '@/mail/address';
 import { explainError } from '@/core/errors';
 import { handlesError } from '@/utils/query-client';
-import { savedRelayRefusesCode } from '@/utils/relay';
+import { asksForRelay, savedRelayRefusesCode } from '@/utils/relay';
 import { usePref } from '@/prefs/store';
 
 type Protocol = 'imap' | 'smtp';
@@ -79,7 +79,7 @@ export default function AddAccountScreen() {
   const firstRun = useAccounts().length === 0;
   const relayUrl = usePref('relayUrl');
   const [changingRelay, setChangingRelay] = useState(false);
-  const needsRelay = Platform.OS === 'web' && firstRun && !relayUrl;
+  const needsRelay = asksForRelay() && firstRun && !relayUrl;
 
   if (needsRelay || changingRelay) {
     return (
@@ -158,7 +158,7 @@ function AccountForm({ firstRun, onChangeRelay }: { firstRun: boolean; onChangeR
     mutationFn: async () => {
       const found = await core.discover(email.trim());
       // Discovery skips every lookup that fails, so a relay refusing them all looks like a domain without settings.
-      return { found, refused: !found && Platform.OS === 'web' && (await savedRelayRefusesCode()) };
+      return { found, refused: !found && asksForRelay() && (await savedRelayRefusesCode()) };
     },
     onSuccess: ({ found, refused }) => {
       if (refused) return;
@@ -249,7 +249,7 @@ function AccountForm({ firstRun, onChangeRelay }: { firstRun: boolean; onChangeR
       <View style={styles.intro}>
         <ThemedText type="title">{t('accounts.add.headline')}</ThemedText>
         <ThemedText>{t('accounts.add.intro')}</ThemedText>
-        {firstRun && Platform.OS === 'web' && (
+        {firstRun && asksForRelay() && (
           <View style={styles.relay}>
             <ThemedText type="meta" style={styles.relayText}>
               {t('accounts.relay.through', { host: new URL(relayUrl).host })}

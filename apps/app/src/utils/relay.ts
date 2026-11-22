@@ -1,5 +1,12 @@
+import { Platform } from 'react-native';
+
 import { core } from '@/core';
 import { getPrefs, setPref } from '@/prefs/store';
+
+import { localRelay } from './desktop';
+
+// Only a browser has to be given a relay: the desktop shell brings its own.
+export const asksForRelay = () => Platform.OS === 'web' && !localRelay;
 
 // Hosted web builds bake in their own relay, so their users never see the relay step.
 export const HOSTED_RELAY_URL = process.env.EXPO_PUBLIC_RELAY_URL ?? '';
@@ -41,7 +48,9 @@ export async function savedRelayRefusesCode() {
 // Hands the saved relay to the core: at start, and when another device's settings arrive.
 export function applyRelay() {
   const { relayUrl, relayToken } = getPrefs();
-  if (relayUrl) core.configureRelay(relayUrl, relayToken);
+  // The shell's relay is never saved: prefs sync, and its address means nothing to another device.
+  if (localRelay) core.configureRelay(localRelay.url, localRelay.token);
+  else if (relayUrl) core.configureRelay(relayUrl, relayToken);
 }
 
 export function saveRelay(url: string, token: string) {

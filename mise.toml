@@ -49,6 +49,16 @@ depends = ["lint:fmt", "lint:clippy", "lint:machete", "lint:taplo", "lint:typos"
 description = "Run the Rust and app tests"
 run = ["cargo nextest run --workspace --all-features --no-fail-fast", "pnpm --filter app test"]
 
+[tasks.desktop]
+description = "Run the desktop app on the Expo dev server"
+dir = "apps/desktop"
+run = "pnpm dlx @tauri-apps/cli@2.12.6 dev"
+
+[tasks."desktop:build"]
+description = "Build the desktop app and its installers"
+dir = "apps/desktop"
+run = "pnpm dlx @tauri-apps/cli@2.12.6 build"
+
 [tasks."audit:deny"]
 description = "Run cargo-deny"
 run = "cargo deny --all-features check"
