@@ -42,7 +42,7 @@
   "notifications": {
     "title": "Notifications",
     "toggle": "Notifications de nouveaux messages",
-    "explanation": "Désactivées tant que vous ne les activez pas. Pour vous signaler les nouveaux messages, le serveur de notifications mailbowox garde une copie chiffrée du mot de passe de ce compte et s’en sert pour surveiller la boîte de réception. Une notification indique seulement qu’un message est arrivé, jamais qui l’envoie ni ce qu’il dit.",
+    "explanation": "Désactivées tant que vous ne les activez pas. Pour vous signaler les nouveaux messages, le serveur de notifications mailbowox garde une copie chiffrée du mot de passe de ce compte et s’en sert pour surveiller la boîte de réception. Sur iPhone, les notifications affichent l’expéditeur, l’objet et le début du message, lisibles par cet appareil seulement. Sur Android, elles indiquent seulement qu’un message est arrivé.",
     "browser": "Affichées par ce navigateur tant que mailbowox est ouvert dans un onglet. Rien n’est envoyé à un serveur.",
     "browserDenied": "Les notifications sont bloquées pour ce site dans les réglages du navigateur.",
     "newMail": "Nouveau message",

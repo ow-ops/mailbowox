@@ -35,7 +35,7 @@ run = "taplo fmt --check"
 
 [tasks."lint:typos"]
 description = "Check spelling"
-run = "typos"
+run = "typos --force-exclude"
 
 [tasks."lint:app"]
 description = "Run the app's tsc, eslint and knip"

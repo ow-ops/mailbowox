@@ -115,6 +115,7 @@
           "enableBackgroundRemoteNotifications": true
         }
       ],
+      "@bacons/apple-targets",
       "@sentry/react-native/expo"
     ],
     "experiments": {

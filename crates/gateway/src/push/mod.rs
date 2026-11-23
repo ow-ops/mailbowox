@@ -4,6 +4,7 @@
 //! through database leases.
 
 mod key;
+mod preview;
 mod sender;
 mod store;
 mod watcher;
@@ -31,6 +32,7 @@ use crate::db::unix_now;
 use crate::relay::{is_public, resolve};
 use crate::vault::bearer;
 
+use preview::DeviceKeys;
 use sender::Providers;
 use store::{Removal, Store, new_id, new_secret};
 use watcher::{Checkpoint, Seen, watch};
@@ -79,6 +81,8 @@ pub struct Registration {
     pub security: Security,
     pub username: String,
     pub password: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub keys: Option<DeviceKeys>,
 }
 
 /// What `POST /push/register` answers. The secret is shown once; `DELETE /push/{id}` needs it.
@@ -327,6 +331,9 @@ pub async fn register(
     };
     if !registration.platform.valid_token(&registration.token) {
         return (StatusCode::BAD_REQUEST, "bad device token").into_response();
+    }
+    if registration.keys.as_ref().is_some_and(|keys| !keys.valid()) {
+        return (StatusCode::BAD_REQUEST, "bad push keys").into_response();
     }
     if !push.providers.supports(registration.platform) {
         return StatusCode::SERVICE_UNAVAILABLE.into_response();

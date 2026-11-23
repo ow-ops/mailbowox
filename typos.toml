@@ -15,3 +15,5 @@ extend-exclude = [
 # Simulator UDID and the SF Symbol name.
 udid = "udid"
 mappin = "mappin"
+# RFC 8291 test vector.
+Nto = "Nto"

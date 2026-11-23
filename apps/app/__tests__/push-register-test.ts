@@ -11,6 +11,9 @@ jest.mock('@/utils/kv', () => ({
   removeItem: (key: string) => mockStore.delete(key),
 }));
 jest.mock('@/push/config', () => ({ GATEWAY_URL: 'https://gateway.test', ANDROID_CHANNEL: 'mail' }));
+jest.mock('@/push/keys', () => ({
+  getOrCreatePushKeys: async () => ({ privateKey: 'priv', publicKey: 'pub', auth: 'auth' }),
+}));
 jest.mock('@/hooks/use-app-active', () => ({ useAppActive: () => true }));
 jest.mock('@/i18n', () => ({ t: (key: string) => key }));
 jest.mock('@/accounts/store', () => ({
@@ -83,8 +86,28 @@ describe('push registration', () => {
     });
   });
 
-  it('leaves a current registration alone at start', async () => {
+  it('sends the public key and auth on iOS, never the private key', async () => {
+    fetchMock.mockResolvedValueOnce(Response.json({ id: 'r1', secret: 's' }, { status: 201 }));
+    await enablePush(account);
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.keys).toEqual({ p256dh: 'pub', auth: 'auth' });
+    expect(JSON.stringify(body)).not.toContain('priv');
+    expect(JSON.parse(mockStore.get('push.a1')!).keys).toBe(true);
+  });
+
+  it('registers again at start when the gateway has no keys yet', async () => {
     mockStore.set('push.a1', JSON.stringify({ id: 'r1', secret: 's', platform: 'ios', token: 'abcd' }));
+    fetchMock.mockResolvedValueOnce(Response.json({ id: 'r2', secret: 's2' }, { status: 201 }));
+
+    await syncPush(account);
+
+    expect(fetchMock).toHaveBeenCalledWith('https://gateway.test/push/register', expect.anything());
+    expect(JSON.parse(mockStore.get('push.a1')!)).toMatchObject({ id: 'r2', keys: true });
+  });
+
+  it('leaves a current registration alone at start', async () => {
+    mockStore.set('push.a1', JSON.stringify({ id: 'r1', secret: 's', platform: 'ios', token: 'abcd', keys: true }));
 
     await syncPush(account);
 

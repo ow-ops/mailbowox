@@ -7,6 +7,7 @@ use backon::{BackoffBuilder, ExponentialBackoff, ExponentialBuilder};
 use mailbowox_core::{AddrFilter, CoreError, MailSession, SyncState};
 use tracing::debug;
 
+use super::preview::seal;
 use super::sender::{Ping, ping};
 use super::{Platform, Registration, kind};
 
@@ -29,6 +30,7 @@ pub trait Notify: Sync {
         platform: Platform,
         token: &str,
         ping: &Ping,
+        preview: Option<&str>,
     ) -> impl Future<Output = Delivery> + Send;
 }
 
@@ -120,17 +122,31 @@ impl<N: Notify, C: Checkpoint> Watching<'_, N, C> {
         )
         .await?;
         loop {
-            let (now, unread) = session.unseen(INBOX).await?;
-            let now = Seen::from(now);
-            let arrived = last.is_some_and(|last| {
+            let (state, unread) = session.unseen(INBOX).await?;
+            let now = Seen::from(state);
+            let arrived = last.filter(|last| {
                 last.uid_validity == now.uid_validity && now.uid_next > last.uid_next
             });
             let mut delivery = Delivery::Sent;
-            if arrived {
+            if let Some(since) = arrived {
                 let ping = ping(&registration.email, unread);
+                let preview = match &registration.keys {
+                    Some(keys) => session
+                        .newest_since(INBOX, state, since.uid_next)
+                        .await
+                        .ok()
+                        .flatten()
+                        .and_then(|message| seal(keys, &message)),
+                    None => None,
+                };
                 delivery = self
                     .notifier
-                    .notify(registration.platform, &registration.token, &ping)
+                    .notify(
+                        registration.platform,
+                        &registration.token,
+                        &ping,
+                        preview.as_deref(),
+                    )
                     .await;
             }
             match delivery {
@@ -171,6 +187,7 @@ mod tests {
 
     use super::*;
     use crate::push::Security as PushSecurity;
+    use crate::push::preview::tests as preview;
 
     /// dev/mailbox's Stalwart, which CI reaches by its compose service name.
     fn host() -> String {
@@ -205,15 +222,22 @@ mod tests {
             security: PushSecurity::Plain,
             username: "alice@mailbowox.test".into(),
             password: password.into(),
+            keys: None,
         }
     }
 
     /// Hands each ping to the test, then reports the device gone so `watch` returns.
-    struct Fake(mpsc::UnboundedSender<Ping>);
+    struct Fake(mpsc::UnboundedSender<(Ping, Option<String>)>);
 
     impl Notify for Fake {
-        fn notify(&self, _: Platform, _: &str, ping: &Ping) -> impl Future<Output = Delivery> {
-            let _ = self.0.send(ping.clone());
+        fn notify(
+            &self,
+            _: Platform,
+            _: &str,
+            ping: &Ping,
+            preview: Option<&str>,
+        ) -> impl Future<Output = Delivery> {
+            let _ = self.0.send((ping.clone(), preview.map(Into::into)));
             std::future::ready(Delivery::Gone)
         }
     }
@@ -279,9 +303,37 @@ mod tests {
             .expect("the watcher pinged before the timeout")
             .expect("task");
         assert_eq!(stop, Stop::DeviceGone);
-        let ping = pings.recv().await.expect("a ping");
+        let (ping, preview) = pings.recv().await.expect("a ping");
         assert_eq!(ping, super::ping("alice@mailbowox.test", ping.unread));
         assert!(ping.unread >= 1);
+        assert_eq!(preview, None);
+    }
+
+    #[tokio::test]
+    async fn a_device_with_keys_gets_the_new_message_sealed() {
+        if !local_server() {
+            return;
+        }
+        let (secret, auth, keys) = preview::device();
+        let (sender, mut pings) = mpsc::unbounded_channel();
+        let mut registration = alice("mailbowox-dev");
+        registration.keys = Some(keys);
+        let watching = tokio::spawn(async move {
+            let fake = Fake(sender);
+            watch(&registration, &fake, &fake, None, None).await
+        });
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        bob_sends_alice().await;
+
+        timeout(Duration::from_secs(20), watching)
+            .await
+            .expect("the watcher pinged before the timeout")
+            .expect("task");
+        let (_, preview) = pings.recv().await.expect("a ping");
+        let content = preview::open(&secret, &auth, &preview.expect("a preview"));
+        assert_eq!(content["title"], "bob@mailbowox.test");
+        assert_eq!(content["subtitle"], "push watcher secret subject");
+        assert_eq!(content["body"], "secret body");
     }
 
     #[tokio::test]

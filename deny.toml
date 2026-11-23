@@ -72,8 +72,10 @@ skip = [
   { crate = "tower-http" },
   # apns-h2 (APNs, via push-delivery) signs with aws-lc-rs, which takes untrusted 0.7 where
   # ring takes 0.9, and its p12-keystore is on the previous RustCrypto releases.
+  { crate = "aes" },
   { crate = "cipher" },
   { crate = "const-oid" },
+  { crate = "der" },
   { crate = "hmac" },
   { crate = "inout" },
   { crate = "sha2" },

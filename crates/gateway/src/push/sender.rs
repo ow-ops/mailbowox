@@ -1,5 +1,5 @@
-//! What reaches APNs and FCM: a hash of the account address and its unread count, nothing
-//! from any message.
+//! What reaches APNs and FCM: a hash of the account address and its unread count, plus an
+//! encrypted preview on iOS.
 
 use std::time::Duration;
 
@@ -34,19 +34,30 @@ pub fn ping(email: &str, unread: u32) -> Ping {
 
 /// A fixed alert, so iOS shows something even when the app is not running; `content-available`
 /// also wakes the app to sync. expo-notifications reads custom data from the `body` key.
-fn apns_payload<'a>(token: &'a str, topic: &'a str, ping: &Ping) -> Payload<'a> {
+fn apns_payload<'a>(
+    token: &'a str,
+    topic: &'a str,
+    ping: &Ping,
+    preview: Option<&str>,
+) -> Payload<'a> {
     let options = NotificationOptions {
         apns_topic: Some(topic),
         apns_push_type: Some(PushType::Alert),
         apns_priority: Some(Priority::High),
         ..Default::default()
     };
-    let mut payload = DefaultNotificationBuilder::new()
+    let mut builder = DefaultNotificationBuilder::new()
         .body("New mail")
         .sound("default")
-        .content_available()
-        .build(token, options);
+        .content_available();
+    if preview.is_some() {
+        builder = builder.mutable_content();
+    }
+    let mut payload = builder.build(token, options);
     payload.data.insert("body".into(), json!(ping));
+    if let Some(preview) = preview {
+        payload.data.insert("m".into(), json!(preview));
+    }
     payload
 }
 
@@ -104,10 +115,16 @@ impl Providers {
 }
 
 impl Notify for Providers {
-    async fn notify(&self, platform: Platform, token: &str, ping: &Ping) -> Delivery {
+    async fn notify(
+        &self,
+        platform: Platform,
+        token: &str,
+        ping: &Ping,
+        preview: Option<&str>,
+    ) -> Delivery {
         let outcome = match (platform, &self.apns, &self.fcm) {
             (Platform::Ios | Platform::IosSandbox, Some(apns), _) => {
-                let payload = apns_payload(token, apns.topic(), ping);
+                let payload = apns_payload(token, apns.topic(), ping, preview);
                 apns.send(platform == Platform::IosSandbox, payload).await
             }
             (Platform::Android, _, Some(fcm)) => fcm.send(&fcm_message(token, ping)).await,
@@ -142,7 +159,7 @@ mod tests {
     #[test]
     fn apns_payload_carries_a_fixed_alert_and_the_ping() {
         let ping = ping("alice@example.org", 2);
-        let payload = apns_payload("abcd", "eu.owops.mailbowox", &ping);
+        let payload = apns_payload("abcd", "eu.owops.mailbowox", &ping, None);
         assert_eq!(payload.device_token, "abcd");
         assert_eq!(payload.options.apns_topic, Some("eu.owops.mailbowox"));
         assert!(matches!(
@@ -162,7 +179,19 @@ mod tests {
             json["body"],
             json!({ "account": ping.account, "unread": 2 })
         );
+        assert_eq!(json["aps"]["mutable-content"], 0);
         assert!(!json.to_string().contains("alice"));
+    }
+
+    #[test]
+    fn a_sealed_preview_goes_to_the_extension() {
+        let ping = ping("alice@example.org", 2);
+        let payload = apns_payload("abcd", "eu.owops.mailbowox", &ping, Some("c2VhbGVk"));
+        let json: Value = serde_json::from_str(&payload.to_json_string().unwrap()).unwrap();
+        assert_eq!(keys(&json), ["aps", "body", "m"]);
+        assert_eq!(json["m"], "c2VhbGVk");
+        assert_eq!(json["aps"]["mutable-content"], 1);
+        assert_eq!(json["aps"]["alert"]["body"], "New mail");
     }
 
     #[test]

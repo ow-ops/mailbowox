@@ -13,7 +13,8 @@ One process, three parts:
   messages between devices being linked.
 - **Push** keeps an IMAP IDLE connection per registered inbox and pings the
   device through APNs or FCM with a hash of the address and the unread count.
-  It holds the IMAP password, sealed under `PUSH_SECRET_KEY`.
+  On iOS it adds the newest message's sender, subject and preview, encrypted
+  to the device. It holds the IMAP password, sealed under `PUSH_SECRET_KEY`.
 
 ## Quick start
 

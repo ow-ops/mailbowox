@@ -111,14 +111,22 @@ platform :ios do
   end
 end
 
-# Export keeps only entitlements already in a signature (tauri-apps/tauri#15663), so ad-hoc sign the app with its own first.
+# Export keeps only entitlements already in a signature (tauri-apps/tauri#15663), so ad-hoc sign each bundle with its own first.
+# Extension before app, which seals it.
+ENTITLEMENTS = {
+  "Products/Applications/mailbowox.app/PlugIns/PushService.appex" => "ios/.targets/PushService/generated.entitlements",
+  "Products/Applications/mailbowox.app" => "ios/mailbowox/mailbowox.entitlements",
+}.freeze
+
 def keep_entitlements(archive, team)
-  text = File.read(File.join(ROOT, "ios/mailbowox/mailbowox.entitlements"))
-    .gsub(/\$\((AppIdentifierPrefix|TeamIdentifierPrefix)\)/, "#{team}.")
-    .sub("<string>development</string>", "<string>production</string>")
   Dir.mktmpdir do |dir|
-    entitlements = File.join(dir, "mailbowox.entitlements")
-    File.write(entitlements, text)
-    sh("codesign", "--force", "--sign", "-", "--entitlements", entitlements, File.join(archive, "Products/Applications/mailbowox.app"))
+    ENTITLEMENTS.each do |bundle, source|
+      text = File.read(File.join(ROOT, source))
+        .gsub(/\$\((AppIdentifierPrefix|TeamIdentifierPrefix)\)/, "#{team}.")
+        .sub("<string>development</string>", "<string>production</string>")
+      entitlements = File.join(dir, "#{File.basename(bundle)}.entitlements")
+      File.write(entitlements, text)
+      sh("codesign", "--force", "--sign", "-", "--entitlements", entitlements, File.join(archive, bundle))
+    end
   end
 end

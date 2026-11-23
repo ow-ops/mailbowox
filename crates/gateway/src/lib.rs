@@ -1,5 +1,5 @@
 //! Gateway for mailbowox: a WebSocket-to-TCP relay for the web build, an encrypted vault store,
-//! a rendezvous for linking devices, and content-free push for new mail.
+//! a rendezvous for linking devices, and push for new mail.
 
 mod config;
 mod db;

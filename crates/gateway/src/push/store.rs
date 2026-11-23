@@ -330,6 +330,7 @@ mod tests {
             security: Security::Tls,
             username: user.into(),
             password: "hunter2-secret".into(),
+            keys: None,
         }
     }
 

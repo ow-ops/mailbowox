@@ -423,6 +423,32 @@ impl MailSession {
         Ok((state, u32::try_from(found.data.len()).unwrap_or(u32::MAX)))
     }
 
+    /// The newest message from UID `first` up to `state`.
+    pub async fn newest_since(
+        &self,
+        mailbox: &str,
+        state: SyncState,
+        first: u32,
+    ) -> Result<Option<MessageSummary>, CoreError> {
+        let mut guard = self.inner.lock().await;
+        let conn = &mut open(&mut guard)?.conn;
+        conn.ensure_selected(mailbox, state.uid_validity).await?;
+        // Not `first:*`, which matches the newest message even below `first`.
+        let Some(range) = range_set(first, state.uid_next.checked_sub(1)) else {
+            return Ok(None);
+        };
+        let found = conn
+            .exec(ImapMessageSearch::new(
+                Vec1::from(SearchKey::Uid(range)),
+                ImapMessageSearchOptions { uid: true },
+            ))
+            .await?;
+        let Some(uid) = found.data.into_iter().map(NonZeroU32::get).max() else {
+            return Ok(None);
+        };
+        Ok(summaries(conn, &[uid]).await?.into_iter().next())
+    }
+
     /// `None` when the part can't be fetched by its section, or isn't the one expected.
     async fn fetch_part(
         &self,

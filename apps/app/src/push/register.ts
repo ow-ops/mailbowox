@@ -10,17 +10,20 @@ import { removeItem, writeItem } from '@/utils/kv';
 import { readJson } from '@/utils/stored';
 
 import { ANDROID_CHANNEL, GATEWAY_URL } from './config';
+import { getOrCreatePushKeys } from './keys';
 
 const unregistration = v.object({ id: v.string(), secret: v.string() });
 const device = v.object({ platform: v.string(), token: v.string() });
 
 type Device = v.InferOutput<typeof device>;
 type Unregistration = v.InferOutput<typeof unregistration>;
-type Registration = Device & Unregistration;
+type Registration = Device & Unregistration & { keys: boolean };
 
 const key = (accountId: string) => `push.${accountId}`;
 
-const saved = (accountId: string) => readJson(key(accountId), v.object({ ...device.entries, ...unregistration.entries }), null);
+const savedRegistration = v.object({ ...device.entries, ...unregistration.entries, keys: v.optional(v.boolean()) });
+
+const saved = (accountId: string) => readJson(key(accountId), savedRegistration, null);
 
 export const isPushOn = (accountId: string) => !!saved(accountId);
 
@@ -51,8 +54,15 @@ function gatewayError(status: number) {
   return new Error(t('settings.notifications.failed', { status }));
 }
 
+async function deviceKeys() {
+  if (Platform.OS !== 'ios') return undefined;
+  const { publicKey, auth } = await getOrCreatePushKeys();
+  return { p256dh: publicKey, auth };
+}
+
 async function register(account: Account, device: Device) {
   const config = await accountConfig(account);
+  const keys = await deviceKeys();
   const response = await fetch(`${GATEWAY_URL}/push/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -64,12 +74,13 @@ async function register(account: Account, device: Device) {
       security: config.imap.security,
       username: config.credentials.username,
       password: config.credentials.password,
+      keys,
     }),
   });
   if (!response.ok) throw gatewayError(response.status);
   const issued = v.safeParse(unregistration, await response.json());
   if (!issued.success) throw gatewayError(response.status);
-  const registration: Registration = { ...issued.output, ...device };
+  const registration: Registration = { ...issued.output, ...device, keys: !!keys };
   writeItem(key(account.id), JSON.stringify(registration));
   return registration;
 }
@@ -130,7 +141,8 @@ export async function syncPush(account: Account) {
   const registration = saved(account.id);
   if (!registration) return;
   const device = await currentDevice();
-  if (device.token !== registration.token || device.platform !== registration.platform) {
+  const missingKeys = Platform.OS === 'ios' && !registration.keys;
+  if (device.token !== registration.token || device.platform !== registration.platform || missingKeys) {
     await register(account, device);
   }
 }
