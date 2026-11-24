@@ -52,7 +52,10 @@
     "channel": "New mail",
     "permissionDenied": "Notifications are turned off for mailbowox in the system settings.",
     "refused": "The mail server refused the password.",
-    "failed": "The notification server couldn't take this account (error {{status}})."
+    "failed": "The notification server couldn't take this account (error {{status}}).",
+    "poll": "Check for new mail without push",
+    "pollExplanation": "Your phone checks this inbox itself now and then, every 15 minutes at best on Android and less often on iPhone, and tells you of new mail. Used while push is off.",
+    "denied": "Notifications are off for mailbowox in the system settings."
   },
   "contacts": {
     "none": "No contacts found yet"

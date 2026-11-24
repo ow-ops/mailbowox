@@ -222,6 +222,9 @@ importers:
       expo-application:
         specifier: ~58.1.2
         version: 58.1.2(expo@58.0.26)
+      expo-background-task:
+        specifier: ~58.0.13
+        version: 58.0.13(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))
       expo-camera:
         specifier: ~58.0.14
         version: 58.0.14(@types/emscripten@1.41.6)(expo@58.0.26)(react-native-web@0.21.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
@@ -3364,6 +3367,11 @@ packages:
       expo: '*'
       react: '*'
       react-native: '*'
+
+  expo-background-task@58.0.13:
+    resolution: {integrity: sha512-1AbMsRPgD9eHgvWWhNCdPwR7u4J2c1pCZDWjZ0NiNVkbaVof5Jqaqk8I6vWN+Z9taFD+C9ACE61PsK3NIJqSzg==}
+    peerDependencies:
+      expo: '*'
 
   expo-camera@58.0.14:
     resolution: {integrity: sha512-yEiMuJ2d7A+EqsP8rlGIvgaUzdk/rW9CXR6R7WKqludxU3H+JcSUbPC3ldr3ZpmaYlgXP3x+oOO9BfQy7yKK2A==}
@@ -9624,6 +9632,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
+
+  expo-background-task@58.0.13(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)):
+    dependencies:
+      expo: 58.0.26(ab72de19d5c3f790a0cf522ea6d4a0f7)
+      expo-task-manager: 58.0.14(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))
+    transitivePeerDependencies:
+      - react-native
 
   expo-camera@58.0.14(@types/emscripten@1.41.6)(expo@58.0.26)(react-native-web@0.21.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0):
     dependencies:

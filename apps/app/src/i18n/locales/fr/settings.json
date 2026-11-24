@@ -52,7 +52,10 @@
     "channel": "Nouveaux messages",
     "permissionDenied": "Les notifications de mailbowox sont désactivées dans les réglages du système.",
     "refused": "Le serveur mail a refusé le mot de passe.",
-    "failed": "Le serveur de notifications n’a pas pu prendre ce compte (erreur {{status}})."
+    "failed": "Le serveur de notifications n’a pas pu prendre ce compte (erreur {{status}}).",
+    "poll": "Vérifier les nouveaux messages sans push",
+    "pollExplanation": "Votre téléphone vérifie lui-même cette boîte de temps en temps, au mieux toutes les 15 minutes sur Android et moins souvent sur iPhone, et vous prévient des nouveaux messages. Utilisé quand le push est désactivé.",
+    "denied": "Les notifications de mailbowox sont désactivées dans les réglages du système."
   },
   "contacts": {
     "none": "Aucun contact trouvé pour l’instant"

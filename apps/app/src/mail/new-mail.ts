@@ -14,16 +14,14 @@ const key = (account: string) => `notify.${account}`;
 
 export const notifiesNewMail = (account: string) => readItem(key(account)) === '1';
 
+export const markNotifyNewMail = (account: string, on: boolean) => (on ? writeItem(key(account), '1') : removeItem(key(account)));
+
 // Kept per browser: the permission is the browser's, not the account's. The desktop shell needs none.
 export async function setNotifyNewMail(account: string, on: boolean) {
-  if (!on) {
-    removeItem(key(account));
-  } else {
-    if (!invoke && (await Notification.requestPermission()) !== 'granted') {
-      throw new Error(t('settings.notifications.browserDenied'));
-    }
-    writeItem(key(account), '1');
+  if (on && !invoke && (await Notification.requestPermission()) !== 'granted') {
+    throw new Error(t('settings.notifications.browserDenied'));
   }
+  markNotifyNewMail(account, on);
   await watchDesktopInboxes();
 }
 
