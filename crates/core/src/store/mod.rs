@@ -12,7 +12,10 @@ mod schema;
 mod search;
 mod threads;
 
-use std::sync::Arc;
+use std::{
+    collections::HashMap,
+    sync::{Arc, PoisonError},
+};
 
 use exec::Exec;
 pub use exec::SqlRunner;
@@ -24,12 +27,18 @@ use crate::{
     types::{KnownMessage, SyncOutcome},
 };
 
+type Turn = Arc<async_lock::Mutex<()>>;
+
 #[derive(uniffi::Object)]
 pub struct MailStore {
     exec: Exec,
     /// Held from the reads a write depends on to the write, as a batch is the
     /// only transaction and a sync reads the thread index before writing.
     writes: async_lock::Mutex<()>,
+    /// One sync of a mailbox at a time: two would read the same state, both
+    /// report the same mail as arrived, and the slower would write back the
+    /// older state.
+    syncing: std::sync::Mutex<HashMap<(String, String), Turn>>,
     exhausted: paging::Exhausted,
 }
 
@@ -58,6 +67,7 @@ impl MailStore {
         Ok(Arc::new(Self {
             exec,
             writes: async_lock::Mutex::new(()),
+            syncing: std::sync::Mutex::default(),
             exhausted: paging::Exhausted::default(),
         }))
     }
@@ -105,6 +115,14 @@ impl MailStore {
         mailbox: String,
         limit: u32,
     ) -> Result<SyncOutcome, CoreError> {
+        let turn = Arc::clone(
+            self.syncing
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .entry((account.clone(), mailbox.clone()))
+                .or_default(),
+        );
+        let _turn = turn.lock().await;
         let since = self.sync_state(account.clone(), mailbox.clone()).await?;
         let known: Vec<KnownMessage> = match since {
             Some(state) => self.known(&account, &mailbox, state.uid_validity).await?,
