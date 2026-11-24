@@ -347,9 +347,13 @@ pub struct ListFilter {
     pub unread: bool,
     pub flagged: bool,
     pub attachments: bool,
-    /// Mail with one of `me` in To or Cc.
+    /// Mail with one of `me` in To.
     pub to_me: bool,
+    /// Mail with one of `me` in Cc.
+    pub cc_me: bool,
     pub me: Vec<String>,
+    /// Mail dated from this Unix second on.
+    pub since: Option<i64>,
     pub category: Option<crate::category::Category>,
 }
 

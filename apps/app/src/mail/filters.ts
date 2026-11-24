@@ -3,13 +3,20 @@ import { createStore, useStore } from 'zustand';
 import type { Account } from '@/accounts/store';
 import type { Category, ListFilter } from '@/core';
 
-import { INBOX, type MailView } from './view';
+import { boxesOf, INBOX, type MailView } from './view';
 
-export type FilterKey = 'unread' | 'flagged' | 'toMe' | 'attachments';
+export type FilterKey = 'unread' | 'flagged' | 'toMe' | 'ccMe' | 'attachments' | 'today';
 
-export const FILTER_KEYS: FilterKey[] = ['unread', 'flagged', 'toMe', 'attachments'];
+export const FILTER_KEYS: FilterKey[] = ['unread', 'flagged', 'toMe', 'ccMe', 'attachments', 'today'];
 
-const filters = createStore<Record<FilterKey, boolean>>(() => ({ unread: false, flagged: false, toMe: false, attachments: false }));
+const filters = createStore<Record<FilterKey, boolean>>(() => ({
+  unread: false,
+  flagged: false,
+  toMe: false,
+  ccMe: false,
+  attachments: false,
+  today: false,
+}));
 
 export const useFilters = () => useStore(filters);
 
@@ -19,9 +26,28 @@ export const isFiltered = (on: Record<FilterKey, boolean>) => FILTER_KEYS.some((
 
 export const ownAddresses = (account: Account) => [account.email, ...(account.identities ?? []).map((i) => i.email)];
 
-// "To me" is any address of any account: mail written to one of your identities counts too.
+const startOfToday = () => Math.floor(new Date().setHours(0, 0, 0, 0) / 1000);
+
+// "Me" is any address of any account: mail written to one of your identities counts too.
 export function listFilter(on: Record<FilterKey, boolean>, accounts: Account[], category?: Category): ListFilter {
-  return { ...on, me: on.toMe ? accounts.flatMap(ownAddresses) : [], category };
+  const { unread, flagged, toMe, ccMe, attachments, today } = on;
+  const me = toMe || ccMe ? accounts.flatMap(ownAddresses) : [];
+  return { unread, flagged, toMe, ccMe, attachments, me, since: today ? startOfToday() : undefined, category };
+}
+
+const hiddenAccounts = createStore<{ hidden: string[] }>(() => ({ hidden: [] }));
+
+export const useHiddenAccounts = () => useStore(hiddenAccounts, (state) => state.hidden);
+
+export const toggleAccount = (id: string) =>
+  hiddenAccounts.setState(({ hidden }) => ({
+    hidden: hidden.includes(id) ? hidden.filter((other) => other !== id) : [...hidden, id],
+  }));
+
+// Hiding narrows the views across accounts; a mailbox belongs to one account and shows whatever is hidden.
+export function shownBoxes(view: MailView, accounts: Account[], hidden: string[]) {
+  const shown = accounts.filter((account) => !hidden.includes(account.id));
+  return boxesOf(view, shown.length > 0 ? shown : accounts);
 }
 
 export type CategoryChoice = Category | 'all';

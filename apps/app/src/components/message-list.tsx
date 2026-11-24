@@ -20,10 +20,10 @@ import { useTheme } from '@/hooks/use-theme';
 import { sameMessage, type MessageRef, type StoredItem , Conversation } from '@/mail/refs';
 import { explainError } from '@/core/errors';
 import { useConversations, useMailboxes } from '@/mail/queries';
-import { hasCategories, isFiltered, useFilters } from '@/mail/filters';
+import { hasCategories, isFiltered, shownBoxes, useFilters, useHiddenAccounts } from '@/mail/filters';
 import { conversationKey, useSelection } from '@/mail/selection';
 import { retrySync, syncMailbox, useSyncErrors } from '@/mail/sync';
-import { boxesOf, type MailView } from '@/mail/view';
+import type { MailView } from '@/mail/view';
 import { usePref } from '@/prefs/store';
 import { isOnline, useOnline } from '@/utils/network';
 import { settleAll } from '@/utils/settle';
@@ -49,7 +49,7 @@ export function MessageList({ view, selected, onOpen }: Props) {
   const categories = usePref('inboxCategories') && hasCategories(view);
   // The same object while neither changes, so the rows are not all rendered again with the list.
   const extraData = useMemo(() => ({ selected, selection }), [selected, selection]);
-  const boxes = boxesOf(view, accounts);
+  const boxes = shownBoxes(view, accounts, useHiddenAccounts());
   const role = useMailboxes(boxes[0].account).data?.mailboxes.find((m) => m.name === boxes[0].mailbox)?.role;
   const byRecipient = view.kind === 'mailbox' && (role === 'sent' || role === 'drafts');
   const mixed = view.kind !== 'mailbox';
@@ -87,7 +87,7 @@ export function MessageList({ view, selected, onOpen }: Props) {
         <>
           <OfflineBanner />
           {categories && <CategoryBar />}
-          <ListFilters />
+          <ListFilters view={view} />
           <OutboxBanners accounts={boxes.map((box) => box.account)} />
           {!notSynced && (
             <SyncFailureBanners errors={failing} title={(email) => t('mail.list.syncFailed', { email })} />

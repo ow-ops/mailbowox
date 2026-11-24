@@ -57,6 +57,7 @@ const toSummary = (summary: MessageSummary): native.MessageSummary => ({
 });
 const toFilter = (filter: ListFilter): native.ListFilter => ({
   ...filter,
+  since: filter.since === undefined ? undefined : BigInt(filter.since),
   category: filter.category === undefined ? undefined : toCategory(filter.category),
 });
 const fromStored = (message: native.StoredMessage) => ({ ...message, summary: fromSummary(message.summary) });

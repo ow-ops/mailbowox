@@ -148,7 +148,10 @@
     "unread": "Unread",
     "flagged": "Flagged",
     "toMe": "To me",
+    "ccMe": "Cc me",
     "attachments": "Attachments",
+    "today": "Today",
+    "without": "Without {{name}}",
     "empty": "Nothing cached matches these filters."
   },
   "categories": {

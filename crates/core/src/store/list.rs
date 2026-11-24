@@ -40,17 +40,19 @@ fn narrowed(alias: &str, filter: &ListFilter) -> Result<(String, Vec<Value>), Co
         conditions.push(format!("{alias}.category = ?"));
         params.push(category.code().into());
     }
-    if filter.to_me {
-        let me: Vec<String> = filter.me.iter().map(|email| email.to_lowercase()).collect();
-        let me = json(&me)?;
-        let to = |field: &str| {
-            format!(
-                "SELECT 1 FROM json_each({alias}.summary, '$.{field}') r
-                 WHERE lower(json_extract(r.value, '$.email')) IN (SELECT value FROM json_each(?))"
-            )
-        };
-        conditions.push(format!("EXISTS ({} UNION ALL {})", to("to"), to("cc")));
-        params.extend([me.as_str().into(), me.into()]);
+    if let Some(since) = filter.since {
+        conditions.push(format!("{alias}.date >= ?"));
+        params.push(since.into());
+    }
+    let me: Vec<String> = filter.me.iter().map(|email| email.to_lowercase()).collect();
+    for (on, field) in [(filter.to_me, "to"), (filter.cc_me, "cc")] {
+        if on {
+            conditions.push(format!(
+                "EXISTS (SELECT 1 FROM json_each({alias}.summary, '$.{field}') r
+                 WHERE lower(json_extract(r.value, '$.email')) IN (SELECT value FROM json_each(?)))"
+            ));
+            params.push(json(&me)?.into());
+        }
     }
     Ok((
         conditions

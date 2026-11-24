@@ -148,7 +148,10 @@
     "unread": "Non lus",
     "flagged": "Suivis",
     "toMe": "À moi",
+    "ccMe": "Moi en copie",
     "attachments": "Pièces jointes",
+    "today": "Aujourd’hui",
+    "without": "Sans {{name}}",
     "empty": "Aucun message enregistré ne correspond à ces filtres."
   },
   "categories": {

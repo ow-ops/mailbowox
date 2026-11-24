@@ -646,7 +646,15 @@ async fn filters_keep_only_what_they_ask_for() {
         me,
         ..ListFilter::default()
     };
-    assert_eq!(listed(to_me.clone()).await, [5, 4]);
+    assert_eq!(listed(to_me.clone()).await, [4]);
+    assert_eq!(
+        listed(ListFilter {
+            cc_me: true,
+            ..to_me.clone()
+        })
+        .await,
+        Vec::<u32>::new()
+    );
     assert_eq!(
         listed(ListFilter {
             unread: true,
@@ -661,8 +669,40 @@ async fn filters_keep_only_what_they_ask_for() {
         .expect("a page");
     assert_eq!(
         grouped.iter().map(|c| c.latest.uid).collect::<Vec<_>>(),
-        [5, 4]
+        [4]
     );
+}
+
+#[tokio::test]
+async fn cc_me_and_since_keep_only_what_they_ask_for() {
+    let store = store().await;
+    let mut cc_me = seen(summary(1, 100));
+    cc_me.cc = vec![Address {
+        name: None,
+        email: "Me@Example.com".to_owned(),
+    }];
+    let changed = vec![cc_me, seen(summary(2, 200)), seen(summary(3, 300))];
+    store
+        .apply_sync(
+            "f",
+            "INBOX",
+            &sync(state(1, 10), true, changed, vec![], false),
+        )
+        .await
+        .expect("applied");
+
+    let inbox = [boxed("f", "INBOX")];
+    let cc = ListFilter {
+        cc_me: true,
+        me: vec!["me@example.com".to_owned()],
+        ..ListFilter::default()
+    };
+    assert_eq!(page_uids(&store, &inbox, None, 50, &cc).await, [1]);
+    let since = ListFilter {
+        since: Some(200),
+        ..ListFilter::default()
+    };
+    assert_eq!(page_uids(&store, &inbox, None, 50, &since).await, [3, 2]);
 }
 
 #[tokio::test]
