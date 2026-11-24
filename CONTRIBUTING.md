@@ -1,8 +1,58 @@
 # Contributing
 
+## Layout
+
+| Path | What it holds |
+| --- | --- |
+| `apps/app` | Expo app (expo-router, zustand, TanStack Query). Strings are in `src/i18n/locales/{en,fr}`. |
+| `apps/desktop` | Tauri shell that runs the web build as a desktop app, with a relay and the store's SQLite files of its own. See its [README](apps/desktop/README.md). |
+| `crates/core` | Rust core: IMAP, SMTP and CardDAV clients, MIME parsing and sanitising, server discovery, and the mail store (sync, conversations, paging, search). Exposed through UniFFI. |
+| `crates/sql` | The store's SQLite, as batches of statements: run beside the core natively, in an OPFS worker on the web (`crates/sql-worker`), and in the desktop shell. |
+| `packages/core-native` | Generated React Native and WASM bindings for the core (`uniffi-bindgen-react-native`). |
+| `crates/gateway` | axum service: WebSocket-to-TCP relay for the web build, encrypted sync vault, IMAP IDLE watcher for push pings. See its [README](crates/gateway/README.md). |
+| `dev/mailbox` | Local Stalwart server with two test accounts, for integration and end-to-end tests. |
+
 ## Setup
 
-See Development in the [README](README.md): mise, pnpm, test mail server, core bindings.
+Install [mise](https://mise.jdx.dev), then from the repo root:
+
+```sh
+mise install                 # Rust, Node, pnpm, lint and audit tools, pinned
+pnpm install
+dev/mailbox/setup.sh         # the test mail server; needs Docker
+```
+
+The bindings are generated, not committed. Build them after cloning and after every change to the core's exported API. Add the mobile targets once, the pinned toolchain has none:
+
+```sh
+rustup target add aarch64-apple-ios aarch64-apple-ios-sim aarch64-linux-android x86_64-linux-android
+cd packages/core-native
+pnpm ubrn:ios                # or ubrn:android with NDK_HOME set, or ubrn:web; see crates/gateway/README.md for the web build
+```
+
+Then from `apps/app`, run a development build (Expo Go can't load the core):
+
+```sh
+pnpm ios                     # or pnpm android
+```
+
+In the app, add `alice@mailbowox.test`, password `mailbowox-dev`, server `127.0.0.1`, ports 1143 (IMAP) and 1587 (SMTP), security None. All ports are in [dev/mailbox/README.md](dev/mailbox/README.md).
+
+## Commands
+
+| Command | Does |
+| --- | --- |
+| `mise run fmt` | `cargo fmt` and `taplo fmt` |
+| `mise run lint` | rustfmt, clippy, cargo-machete, taplo, typos, then the app's `tsc`, eslint and knip |
+| `mise run test` | `cargo nextest` for the workspace and jest for the app |
+| `mise run audit` | `cargo deny` and `pnpm audit --prod` |
+| `mise run check` | all of the above |
+
+The Rust integration tests need the test mail server (`dev/mailbox/setup.sh`), otherwise they skip. `lefthook install` sets up git hooks: quick checks on commit, `cargo deny` on push.
+
+## End-to-end tests
+
+Maestro flows in `apps/app/e2e`, see [apps/app/e2e/README.md](apps/app/e2e/README.md).
 
 ## Commits
 
