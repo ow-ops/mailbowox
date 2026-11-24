@@ -4,7 +4,7 @@ import * as v from 'valibot';
 import { getAccounts } from '@/accounts/store';
 
 // The gateway names the account by this hash, never by its address.
-const accountHash = (email: string) =>
+export const accountHash = (email: string) =>
   digestStringAsync(CryptoDigestAlgorithm.SHA256, email.trim().toLowerCase());
 
 export async function accountByHash(hash: unknown) {

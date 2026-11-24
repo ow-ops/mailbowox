@@ -16,6 +16,7 @@ jest.mock('@/accounts/store', () => ({
 jest.mock('@/mail/new-mail', () => ({ notifiesNewMail: (id: string) => id !== 'quiet', markNotifyNewMail: jest.fn() }));
 jest.mock('@/push/register', () => ({ isPushOn: (id: string) => id === 'pushed' }));
 jest.mock('@/push/config', () => ({ ANDROID_CHANNEL: 'mail' }));
+jest.mock('@/push/payload', () => ({ accountHash: async (email: string) => `hash of ${email}` }));
 jest.mock('@/mail/sync', () => ({ PAGE_SIZE: 50 }));
 jest.mock('@/mail/session', () => ({ withSession: (account: string, run: (s: unknown) => unknown) => run(account) }));
 jest.mock('@/mail/store', () => {
@@ -40,6 +41,7 @@ describe('the background check', () => {
     expect(jest.mocked(Notifications.scheduleNotificationAsync).mock.calls[0][0].content).toMatchObject({
       title: 'Bob',
       body: 'Hello from polled',
+      data: { account: 'hash of me@example.com' },
     });
   });
 });

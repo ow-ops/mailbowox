@@ -13,6 +13,7 @@ import { PAGE_SIZE } from '@/mail/sync';
 import { INBOX } from '@/mail/view';
 
 import { ANDROID_CHANNEL } from './config';
+import { accountHash } from './payload';
 import { isPushOn } from './register';
 
 // Without push, the system wakes the app now and then (every 15 minutes at best on Android, less often on
@@ -33,7 +34,8 @@ TaskManager.defineTask(POLL_TASK, async () => {
         content: {
           title: sender ? addressName(sender) : account.displayName || account.email,
           body: message.subject || t('settings.notifications.newMail'),
-          data: { account: account.id },
+          // Taps find the account by this hash, as they do for push.
+          data: { account: await accountHash(account.email) },
         },
         trigger: Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL } : null,
       });
