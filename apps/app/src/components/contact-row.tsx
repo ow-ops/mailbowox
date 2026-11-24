@@ -6,7 +6,7 @@ import { hrefParam } from '@/utils/href-param';
 import { ContactAvatar } from '@/components/contact-avatar';
 import { ThemedText } from '@/components/themed-text';
 import { Hairline, Spacing } from '@/constants/theme';
-import type { ContactRow as Row } from '@/contacts/db';
+import type { ContactRow as Row } from '@/core';
 import { useTheme } from '@/hooks/use-theme';
 
 export function ContactRow({ contact }: { contact: Row }) {

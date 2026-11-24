@@ -2,35 +2,23 @@ import { queryOptions, useQueries } from '@tanstack/react-query';
 import { useIsFocused } from 'expo-router';
 
 import { accountConfig, accountExists, getAccount, getAccounts, useAccounts } from '@/accounts/store';
-import { core } from '@/core';
 import { useAppActive } from '@/hooks/use-app-active';
+import { mailStore } from '@/mail/store';
 import { isOnline, useOnline } from '@/utils/network';
 import { invalidateContacts, queryClient } from '@/utils/query-client';
 import { settleAll } from '@/utils/settle';
 
-import { applyContactSync, getSyncInput, saveAddressBooks, type BookRef } from './db';
-
 async function run(accountId: string) {
   const account = getAccount(accountId);
   if (!account.carddav) return null;
-  const config = await accountConfig(account);
-  const books = await core.listAddressBooks(config, account.carddav);
-  // Removed while the server was answering: nothing more is written for it.
-  if (!accountExists(accountId)) return null;
-  await saveAddressBooks(accountId, books);
-  // One address book at a time: servers such as Stalwart cap concurrent requests per account.
-  let failure: unknown;
-  for (const book of books) {
-    const ref: BookRef = { account: accountId, book: book.href };
-    await getSyncInput(ref)
-      .then(({ state, known }) => core.syncContacts(config, book.href, state, known))
-      .then((result) => (accountExists(accountId) ? applyContactSync(ref, result) : undefined))
-      .catch((error: unknown) => {
-        failure ??= error;
-      });
+  const store = await mailStore();
+  try {
+    await store.syncContacts(await accountConfig(account), accountId, account.carddav);
+  } finally {
+    // Removed while the server was answering: its data is being deleted, and this sync put some back.
+    if (!accountExists(accountId)) await store.deleteAccount(accountId);
+    invalidateContacts();
   }
-  invalidateContacts();
-  if (failure) throw failure;
   return null;
 }
 

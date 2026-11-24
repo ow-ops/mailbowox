@@ -26,3 +26,6 @@ const adapt = (db: Database) => ({
 });
 
 export const openDatabaseAsync = async () => adapt(new DatabaseSync(':memory:'));
+
+// Every database here is in memory and gone with its connection.
+export async function deleteDatabaseAsync(_name: string) {}

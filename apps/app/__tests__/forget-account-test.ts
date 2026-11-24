@@ -29,7 +29,6 @@ jest.mock('@/mail/store', () => {
   return { mailStore: async () => store };
 });
 
-jest.mock('@/contacts/db', () => mockData('contacts'));
 jest.mock('@/mail/local-drafts', () => ({ removeAccountDrafts: async () => undefined }));
 jest.mock('@/mail/new-mail', () => ({ setNotifyNewMail: async () => undefined }));
 jest.mock('@/utils/query-client', () => ({
@@ -49,7 +48,7 @@ describe('forgetAccount', () => {
   it('takes the account off the list before deleting its data, so a sync under way stops writing', async () => {
     await forgetAccount({ id: 'gone' } as Account);
 
-    expect(mockDeleted).toEqual(['mail:gone:unlisted', 'contacts:gone:unlisted']);
+    expect(mockDeleted).toEqual(['mail:gone:unlisted']);
   });
 });
 
@@ -58,14 +57,14 @@ describe('sweepRemovedAccounts', () => {
     mockAccounts.splice(1);
     await sweepRemovedAccounts();
 
-    expect(mockDeleted).toEqual(['mail:gone:unlisted', 'contacts:gone:unlisted']);
+    expect(mockDeleted).toEqual(['mail:gone:unlisted']);
   });
 
   it('cleans up after the last account too', async () => {
     mockAccounts.length = 0;
     await sweepRemovedAccounts();
 
-    expect(mockDeleted).toHaveLength(4);
+    expect(mockDeleted).toHaveLength(2);
   });
 
   it('touches nothing when the account list could not be read', async () => {

@@ -1,4 +1,7 @@
+import { deleteDatabaseAsync } from 'expo-sqlite';
+
 import type { Draft, DraftAttachment, MailStore } from '@/core';
+import { invoke } from '@/utils/desktop';
 import { readItem, writeItem } from '@/utils/kv';
 
 import { database } from './database';
@@ -12,8 +15,9 @@ type DraftRow = { slot: string; key: string; filename: string; mime_type: string
 const buffer = (bytes: Uint8Array) => Uint8Array.from(bytes).buffer;
 
 // The outbox and draft attachments were in mail.db until they moved to the core's store. Each message leaves
-// mail.db as soon as the store has it, so a move cut short never queues one twice.
-export async function moveLegacyOutbox(store: MailStore) {
+// mail.db as soon as the store has it, so a move cut short never queues one twice. Contacts sync again, so
+// contacts.db only goes; the desktop shell keeps its file, which nothing reads.
+export async function moveLegacyData(store: MailStore) {
   if (readItem(MOVED)) return;
   const db = await database();
   for (const row of await db.getAllAsync<QueuedRow>('SELECT id, account, draft, error FROM outbox ORDER BY id')) {
@@ -36,5 +40,6 @@ export async function moveLegacyOutbox(store: MailStore) {
   }
   for (const [slot, list] of slots) await store.setDraftAttachments(slot, list);
   await db.runAsync('DELETE FROM draft_attachments');
+  if (!invoke) await deleteDatabaseAsync('contacts.db').catch(() => {});
   writeItem(MOVED, '1');
 }

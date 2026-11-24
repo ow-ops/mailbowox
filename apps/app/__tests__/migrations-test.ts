@@ -1,6 +1,5 @@
 import * as SQLite from 'expo-sqlite';
 
-import { MIGRATIONS as contacts } from '@/contacts/db';
 import { migrate, openDatabase } from '@/db/migrate';
 import i18n from '@/i18n';
 import { MIGRATIONS as mail } from '@/mail/database';
@@ -27,10 +26,7 @@ const schema = async (db: Db) =>
 
 beforeAll(() => i18n.changeLanguage('en'));
 
-describe.each([
-  ['mail', mail],
-  ['contacts', contacts],
-])('%s migrations', (name, migrations) => {
+describe.each([['mail', mail]])('%s migrations', (name, migrations) => {
   it('builds the current schema on an empty database', async () => {
     const db = await open();
     await migrate(db, name, migrations);
@@ -119,7 +115,7 @@ describe('opening databases', () => {
 
     await Promise.all([
       openDatabase('mail.db', mail),
-      openDatabase('contacts.db', contacts),
+      openDatabase('other.db', mail),
     ]);
 
     expect(most).toBe(1);

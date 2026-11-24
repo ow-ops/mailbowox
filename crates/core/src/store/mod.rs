@@ -1,6 +1,7 @@
 //! The device's copy of the mail, kept in SQLite through [`exec::Exec`].
 
 mod bodies;
+mod contacts;
 mod exec;
 mod list;
 mod messages;

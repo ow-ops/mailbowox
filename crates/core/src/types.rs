@@ -232,7 +232,7 @@ pub struct ContactTag {
     pub etag: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record, serde::Serialize, serde::Deserialize)]
 pub struct ContactValue {
     pub value: String,
     /// The first TYPE parameter, lowercased, such as work, home or cell; `pref`
@@ -389,4 +389,35 @@ pub struct DraftAttachment {
     pub mime_type: String,
     pub size: u64,
     pub data: Option<Vec<u8>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct StoredAddressBook {
+    pub account: String,
+    pub book: AddressBook,
+}
+
+/// A row of the contact list: the first address stands for the contact.
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct ContactRow {
+    pub account: String,
+    pub href: String,
+    pub name: String,
+    pub organization: Option<String>,
+    pub email: Option<String>,
+    /// What the list sorts by, family name first; its first letter heads a section.
+    pub sort: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct ContactAddress {
+    pub name: String,
+    pub email: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct StoredContact {
+    pub account: String,
+    pub book: String,
+    pub contact: Contact,
 }

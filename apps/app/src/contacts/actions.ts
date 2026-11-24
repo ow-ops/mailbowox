@@ -6,10 +6,11 @@ import { t } from '@/i18n';
 import { handlesError, invalidateContacts } from '@/utils/query-client';
 import { settleAll } from '@/utils/settle';
 
-import { putContact, removeContact, type BookRef } from './db';
+import { mailStore } from '@/mail/store';
+
 import { syncContactsOf } from './sync';
 
-type SaveContact = BookRef & { draft: ContactDraft; contact?: Contact };
+type SaveContact = { account: string; book: string; draft: ContactDraft; contact?: Contact };
 
 export function useSaveContact() {
   return useMutation({
@@ -19,7 +20,7 @@ export function useSaveContact() {
       const saved = contact
         ? await core.updateContact(config, contact, draft)
         : await core.createContact(config, book, draft);
-      await putContact({ account, book }, saved);
+      await (await mailStore()).putContact(account, book, saved);
     },
     onSuccess: invalidateContacts,
   });
@@ -33,7 +34,7 @@ export function useDeleteContact() {
     mutationFn: async ({ account, contact }: DeleteContact) => {
       const config = await accountConfig(getAccount(account));
       await core.deleteContact(config, contact.href, contact.etag);
-      await removeContact({ account, href: contact.href });
+      await (await mailStore()).removeContact(account, contact.href);
     },
     onSuccess: invalidateContacts,
   });

@@ -468,7 +468,7 @@ impl MailStore {
     pub async fn stored_accounts(&self) -> Result<Vec<String>, CoreError> {
         let rows = self
             .rows(statement!(
-                "SELECT account FROM mailboxes UNION SELECT account FROM messages UNION SELECT account FROM sync_state UNION SELECT account FROM outbox"
+                "SELECT account FROM mailboxes UNION SELECT account FROM messages UNION SELECT account FROM sync_state UNION SELECT account FROM outbox UNION SELECT account FROM address_books UNION SELECT account FROM contacts"
             ))
             .await?;
         rows.iter()
@@ -488,6 +488,8 @@ impl MailStore {
             "thread_subjects",
             "addresses",
             "outbox",
+            "address_books",
+            "contacts",
         ]
         .map(|table| statement!(format!("DELETE FROM {table} WHERE account = ?"), account));
         self.exec.batch(statements.to_vec()).await?;

@@ -13,7 +13,7 @@ import { SyncFailureBanners, useSyncRefresh } from '@/components/sync-status';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ColumnWidth, Hairline, Spacing } from '@/constants/theme';
-import type { ContactRow as Row } from '@/contacts/db';
+import type { ContactRow as Row } from '@/core';
 import { letterOf } from '@/contacts/format';
 import { useAddressBooks, useContacts } from '@/contacts/queries';
 import { syncContacts, useContactsSync } from '@/contacts/sync';

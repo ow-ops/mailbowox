@@ -3,10 +3,10 @@ import type {
   AddressBook,
   AttachmentInfo,
   Contact,
+  ContactAddress,
+  ContactRow,
+  StoredContact,
   ContactDraft,
-  ContactSyncResult,
-  ContactSyncState,
-  ContactTag,
   Draft,
   Flags,
   ListFilter,
@@ -32,19 +32,18 @@ import type {
 // src/core/index.ts converts those fields.
 export type {
   Address,
-  AddressBook,
   AttachmentInfo,
   Contact,
   ContactDraft,
-  ContactSyncResult,
-  ContactSyncState,
-  ContactTag,
+  ContactAddress,
+  ContactRow,
   ContactValue,
   Draft,
   Flags,
   ListFilter,
   OutgoingAttachment,
   SearchQuery,
+  StoredContact,
 } from '@mailbowox/core-native';
 
 type EnumName<E> = Uncapitalize<Extract<keyof E, string>>;
@@ -121,6 +120,13 @@ export interface MailStore {
   search(boxes: MailboxRef[], query: SearchQuery, limit: number): Promise<StoredMessage[]>;
   storedAccounts(): Promise<string[]>;
   deleteAccount(account: string): Promise<void>;
+  syncContacts(config: AccountConfig, account: string, home: string): Promise<void>;
+  addressBooks(): Promise<(AddressBook & { account: string })[]>;
+  putContact(account: string, book: string, contact: Contact): Promise<void>;
+  removeContact(account: string, href: string): Promise<void>;
+  contacts(words: string[]): Promise<ContactRow[]>;
+  contactAddresses(): Promise<ContactAddress[]>;
+  contact(account: string, href: string): Promise<StoredContact | undefined>;
   enqueue(account: string, draft: Draft, error: string | null): Promise<number>;
   queuedMessages(): Promise<QueuedMessage[]>;
   queuedMessage(id: number): Promise<QueuedMessage | undefined>;
@@ -140,13 +146,6 @@ export interface Core {
   buildMessage(draft: Draft): Promise<ArrayBuffer>;
   configureRelay(url: string, token: string): void;
   discoverContacts(config: AccountConfig): Promise<string | undefined>;
-  listAddressBooks(config: AccountConfig, home: string): Promise<AddressBook[]>;
-  syncContacts(
-    config: AccountConfig,
-    addressBook: string,
-    since: ContactSyncState | undefined,
-    known: ContactTag[],
-  ): Promise<ContactSyncResult>;
   createContact(config: AccountConfig, addressBook: string, draft: ContactDraft): Promise<Contact>;
   updateContact(config: AccountConfig, contact: Contact, draft: ContactDraft): Promise<Contact>;
   deleteContact(config: AccountConfig, href: string, etag: string | undefined): Promise<void>;

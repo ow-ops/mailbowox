@@ -1,7 +1,6 @@
-import type { Address } from '@/core';
+import type { Address , ContactAddress } from '@/core';
 import { normalize, queryWords } from '@/utils/text';
 
-import type { ContactAddress } from './db';
 
 const LIMIT = 5;
 

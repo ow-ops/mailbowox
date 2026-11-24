@@ -181,6 +181,13 @@ function wrapStore(store: native.MailStoreLike): MailStore {
     search: async (boxes, query, limit) => (await store.search(boxes, query, limit)).map(fromStored),
     storedAccounts: () => store.storedAccounts(),
     deleteAccount: (account) => store.deleteAccount(account),
+    syncContacts: (config, account, home) => store.syncContacts(toConfig(config), account, home),
+    addressBooks: async () => (await store.addressBooks()).map(({ account, book }) => ({ ...book, account })),
+    putContact: (account, book, contact) => store.putContact(account, book, contact),
+    removeContact: (account, href) => store.removeContact(account, href),
+    contacts: (words) => store.contacts(words),
+    contactAddresses: () => store.contactAddresses(),
+    contact: (account, href) => store.contact(account, href),
     enqueue: async (account, draft, error) => Number(await store.enqueue(account, draft, error ?? undefined)),
     queuedMessages: async () => (await store.queuedMessages()).map(fromQueued),
     queuedMessage: async (id) => {
@@ -206,9 +213,6 @@ export const core = explainErrors<Core>({
   buildMessage: async (draft) => native.buildMessage(draft),
   configureRelay: (url, token) => native.configureRelay(url, token),
   discoverContacts: (config) => native.discoverContacts(toConfig(config)),
-  listAddressBooks: (config, home) => native.listAddressBooks(toConfig(config), home),
-  syncContacts: (config, addressBook, since, known) =>
-    native.syncContacts(toConfig(config), addressBook, since, known),
   createContact: (config, addressBook, draft) => native.createContact(toConfig(config), addressBook, draft),
   updateContact: (config, contact, draft) => native.updateContact(toConfig(config), contact, draft),
   deleteContact: (config, href, etag) => native.deleteContact(toConfig(config), href, etag),

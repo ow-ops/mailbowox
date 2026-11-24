@@ -2,11 +2,11 @@ import { defaultDatabaseDirectory } from 'expo-sqlite';
 
 import { core, type MailStore } from '@/core';
 
-import { moveLegacyOutbox } from './legacy-outbox';
+import { moveLegacyData } from './legacy';
 
 async function open() {
   const store = await core.openStore(`${defaultDatabaseDirectory}/store.sqlite3`);
-  await moveLegacyOutbox(store);
+  await moveLegacyData(store);
   return store;
 }
 

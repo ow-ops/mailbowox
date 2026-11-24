@@ -1,6 +1,6 @@
 import type { MailStore } from '@/core';
 import { database } from '@/mail/database';
-import { moveLegacyOutbox } from '@/mail/legacy-outbox';
+import { moveLegacyData } from '@/mail/legacy';
 
 import { store } from '../jest/mail-store';
 
@@ -12,7 +12,7 @@ jest.mock('@/utils/kv', () => {
 
 const draft = { from: { email: 'me@example.com' }, to: [{ email: 'you@example.com' }], cc: [], bcc: [], subject: 'Queued', text: 'hi', references: [] };
 
-describe('moveLegacyOutbox', () => {
+describe('moveLegacyData', () => {
   it('queues what mail.db held in the store once, and leaves mail.db empty', async () => {
     const db = await database();
     const { lastInsertRowId } = await db.runAsync(
@@ -33,8 +33,8 @@ describe('moveLegacyOutbox', () => {
       "INSERT INTO draft_attachments (slot, position, key, filename, mime_type, size, data) VALUES ('new/', 0, 'k', 'b.pdf', 'application/pdf', 3, NULL)",
     );
 
-    await moveLegacyOutbox(store as unknown as MailStore);
-    await moveLegacyOutbox(store as unknown as MailStore);
+    await moveLegacyData(store as unknown as MailStore);
+    await moveLegacyData(store as unknown as MailStore);
 
     const queued = await store.queuedMessages();
     expect(queued).toHaveLength(1);

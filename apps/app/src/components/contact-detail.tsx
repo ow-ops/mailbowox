@@ -10,10 +10,10 @@ import { SectionTitle } from '@/components/settings';
 import { ThemedText } from '@/components/themed-text';
 import { ColumnWidth, Fonts, Hairline, Spacing } from '@/constants/theme';
 import { useDeleteContact } from '@/contacts/actions';
-import type { ContactRef, StoredContact } from '@/contacts/db';
+import type { ContactRef } from '@/contacts/queries';
+import type { StoredContact , ContactValue } from '@/core';
 import { displayName, embeddedPhoto, kindLabel } from '@/contacts/format';
 import { useAddressBooks, useContact } from '@/contacts/queries';
-import type { ContactValue } from '@/core';
 import { useTheme } from '@/hooks/use-theme';
 import { confirmAction } from '@/utils/dialog';
 

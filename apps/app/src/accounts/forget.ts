@@ -1,4 +1,3 @@
-import { deleteAccountData as deleteContactData, storedAccounts as contactAccounts } from '@/contacts/db';
 import { removeAccountDrafts } from '@/mail/local-drafts';
 import { setNotifyNewMail } from '@/mail/new-mail';
 import { invalidateContacts, invalidateMail } from '@/utils/query-client';
@@ -10,7 +9,6 @@ import { accountExists, accountsReadable, removeAccount, type Account } from './
 
 const stores = [
   [async () => (await mailStore()).storedAccounts(), async (id: string) => (await mailStore()).deleteAccount(id)],
-  [contactAccounts, deleteContactData],
 ] as const;
 
 // The account leaves the list before its data is deleted: that stops its watchers, and a sync already

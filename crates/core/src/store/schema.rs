@@ -103,6 +103,38 @@ const MIGRATIONS: &[&[&str]] = &[
        PRIMARY KEY (slot, position)
      )",
     ],
+    &[
+        "CREATE TABLE address_books (
+           account TEXT NOT NULL,
+           href TEXT NOT NULL,
+           position INTEGER NOT NULL,
+           name TEXT NOT NULL,
+           read_only INTEGER NOT NULL,
+           ctag TEXT,
+           sync_token TEXT,
+           PRIMARY KEY (account, href)
+         )",
+        "CREATE TABLE contacts (
+           account TEXT NOT NULL,
+           href TEXT NOT NULL,
+           book TEXT NOT NULL,
+           uid TEXT NOT NULL,
+           etag TEXT,
+           name TEXT NOT NULL,
+           given TEXT,
+           family TEXT,
+           organization TEXT,
+           emails TEXT NOT NULL,
+           phones TEXT NOT NULL,
+           photo TEXT,
+           vcard TEXT NOT NULL,
+           sort TEXT NOT NULL,
+           search TEXT NOT NULL,
+           PRIMARY KEY (account, href)
+         )",
+        "CREATE INDEX contacts_by_book ON contacts (account, book)",
+        "CREATE INDEX contacts_by_sort ON contacts (sort)",
+    ],
 ];
 
 pub(super) async fn migrate(exec: &Exec) -> Result<(), CoreError> {
