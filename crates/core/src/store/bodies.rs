@@ -11,6 +11,16 @@ use crate::{
 
 const BODY_CACHE_BYTES: i64 = 50 * 1024 * 1024;
 
+/// Every term as a prefix, so a word matches while it is being typed. A term
+/// with punctuation (`team@example`) becomes the phrase of its words.
+fn match_expression(terms: &[String]) -> String {
+    terms
+        .iter()
+        .map(|term| format!("\"{}\"*", term.replace('"', "\"\"")))
+        .collect::<Vec<_>>()
+        .join(" AND ")
+}
+
 /// How many messages that mention a field's value are checked against the
 /// field itself: far above a page of results, and still a bound on one keystroke.
 const FIELD_CANDIDATES: u32 = 5000;
@@ -99,11 +109,12 @@ impl MailStore {
     ) -> Result<Vec<StoredMessage>, CoreError> {
         let query = &query;
         let within = vec!["(account = ? AND mailbox = ?)"; boxes.len()].join(" OR ");
-        let mut conditions: Vec<String> = query
-            .terms
-            .iter()
-            .map(|_| "instr(search, ?) > 0".to_owned())
-            .collect();
+        let mut conditions = Vec::new();
+        if !query.terms.is_empty() {
+            conditions.push(
+                "rowid IN (SELECT rowid FROM message_text WHERE message_text MATCH ?)".to_owned(),
+            );
+        }
         if let Some(seen) = query.seen {
             conditions.push(format!("seen = {}", i64::from(seen)));
         }
@@ -117,7 +128,9 @@ impl MailStore {
             .iter()
             .flat_map(|b| [b.account.as_str().into(), b.mailbox.as_str().into()])
             .collect();
-        params.extend(query.terms.iter().map(|term| term.as_str().into()));
+        if !query.terms.is_empty() {
+            params.push(match_expression(&query.terms).into());
+        }
         let bound = if query.fields {
             FIELD_CANDIDATES
         } else {
@@ -174,7 +187,14 @@ impl MailStore {
              )",
             BODY_CACHE_BYTES
         );
-        self.exec.batch(vec![save, evict]).await?;
+        let mut index = statement!(
+            format!(
+                "UPDATE message_text SET body = ? WHERE rowid = (SELECT rowid FROM messages WHERE {MESSAGE})"
+            ),
+            body.text.clone().unwrap_or_default()
+        );
+        index.params.extend(message_key(r));
+        self.exec.batch(vec![save, index, evict]).await?;
         Ok(())
     }
 }

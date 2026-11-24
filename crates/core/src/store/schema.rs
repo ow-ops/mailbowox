@@ -135,6 +135,32 @@ const MIGRATIONS: &[&[&str]] = &[
         "CREATE INDEX contacts_by_book ON contacts (account, book)",
         "CREATE INDEX contacts_by_sort ON contacts (sort)",
     ],
+    &[
+        // What local search looks in: the subject, people and preview, then the
+        // body text of each message once it has been opened. A body's text stays
+        // after the cache drops the body, so the message is still found.
+        "CREATE VIRTUAL TABLE message_text USING fts5(head, body, tokenize = 'unicode61 remove_diacritics 2')",
+        "INSERT INTO message_text (rowid, head, body)
+           SELECT m.rowid, m.search, COALESCE(
+             (SELECT json_extract(b.body, '$.text') FROM bodies b
+              WHERE b.account = m.account AND b.mailbox = m.mailbox AND b.uid = m.uid AND b.uid_validity = m.uid_validity),
+             '')
+           FROM messages m",
+        "CREATE TRIGGER message_text_insert AFTER INSERT ON messages BEGIN
+           INSERT INTO message_text (rowid, head, body) VALUES (new.rowid, new.search, '');
+         END",
+        "CREATE TRIGGER message_text_update AFTER UPDATE OF search ON messages BEGIN
+           UPDATE message_text SET head = new.search WHERE rowid = new.rowid;
+         END",
+        // A uid the server gave a new message keeps the row; the old body text goes.
+        "CREATE TRIGGER message_text_reused AFTER UPDATE OF uid_validity ON messages
+           WHEN old.uid_validity != new.uid_validity BEGIN
+           UPDATE message_text SET body = '' WHERE rowid = new.rowid;
+         END",
+        "CREATE TRIGGER message_text_delete AFTER DELETE ON messages BEGIN
+           DELETE FROM message_text WHERE rowid = old.rowid;
+         END",
+    ],
 ];
 
 pub(super) async fn migrate(exec: &Exec) -> Result<(), CoreError> {

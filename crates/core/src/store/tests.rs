@@ -1184,3 +1184,88 @@ async fn search_filters_on_flags_and_attachments_and_widens_for_fields() {
         .unwrap();
     assert_eq!((narrow.len(), wide.len()), (50, 60));
 }
+
+#[tokio::test]
+async fn search_finds_words_of_opened_bodies_until_the_message_goes() {
+    let store = store().await;
+    store
+        .apply_sync(
+            "b",
+            "INBOX",
+            &sync(
+                state(1, 10),
+                true,
+                vec![summary(1, 100), summary(2, 200)],
+                vec![],
+                false,
+            ),
+        )
+        .await
+        .unwrap();
+    let inbox = [boxed("b", "INBOX")];
+    let opened = message("b", "INBOX", 1, 1);
+    assert_eq!(found(&store, &inbox, search_query(&["ramen"])).await, []);
+
+    store
+        .save_body(&opened, &body("Shall we try the new Ramen place?"), false)
+        .await
+        .unwrap();
+    assert_eq!(
+        found(&store, &inbox, search_query(&["ramen"])).await,
+        [("INBOX".to_owned(), 1)]
+    );
+    // A prefix matches while the word is being typed.
+    assert_eq!(
+        found(&store, &inbox, search_query(&["ram"])).await,
+        [("INBOX".to_owned(), 1)]
+    );
+
+    // A flag change rewrites the message, not what was learned from its body.
+    let mut flagged = summary(1, 100);
+    flagged.flags.flagged = true;
+    store
+        .apply_sync(
+            "b",
+            "INBOX",
+            &sync(state(1, 10), false, vec![flagged], vec![], false),
+        )
+        .await
+        .unwrap();
+    assert_eq!(
+        found(&store, &inbox, search_query(&["ramen"])).await,
+        [("INBOX".to_owned(), 1)]
+    );
+
+    store.remove_messages(vec![opened]).await.unwrap();
+    assert_eq!(found(&store, &inbox, search_query(&["ramen"])).await, []);
+}
+
+#[tokio::test]
+async fn a_uid_the_server_reuses_loses_the_old_body_text() {
+    let store = store().await;
+    store
+        .apply_sync(
+            "r",
+            "INBOX",
+            &sync(state(1, 10), true, vec![summary(1, 100)], vec![], false),
+        )
+        .await
+        .unwrap();
+    store
+        .save_body(&message("r", "INBOX", 1, 1), &body("quokka"), false)
+        .await
+        .unwrap();
+    store
+        .put_messages(vec![MailItem {
+            account: "r".to_owned(),
+            mailbox: "INBOX".to_owned(),
+            uid_validity: 2,
+            summary: summary(1, 300),
+        }])
+        .await
+        .unwrap();
+    assert_eq!(
+        found(&store, &[boxed("r", "INBOX")], search_query(&["quokka"])).await,
+        []
+    );
+}

@@ -215,8 +215,13 @@ fn upsert(
     for (item, thread) in items.iter().zip(&assigned.threads) {
         let summary = &item.summary;
         statements.push(statement!(
-            "INSERT OR REPLACE INTO messages (account, mailbox, uid, uid_validity, date, seen, flagged, thread, summary, search)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            // An update keeps the row, and with it the message's place in the search index.
+            "INSERT INTO messages (account, mailbox, uid, uid_validity, date, seen, flagged, thread, summary, search)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT (account, mailbox, uid) DO UPDATE SET
+               uid_validity = excluded.uid_validity, date = excluded.date, seen = excluded.seen,
+               flagged = excluded.flagged, thread = excluded.thread, summary = excluded.summary,
+               search = excluded.search",
             account,
             item.mailbox.as_str(),
             i64::from(summary.uid),

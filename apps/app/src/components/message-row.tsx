@@ -13,9 +13,10 @@ import { BorderWidth, Fonts, Hairline, Radius, Spacing } from '@/constants/theme
 import { useTheme } from '@/hooks/use-theme';
 import { useMessageActions } from '@/mail/actions';
 import { addressName, sameAddress } from '@/mail/address';
-import { messageParams, type MailItem, type StoredItem , Conversation } from '@/mail/refs';
+import { messageParams, type Conversation, type MailItem, type StoredItem } from '@/mail/refs';
 import { useBlockedCount, useRoleMailbox } from '@/mail/queries';
 import { conversationKey, startSelecting, toggleSelected } from '@/mail/selection';
+import { highlight as highlightText } from '@/utils/text';
 import { listTime } from '@/utils/time';
 
 type Props = {
@@ -32,6 +33,8 @@ type Props = {
   selecting: boolean;
   checked: boolean;
   onOpen?: (item: StoredItem) => void;
+  // Words a search found, marked in the subject and preview.
+  highlight?: string[];
 };
 
 // Each sender once, in the order they joined the conversation.
@@ -52,6 +55,7 @@ export function MessageRow({
   selecting,
   checked,
   onOpen,
+  highlight = [],
 }: Props) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -178,7 +182,7 @@ export function MessageRow({
                 numberOfLines={1}
                 themeColor={unread ? 'heading' : 'text'}
                 style={[styles.grow, unread && styles.unreadSubject]}>
-                {subject}
+                <Marked text={subject} words={highlight} />
               </ThemedText>
               {hasAttachments && (
                 <SymbolView
@@ -204,7 +208,7 @@ export function MessageRow({
             </View>
             {!!summary.preview && (
               <ThemedText type="meta" numberOfLines={2}>
-                {summary.preview}
+                <Marked text={summary.preview} words={highlight} />
               </ThemedText>
             )}
             {place && (
@@ -250,7 +254,22 @@ function Check({ checked }: { checked: boolean }) {
   );
 }
 
+function Marked({ text, words }: { text: string; words: string[] }) {
+  const theme = useTheme();
+  if (!words.length) return text;
+  return highlightText(text, words).map((segment, i) =>
+    segment.match ? (
+      <ThemedText key={i} style={[styles.match, { color: theme.primary }]}>
+        {segment.text}
+      </ThemedText>
+    ) : (
+      segment.text
+    ),
+  );
+}
+
 const styles = StyleSheet.create({
+  match: { fontWeight: '600' },
   row: {
     flexDirection: 'row',
     paddingVertical: Spacing.oneHalf,

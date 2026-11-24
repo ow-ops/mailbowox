@@ -11,11 +11,11 @@ import { SegmentedControl } from '@/components/segmented-control';
 import { ThemedText } from '@/components/themed-text';
 import { Hairline, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { messageKey, sameMessage, type MessageRef, type StoredItem } from '@/mail/refs';
+import { messageKey, sameMessage, single, type MessageRef, type StoredItem } from '@/mail/refs';
 import { explainError } from '@/core/errors';
 import { mailboxLabel } from '@/mail/mailboxes';
 import { mailboxesQuery, type SearchScope, type useSearch } from '@/mail/queries';
-import { single } from '@/mail/refs';
+import { parseQuery } from '@/mail/search';
 import type { MailView } from '@/mail/view';
 
 // The results come from the screen, which also moves through them with the keyboard.
@@ -37,6 +37,8 @@ export function SearchResults({ view, title, query, scope, onScope, results, ser
   const mailboxes = useQueries({ queries: accounts.map((a) => mailboxesQuery(a.id)) });
   const byId = new Map(accounts.map((a) => [a.id, a]));
   const mixed = accounts.length > 1 && (scope === 'all' || view.kind !== 'mailbox');
+  const parsed = parseQuery(query);
+  const words = [...parsed.words, ...parsed.fields.map(({ value }) => value)];
 
   const mailboxName = (item: StoredItem) => {
     const list = mailboxes[accounts.findIndex((a) => a.id === item.account)]?.data?.mailboxes;
@@ -58,6 +60,7 @@ export function SearchResults({ view, title, query, scope, onScope, results, ser
           selected={!!selected && sameMessage(selected, item)}
           selecting={false}
           checked={false}
+          highlight={words}
           onOpen={onOpen}
         />
       )}
