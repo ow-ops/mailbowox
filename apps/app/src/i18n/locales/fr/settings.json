@@ -44,6 +44,7 @@
     "toggle": "Notifications de nouveaux messages",
     "explanation": "Désactivées tant que vous ne les activez pas. Pour vous signaler les nouveaux messages, le serveur de notifications mailbowox garde une copie chiffrée du mot de passe de ce compte et s’en sert pour surveiller la boîte de réception. Les notifications affichent l’expéditeur, l’objet et le début du message, lisibles par cet appareil seulement.",
     "browser": "Affichées par ce navigateur tant que mailbowox est ouvert dans un onglet. Rien n’est envoyé à un serveur.",
+    "desktop": "Affichent l’expéditeur, l’objet et le début des nouveaux messages. Fermer la fenêtre laisse mailbowox dans la barre des menus ou la zone de notification, où il surveille lui-même la boîte de réception ; quittez-le depuis là pour l’arrêter. Rien n’est envoyé à un serveur.",
     "browserDenied": "Les notifications sont bloquées pour ce site dans les réglages du navigateur.",
     "newMail": "Nouveau message",
     "newMails_one": "{{count}} nouveau message",

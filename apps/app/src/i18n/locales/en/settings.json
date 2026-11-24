@@ -44,6 +44,7 @@
     "toggle": "New mail notifications",
     "explanation": "Off until you turn it on. To tell you about new mail, the mailbowox notification server keeps an encrypted copy of this account's password and uses it to watch the inbox. Notifications show the sender, subject and start of the message, readable only by this device.",
     "browser": "Shown by this browser while mailbowox is open in a tab. Nothing is sent to a server.",
+    "desktop": "Shows the sender, subject and start of new mail. Closing the window keeps mailbowox in the menu bar or system tray, watching the inbox itself; quit it there to stop. Nothing is sent to a server.",
     "browserDenied": "Notifications are blocked for this site in the browser’s settings.",
     "newMail": "New mail",
     "newMails_one": "{{count}} new message",

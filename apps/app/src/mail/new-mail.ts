@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
 import { Platform } from 'react-native';
 
-import { getAccount } from '@/accounts/store';
+import { accountConfig, getAccount, getAccounts } from '@/accounts/store';
 import type { MessageSummary } from '@/core';
 import { t } from '@/i18n';
+import { invoke } from '@/utils/desktop';
 import { readItem, removeItem, writeItem } from '@/utils/kv';
 
 import { addressName } from './address';
@@ -13,20 +14,43 @@ const key = (account: string) => `notify.${account}`;
 
 export const notifiesNewMail = (account: string) => readItem(key(account)) === '1';
 
-// Kept per browser: the permission is the browser's, not the account's.
+// Kept per browser: the permission is the browser's, not the account's. The desktop shell needs none.
 export async function setNotifyNewMail(account: string, on: boolean) {
   if (!on) {
     removeItem(key(account));
-    return;
+  } else {
+    if (!invoke && (await Notification.requestPermission()) !== 'granted') {
+      throw new Error(t('settings.notifications.browserDenied'));
+    }
+    writeItem(key(account), '1');
   }
-  if ((await Notification.requestPermission()) !== 'granted') throw new Error(t('settings.notifications.browserDenied'));
-  writeItem(key(account), '1');
+  await watchDesktopInboxes();
 }
 
-// The browser's own notifications, while a tab is open. Phones are told by push. Nothing shows while the
-// tab has focus: the list already has the new mail.
+let handing = Promise.resolve();
+
+// The desktop shell watches these inboxes itself, also from the tray. It gets the whole list, passwords
+// included, each time it may have changed; calls run in order, so the last list wins.
+export function watchDesktopInboxes() {
+  const hand = async () => {
+    if (!invoke) return;
+    const accounts = [];
+    for (const account of getAccounts().filter(({ id }) => notifiesNewMail(id))) {
+      const config = await accountConfig(account).catch(() => null);
+      if (!config) continue;
+      const { username, password } = config.credentials;
+      accounts.push({ id: account.id, imap: config.imap, username, password });
+    }
+    await invoke('watch_inboxes', { accounts });
+  };
+  handing = handing.then(hand, hand);
+  return handing;
+}
+
+// The browser's own notifications, while a tab is open. Phones are told by push, and the desktop shell shows
+// its own. Nothing shows while the tab has focus: the list already has the new mail.
 export function announceNewMail(account: string, messages: MessageSummary[]) {
-  if (Platform.OS !== 'web' || messages.length === 0 || !notifiesNewMail(account)) return;
+  if (Platform.OS !== 'web' || invoke || messages.length === 0 || !notifiesNewMail(account)) return;
   if (Notification.permission !== 'granted' || document.hasFocus()) return;
   const sender = messages[0].from[0];
   const notification =

@@ -9,15 +9,16 @@ import { ThemedText } from '@/components/themed-text';
 import { notifiesNewMail, setNotifyNewMail } from '@/mail/new-mail';
 import { GATEWAY_URL } from '@/push/config';
 import { disablePush, enablePush, isPushOn } from '@/push/register';
+import { invoke } from '@/utils/desktop';
 
 export function NotificationSettings({ account }: { account: Account }) {
   const { t } = useTranslation();
   if (Platform.OS === 'web') {
-    if (!('Notification' in window)) return null;
+    if (!invoke && !('Notification' in window)) return null;
     return (
       <Section title={t('settings.notifications.title')}>
         <Toggle on={notifiesNewMail(account.id)} change={(next) => setNotifyNewMail(account.id, next)} />
-        <ThemedText type="meta">{t('settings.notifications.browser')}</ThemedText>
+        <ThemedText type="meta">{t(invoke ? 'settings.notifications.desktop' : 'settings.notifications.browser')}</ThemedText>
       </Section>
     );
   }
