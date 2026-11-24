@@ -1,6 +1,6 @@
 import type { MessageBody } from '@/core';
 
-const escapeHtml = (text: string) =>
+export const escapeHtml = (text: string) =>
   text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 
 // One paragraph per line and a bare break for an empty one, as the editor writes them.

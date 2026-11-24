@@ -76,7 +76,6 @@ pub(super) fn answers<const N: usize>(rows: Vec<Rows>) -> Result<[Rows; N], Core
         .map_err(|rows| CoreError::storage(format!("{} answers to {N} statements", rows.len())))
 }
 
-/// The first column of the first row.
 fn scalar(rows: &Rows) -> Option<i64> {
     rows.first()?.first()?.as_i64()
 }
