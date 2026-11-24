@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { randomUUID } from 'expo-crypto';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { File } from 'expo-file-system';
@@ -41,12 +42,11 @@ type ComposerProps = { sender: Sender; mode?: ReplyMode; prefill?: Prefill; orig
 // Long enough to skip most keystrokes, short enough that a crash loses little.
 const AUTOSAVE_DELAY = 500;
 
-let pickCount = 0;
-
 const forwardKey = (info: AttachmentInfo) => `forward/${info.index}`;
 
 const attachment = (filename: string, mimeType: string | undefined, data: ArrayBuffer): DraftAttachment => ({
-  key: `picked/${pickCount++}`,
+  // Unique across launches: a reopened draft brings back the keys it was kept with.
+  key: `picked/${randomUUID()}`,
   filename,
   mimeType: mimeType || 'application/octet-stream',
   size: data.byteLength,
