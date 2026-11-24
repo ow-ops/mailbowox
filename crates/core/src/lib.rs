@@ -34,6 +34,7 @@ mod session;
 mod smtp;
 mod store;
 mod summary;
+mod text;
 mod tls;
 mod transport;
 mod types;
@@ -54,6 +55,17 @@ use smtp::SmtpConn;
 extern crate uniffi_runtime_wasm as _;
 
 uniffi::setup_scaffolding!();
+
+/// The text part of a formatted message, built from its HTML.
+#[uniffi::export]
+#[must_use]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "UniFFI hands strings over by value"
+)]
+pub fn html_to_text(html: String) -> String {
+    text::html_to_text(&html)
+}
 
 /// Sets the gateway (`http://` or `https://`) whose `/relay` the web build
 /// tunnels connections through; `Invalid` for another scheme. Native builds

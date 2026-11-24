@@ -151,6 +151,7 @@ export interface Core {
   sendMessage(config: AccountConfig, draft: Draft): Promise<ArrayBuffer>;
   buildMessage(draft: Draft): Promise<ArrayBuffer>;
   configureRelay(url: string, token: string): void;
+  htmlToText(html: string): string;
   discoverContacts(config: AccountConfig): Promise<string | undefined>;
   createContact(config: AccountConfig, addressBook: string, draft: ContactDraft): Promise<Contact>;
   updateContact(config: AccountConfig, contact: Contact, draft: ContactDraft): Promise<Contact>;

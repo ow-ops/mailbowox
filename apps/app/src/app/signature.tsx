@@ -7,7 +7,8 @@ import { Button } from '@/components/button';
 import { FormScreen } from '@/components/form-screen';
 import { FormatBar, RichBody, useRichEditor } from '@/components/rich-body';
 import { ThemedText } from '@/components/themed-text';
-import { htmlToText, signatureHtml } from '@/mail/rich';
+import { core } from '@/core';
+import { signatureHtml } from '@/mail/rich';
 
 export default function SignatureScreen() {
   const { account: id } = useLocalSearchParams<{ account: string }>();
@@ -22,7 +23,7 @@ function SignatureForm({ account }: { account: Account }) {
   const [html, setHtml] = useState(initial);
 
   const save = () => {
-    setSignature(account.id, htmlToText(html).trim() ? html : '');
+    setSignature(account.id, core.htmlToText(html).trim() ? html : '');
     router.back();
   };
 

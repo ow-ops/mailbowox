@@ -237,6 +237,7 @@ export const core = explainErrors<Core>({
   sendMessage: (config, draft) => native.sendMessage(toConfig(config), draft),
   buildMessage: async (draft) => native.buildMessage(draft),
   configureRelay: (url, token) => native.configureRelay(url, token),
+  htmlToText: (html) => native.htmlToText(html),
   discoverContacts: (config) => native.discoverContacts(toConfig(config)),
   createContact: (config, addressBook, draft) => native.createContact(toConfig(config), addressBook, draft),
   updateContact: (config, contact, draft) => native.updateContact(toConfig(config), contact, draft),

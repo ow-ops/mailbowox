@@ -17,9 +17,9 @@ export type LocalDraft = {
   cc: Recipients;
   bcc: Recipients;
   subject: string;
-  text: string;
-  // Missing in drafts kept before the editor.
   html?: string;
+  // Drafts kept before the editor have text instead of html.
+  text?: string;
 };
 
 type Returned = { draft: LocalDraft; attachments: DraftAttachment[] };

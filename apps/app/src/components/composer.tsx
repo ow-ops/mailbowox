@@ -16,7 +16,7 @@ import { Button } from '@/components/button';
 import { FormatBar, RichBody, useRichEditor } from '@/components/rich-body';
 import { SenderPicker } from '@/components/sender-picker';
 import { ThemedText, textStyles } from '@/components/themed-text';
-import type { Address, AttachmentInfo, Draft, DraftAttachment, OutgoingAttachment } from '@/core';
+import { core, type Address, type AttachmentInfo, type Draft, type DraftAttachment, type OutgoingAttachment } from '@/core';
 import { ColumnWidth, frameless, Hairline, Press, Radius, Spacing, TouchTarget } from '@/constants/theme';
 import { useFileDrop } from '@/hooks/use-file-drop';
 import { useTheme } from '@/hooks/use-theme';
@@ -26,8 +26,8 @@ import { explainError } from '@/core/errors';
 import { senders, setLastFrom, type Sender } from '@/mail/from';
 import { messageParams, type MessageRef } from '@/mail/refs';
 import { fetchForwarded } from '@/mail/forward';
-import { type Prefill, type ReplyMode } from '@/mail/reply';
-import { htmlToText, startHtml, textToHtml } from '@/mail/rich';
+import type { Prefill, ReplyMode } from '@/mail/reply';
+import { startHtml, textToHtml } from '@/mail/rich';
 import { handBack, readLocalDraft, removeLocalDraft, takeBack, writeLocalDraft, type LocalDraft } from '@/mail/local-drafts';
 import { saveDraft } from '@/mail/send';
 import { sendWithUndo } from '@/mail/undo-send';
@@ -105,7 +105,7 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
   const signatureOf = (account: string) => accounts.find((a) => a.id === account)?.signature;
   const quotedRich = prefill?.html ?? '';
   const [initialHtml] = useState(
-    () => saved?.html ?? (saved ? textToHtml(saved.text) : startHtml(quotedRich, signatureOf(sender.account))),
+    () => saved?.html ?? (saved ? textToHtml(saved.text ?? '') : startHtml(quotedRich, signatureOf(sender.account))),
   );
   const [html, setHtml] = useState(initialHtml);
   const { editorRef, selectionRef } = useRichEditor();
@@ -129,7 +129,7 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
 
   useEffect(() => {
     if (!touched) return;
-    unsaved.current = { account: sender.account, from: sender.address, to, cc, bcc, subject, text: htmlToText(html), html };
+    unsaved.current = { account: sender.account, from: sender.address, to, cc, bcc, subject, html };
     const timer = setTimeout(() => {
       if (unsaved.current) writeLocalDraft(slot, unsaved.current);
       unsaved.current = null;
@@ -223,7 +223,7 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
     cc: allRecipients(cc),
     bcc: allRecipients(bcc),
     subject,
-    text: htmlToText(html),
+    text: core.htmlToText(html),
     html,
     inReplyTo: prefill?.inReplyTo,
     references: prefill?.references ?? [],
@@ -240,16 +240,7 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
 
   const send = useMutation({
     mutationFn: () => {
-      const local: LocalDraft = {
-        account: sender.account,
-        from: sender.address,
-        to,
-        cc,
-        bcc,
-        subject,
-        text: htmlToText(html),
-        html,
-      };
+      const local: LocalDraft = { account: sender.account, from: sender.address, to, cc, bcc, subject, html };
       const files = attachments;
       return sendWithUndo(sender.account, draft(), () => {
         handBack(slot, local, files);
@@ -402,7 +393,7 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
               onChange={(nextHtml) => {
                 if (pristine.current === undefined) {
                   // The web editor reports itself empty before it has loaded the message.
-                  if (!htmlToText(nextHtml) && htmlToText(initialHtml)) return;
+                  if (!core.htmlToText(nextHtml) && core.htmlToText(initialHtml)) return;
                   pristine.current = nextHtml;
                   // Typing starts above the signature and the quoted text.
                   if (!saved && quotedRich) editorRef.current?.setSelection(0, 0);

@@ -33,7 +33,6 @@ type Props = EditorRefs & {
   minHeight?: number;
 };
 
-// Formatted text, kept as HTML.
 export function RichBody(props: Props) {
   const { editorRef, selectionRef, defaultValue, label, autoFocus, onChange, minHeight = 200 } = props;
   const theme = useTheme();

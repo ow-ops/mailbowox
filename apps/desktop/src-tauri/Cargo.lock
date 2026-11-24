@@ -3555,6 +3555,7 @@ dependencies = [
  "gloo-net",
  "gloo-timers",
  "hex",
+ "html5ever 0.40.1",
  "io-http",
  "io-imap",
  "io-pim-discovery",
@@ -3596,7 +3597,6 @@ dependencies = [
  "mailbowox-core",
  "mailbowox-gateway",
  "mailbowox-sql",
- "rusqlite",
  "serde",
  "serde_json",
  "tauri",
@@ -5130,15 +5130,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rsqlite-vfs"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "353b74f9810d5b085b6c42c9d86a5f0fdb795553235cdd48753b32e3809d18a7"
-dependencies = [
- "thiserror 2.0.21",
-]
-
-[[package]]
 name = "rusqlite"
 version = "0.43.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5150,7 +5141,6 @@ dependencies = [
  "hashlink 0.12.2",
  "libsqlite3-sys",
  "smallvec",
- "sqlite-wasm-rs",
 ]
 
 [[package]]
@@ -5901,16 +5891,6 @@ checksum = "d91ed6c858b01f942cd56b37a94b3e0a1798290327d1236e4d9cf4eaca44d29d"
 dependencies = [
  "base64ct",
  "der 0.7.10",
-]
-
-[[package]]
-name = "sqlite-wasm-rs"
-version = "0.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6cd504cecbfe7eef649988840f9a6cb768d11085efec138f8e99f160632d867"
-dependencies = [
- "cc",
- "rsqlite-vfs",
 ]
 
 [[package]]

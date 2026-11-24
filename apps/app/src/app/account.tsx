@@ -10,9 +10,9 @@ import { AccountSwatch } from '@/components/account-mark';
 import { NotificationSettings } from '@/components/notification-settings';
 import { Row, Section, SettingsScreen } from '@/components/settings';
 import { ThemedText } from '@/components/themed-text';
-import type { ServerConfig } from '@/core';
+import { core, type ServerConfig } from '@/core';
 import { explainError } from '@/core/errors';
-import { signatureText } from '@/mail/rich';
+import { signatureHtml } from '@/mail/rich';
 import { confirmAction } from '@/utils/dialog';
 import { showError } from '@/utils/toast';
 import { recordRemoval } from '@/vault/sync';
@@ -99,7 +99,7 @@ function AccountSettings({ account }: { account: Account }) {
       <Section>
         <Row
           title={t('settings.signature.title')}
-          detail={account.signature ? signatureText(account.signature).split('\n')[0] : t('settings.signature.none')}
+          detail={account.signature ? core.htmlToText(signatureHtml(account.signature)).split('\n')[0] : t('settings.signature.none')}
           chevron
           onPress={() => router.push({ pathname: '/signature', params: { account: account.id } })}
         />

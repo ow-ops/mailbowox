@@ -2369,6 +2369,7 @@ dependencies = [
  "gloo-net",
  "gloo-timers",
  "hex",
+ "html5ever",
  "io-http",
  "io-imap",
  "io-pim-discovery",

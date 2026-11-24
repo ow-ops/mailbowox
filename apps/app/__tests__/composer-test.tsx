@@ -9,7 +9,7 @@ import { saveDraft } from '@/mail/send';
 import { sendWithUndo } from '@/mail/undo-send';
 import { renderWithQueries } from '../jest/render';
 
-jest.mock('@mailbowox/core-native', () => ({}));
+jest.mock('@mailbowox/core-native', () => ({ htmlToText: jest.requireActual('../jest/enriched-html').plainText }));
 jest.mock('expo-router', () => jest.requireActual('../jest/expo-router'));
 jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
 jest.mock('expo-file-system', () => ({ File: jest.fn() }));
