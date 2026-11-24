@@ -12,10 +12,10 @@ tauri-build = { version = "2.7.6", features = [] }
 
 [dependencies]
 backon = { version = "1.6.0", default-features = false, features = ["std"] }
-hex = "0.4.3"
 mailbowox-core = { path = "../../../crates/core" }
 mailbowox-gateway = { path = "../../../crates/gateway" }
 mailbowox-sql = { path = "../../../crates/sql", features = ["engine"] }
+# The SQLite build mailbowox-sql's engine runs on.
 rusqlite = { version = "0.43.0", features = ["bundled"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"

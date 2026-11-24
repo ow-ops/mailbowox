@@ -3593,7 +3593,6 @@ name = "mailbowox-desktop"
 version = "0.1.0"
 dependencies = [
  "backon",
- "hex",
  "mailbowox-core",
  "mailbowox-gateway",
  "mailbowox-sql",

@@ -15,7 +15,6 @@
     "server": "The server returned an error. Try again in a moment.",
     "device": "Couldn't read or save data on this device."
   },
-  "databaseTooNew": "The {{name}} database was written by a newer version of this app. Update the app to open it.",
   "offline": {
     "title": "You're offline",
     "detail": "Showing what's saved on this device."

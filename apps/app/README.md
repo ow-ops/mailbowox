@@ -21,7 +21,6 @@ On web the app reaches mail servers through the gateway's `/relay`. First run as
 
 `pnpm exec expo export -p web` writes the site to `dist/`. `Dockerfile` serves it with Caddy (`Caddyfile`). Any other static host has to:
 
-- send `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: credentialless`, because expo-sqlite needs `SharedArrayBuffer`;
 - serve `.wasm` as `application/wasm` and compress it;
 - cache the hashed assets as immutable.
 

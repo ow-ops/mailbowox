@@ -1,5 +1,4 @@
 mod batch;
-mod db;
 mod inbox;
 
 use std::future::pending;
@@ -10,37 +9,13 @@ use mailbowox_gateway::{Config, Roles, serve};
 use serde_json::Value as Json;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::webview::{NewWindowResponse, PageLoadEvent};
+use tauri::webview::NewWindowResponse;
 use tauri::{AppHandle, Emitter, Manager, State, Url, WebviewWindowBuilder, WindowEvent};
 use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_opener::OpenerExt;
 
-use batch::Files;
-use db::{Databases, Outcome};
+use batch::{Files, remove_database};
 use inbox::{Inboxes, Watched, content};
-
-#[expect(
-    clippy::needless_pass_by_value,
-    reason = "Tauri hands a command its state by value"
-)]
-#[tauri::command(async)]
-fn db_exec(databases: State<'_, Databases>, name: &str, sql: &str) -> Result<(), String> {
-    databases.exec(name, sql)
-}
-
-#[expect(
-    clippy::needless_pass_by_value,
-    reason = "Tauri hands a command its state by value"
-)]
-#[tauri::command(async)]
-fn db_query(
-    databases: State<'_, Databases>,
-    name: &str,
-    sql: &str,
-    params: Vec<Json>,
-) -> Result<Outcome, String> {
-    databases.query(name, sql, params)
-}
 
 #[expect(
     clippy::needless_pass_by_value,
@@ -173,12 +148,7 @@ fn main() {
         }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
-        .invoke_handler(tauri::generate_handler![
-            db_batch,
-            db_exec,
-            db_query,
-            watch_inboxes
-        ])
+        .invoke_handler(tauri::generate_handler![db_batch, watch_inboxes])
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
@@ -207,8 +177,13 @@ fn main() {
             // deletes what belongs to an account its store does not list.
             let data = app.path().app_data_dir()?;
             let data = if cfg!(dev) { data.join("dev") } else { data };
-            app.manage(Files::new(data.clone()));
-            app.manage(Databases::new(data));
+            // The app kept these before its store; they only held copies of server data and the old outbox.
+            for name in ["mail.db", "contacts.db"] {
+                if let Err(error) = remove_database(&data, name) {
+                    eprintln!("could not remove {name}: {error}");
+                }
+            }
+            app.manage(Files::new(data));
             // The web build cannot open TCP, so it goes through the gateway's relay on loopback.
             let token = uuid::Uuid::new_v4().simple().to_string();
             let listener =
@@ -239,11 +214,6 @@ fn main() {
                         eprintln!("could not open {url}: {error}");
                     }
                     NewWindowResponse::Deny
-                })
-                .on_page_load(|webview, payload| {
-                    if payload.event() == PageLoadEvent::Started {
-                        webview.state::<Databases>().close();
-                    }
                 })
                 .build()?;
             Ok(())

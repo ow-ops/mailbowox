@@ -15,7 +15,6 @@
     "server": "Le serveur a renvoyé une erreur. Réessayez dans un instant.",
     "device": "Impossible de lire ou d’enregistrer les données sur cet appareil."
   },
-  "databaseTooNew": "La base {{name}} a été écrite par une version plus récente de l’application. Mettez l’application à jour pour l’ouvrir.",
   "offline": {
     "title": "Vous êtes hors ligne",
     "detail": "Affichage de ce qui est enregistré sur cet appareil."

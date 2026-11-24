@@ -2,7 +2,7 @@
 //! OPFS worker.
 
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Mutex, PoisonError};
 
 use mailbowox_sql::rusqlite::Connection;
@@ -51,16 +51,21 @@ impl mailbowox_sql::Databases for Open {
 
     fn remove(&mut self, name: &str) -> Result<(), String> {
         self.connections.remove(name);
-        for suffix in ["", "-wal", "-shm"] {
-            match std::fs::remove_file(self.dir.join(format!("{name}{suffix}"))) {
-                Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
-                    return Err(error.to_string());
-                }
-                _ => {}
-            }
-        }
-        Ok(())
+        remove_database(&self.dir, name)
     }
+}
+
+/// Deletes a database's file and its journal; one that is not there is already removed.
+pub(crate) fn remove_database(dir: &Path, name: &str) -> Result<(), String> {
+    for suffix in ["", "-wal", "-shm"] {
+        match std::fs::remove_file(dir.join(format!("{name}{suffix}"))) {
+            Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
+                return Err(error.to_string());
+            }
+            _ => {}
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]
