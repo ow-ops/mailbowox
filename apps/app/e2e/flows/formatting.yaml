@@ -1,0 +1,26 @@
+appId: eu.owops.mailbowox
+name: A message goes out formatted, with a link whose address its text part keeps
+---
+- runFlow: subflows/sign-in.yaml
+- tapOn: "New message"
+- tapOn: "To"
+- inputText: "bob@mailbowox.test"
+- tapOn: "Subject"
+- inputText: "Formatted plan"
+- tapOn: "Message"
+- inputText: "Plain then "
+- tapOn: "Bold"
+- inputText: "bold"
+- tapOn: "Bold"
+- inputText: " and "
+# With nothing selected the address goes in as the link's words.
+- tapOn: "Link"
+- tapOn: "Link address"
+- inputText: "example.org/docs"
+- tapOn: "Add link"
+- tapOn: "Send"
+- extendedWaitUntil:
+    visible: ".*Lunch on Friday.*"
+    timeout: 20000
+- runScript:
+    file: ../scripts/formatted-reached-bob.js

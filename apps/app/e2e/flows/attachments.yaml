@@ -1,0 +1,32 @@
+appId: eu.owops.mailbowox
+name: An attachment opens in place, and a photo is attached from the library
+---
+- runFlow: subflows/sign-in.yaml
+- tapOn: ".*Trip plan.*"
+- tapOn: ".*plan.txt.*"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: ".*Day one: the coast.*"
+          timeout: 10000
+      - tapOn: "Back"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "Back"
+- tapOn: "New message"
+- tapOn: "Attach photos"
+# The system picker; the simulator's library comes with sample photos.
+- extendedWaitUntil:
+    visible: "Photo, .*"
+    timeout: 10000
+- tapOn:
+    text: "Photo, .*"
+    index: 0
+- tapOn: "Done"
+- extendedWaitUntil:
+    visible: "Remove .*"
+    timeout: 10000

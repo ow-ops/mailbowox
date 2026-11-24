@@ -1,0 +1,15 @@
+appId: eu.owops.mailbowox
+name: A long press previews a message with its actions on iOS
+---
+- runFlow: subflows/sign-in.yaml
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - longPressOn: ".*Quarterly numbers.*"
+      - assertVisible: "The report is ready."
+      - assertVisible: "Archive"
+      - tapOn: "Reply"
+      - assertVisible: "Re: Quarterly numbers"
+      - tapOn: "Cancel"
+      - assertVisible: ".*Quarterly numbers.*"

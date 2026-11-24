@@ -9,4 +9,7 @@ executionOrder:
     - The inbox lists synced mail and the reader blocks remote images
     - A reply goes out, is filed in Sent and joins the conversation
     - A contact on the CardDAV server shows in Contacts and is suggested while addressing a message
+    - A message goes out formatted, with a link whose address its text part keeps
+    - A long press previews a message with its actions on iOS
+    - An attachment opens in place, and a photo is attached from the library
     - Two accounts share All inboxes, and a reply goes out from the account the mail was sent to

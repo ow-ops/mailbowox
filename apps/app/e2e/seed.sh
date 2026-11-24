@@ -25,6 +25,25 @@ Content-Type: text/html; charset=utf-8
 <p>The report is ready.</p><img src="https://tracker.example/pixel.gif" width="1" height="1">
 EOF
 
+send <<'EOF'
+From: Bob <bob@mailbowox.test>
+To: Alice <alice@mailbowox.test>
+Subject: Trip plan
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary=plan
+
+--plan
+Content-Type: text/plain; charset=utf-8
+
+The plan is attached.
+--plan
+Content-Type: text/plain; charset=utf-8; name=plan.txt
+Content-Disposition: attachment; filename=plan.txt
+
+Day one: the coast. Day two: the hills.
+--plan--
+EOF
+
 send alice bob <<'EOF'
 From: Alice <alice@mailbowox.test>
 To: Bob <bob@mailbowox.test>
