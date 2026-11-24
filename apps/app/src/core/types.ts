@@ -137,6 +137,8 @@ export interface MailStore {
   setQueuedError(id: number, error: string | null): Promise<void>;
   setDraftAttachments(slot: string, attachments: DraftAttachment[]): Promise<void>;
   setOwnAddresses(account: string, emails: string[]): Promise<void>;
+  avatar(email: string): Promise<{ source?: string; checkedAt: number } | undefined>;
+  setAvatar(email: string, source: string | undefined): Promise<void>;
   moveSender(account: string, email: string, category: Category): Promise<void>;
   draftAttachments(slot: string): Promise<DraftAttachment[]>;
 }

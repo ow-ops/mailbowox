@@ -158,7 +158,9 @@
     "remoteSendersCount_one": "{{count}} expéditeur",
     "remoteSendersCount_other": "{{count}} expéditeurs",
     "remoteSendersHint": "Les images de ces expéditeurs se chargent sans demander. Choisissez-en un pour qu’on vous redemande.",
-    "stopLoading": "Ne plus charger automatiquement"
+    "stopLoading": "Ne plus charger automatiquement",
+    "pictures": "Photos des contacts",
+    "picturesDetail": "Affiche la photo qu'un expéditeur a mise sur Gravatar, sinon le logo ou l'icône du site de son entreprise. Gravatar et ces sites apprennent quelles adresses vous consultez."
   },
   "crashReports": {
     "title": "Rapports de plantage",

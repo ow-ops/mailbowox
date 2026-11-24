@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAccounts } from '@/accounts/store';
 import { AccountMark } from '@/components/account-mark';
 import { Button } from '@/components/button';
+import { ContactAvatar } from '@/components/contact-avatar';
 import { IconButton } from '@/components/icon-button';
 import { MailBody } from '@/components/mail-body';
 import { NativeMenu } from '@/components/native-menu';
@@ -460,13 +461,16 @@ function Header({ item }: { item: StoredItem }) {
 
   return (
     <View style={styles.header}>
-      <View>
-        <ThemedText type="name">{sender ? addressName(sender) : t('mail.row.nobody')}</ThemedText>
-        {sender?.name && (
-          <ThemedText type="meta" selectable>
-            {sender.email}
-          </ThemedText>
-        )}
+      <View style={styles.sender}>
+        <ContactAvatar name={sender ? addressName(sender) : '?'} email={sender?.email} size={36} />
+        <View style={styles.grow}>
+          <ThemedText type="name">{sender ? addressName(sender) : t('mail.row.nobody')}</ThemedText>
+          {sender?.name && (
+            <ThemedText type="meta" selectable>
+              {sender.email}
+            </ThemedText>
+          )}
+        </View>
       </View>
       {recipients.length > 0 && (
         <Pressable
@@ -611,6 +615,7 @@ const styles = StyleSheet.create({
   headContent: { paddingTop: Spacing.three, paddingBottom: Spacing.three, gap: Spacing.two },
   header: { paddingHorizontal: Spacing.three, gap: Spacing.two },
   subject: { paddingHorizontal: Spacing.three },
+  sender: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   collapsedMessage: {
     flexDirection: 'row',
     alignItems: 'center',

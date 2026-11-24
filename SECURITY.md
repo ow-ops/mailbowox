@@ -14,6 +14,8 @@ The app and the Rust core connect straight to your IMAP, SMTP and CardDAV server
 
 No project server is involved. Your provider sees your mail, as always. Adding an account looks up its servers: the address's domain goes to Cloudflare (DNS over HTTPS) and to Thunderbird's provider database, and the full address to the domain's own autoconfig server when it has one. No password is sent until you sign in.
 
+Contact pictures are on by default and can be turned off in Settings: for each address shown, the app asks Gravatar for a picture (by the address's SHA-256 hash), then, for a company address, Cloudflare's DNS resolver for the domain's BIMI logo and the company's website for its icon. Those services learn the addresses and domains you look at. What is found is kept on the device for a month.
+
 Crash reports are opt-in and off by default; [apps/app/README.md](apps/app/README.md#crash-reporting) says what they hold.
 
 ### The gateway (`crates/gateway`)

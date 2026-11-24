@@ -14,6 +14,7 @@ export type Prefs = {
   remoteSenders: string[];
   conversations: boolean;
   inboxCategories: boolean;
+  contactPictures: boolean;
   relayUrl: string;
   relayToken: string;
   // Hue index per account email, synced so every device shows an account in the same colour.
@@ -25,6 +26,7 @@ export const prefsSchema = v.looseObject({
   remoteContent: v.fallback(v.picklist(PREF_OPTIONS.remoteContent), 'ask'),
   conversations: v.optional(v.boolean(), true),
   inboxCategories: v.optional(v.boolean(), true),
+  contactPictures: v.optional(v.boolean(), true),
   relayUrl: v.optional(v.string(), ''),
   relayToken: v.optional(v.string(), ''),
   accountColors: v.optional(v.record(v.string(), v.number()), {}),

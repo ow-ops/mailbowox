@@ -13,6 +13,7 @@ Status: pre-release. The app has no store listing yet.
 - **Quick triage.** Swipe to archive or mark as read, select several messages at once, and undo an archive, a delete or a send.
 - **Unsubscribe in one tap** from mailing lists.
 - **Contacts** synced with your provider over CardDAV, suggested as you type an address.
+- **Contact pictures** from Gravatar, or a company's logo or website icon.
 - **Send-from addresses and signatures** per account.
 - **Your accounts on all your devices.** Link a new device with a code from one you already use, so you never type a password twice. Account settings are encrypted on your device before they leave it.
 - **New-mail notifications**, if you turn them on.
@@ -37,6 +38,7 @@ Install [Obtainium](https://obtainium.imranr.dev), then tap **Add to Obtainium**
 ## Privacy
 
 - The mobile app connects directly to your provider over TLS. The web app connects over TLS through a relay that forwards encrypted traffic.
+- Contact pictures, on by default, tell Gravatar and senders' company websites which addresses you look at, and Cloudflare's DNS resolver which company domains. Turn them off in Settings, Privacy.
 - Remote images stay blocked until you allow them. Message HTML is sanitised and rendered in a web view with JavaScript off.
 - There are no analytics. Crash reports are opt-in, off by default, and only in builds made with a Sentry DSN.
 - Account sync and new-mail notifications are opt-in. Sync encrypts account settings on your device before upload. The push gateway holds your IMAP password to watch the inbox, so its operator can access your mail. See [SECURITY.md](SECURITY.md) for details.

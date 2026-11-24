@@ -183,6 +183,14 @@ const MIGRATIONS: &[&[&str]] = &[
            PRIMARY KEY (account, email)
          )",
     ],
+    &[
+        // Where each address's picture was found, if anywhere; looked for again after a while.
+        "CREATE TABLE avatars (
+           email TEXT PRIMARY KEY,
+           source TEXT,
+           checked_at INTEGER NOT NULL
+         )",
+    ],
 ];
 
 pub(super) async fn migrate(exec: &Exec) -> Result<(), CoreError> {

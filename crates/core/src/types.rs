@@ -426,3 +426,11 @@ pub struct StoredContact {
     pub book: String,
     pub contact: Contact,
 }
+
+/// Where an address's picture was found, `None` when nowhere.
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct Avatar {
+    pub source: Option<String>,
+    /// Unix seconds.
+    pub checked_at: i64,
+}

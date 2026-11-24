@@ -158,7 +158,9 @@
     "remoteSendersCount_one": "{{count}} sender",
     "remoteSendersCount_other": "{{count}} senders",
     "remoteSendersHint": "Images from these senders load without asking. Choose one to go back to asking.",
-    "stopLoading": "Stop loading automatically"
+    "stopLoading": "Stop loading automatically",
+    "pictures": "Contact pictures",
+    "picturesDetail": "Shows the picture a sender set on Gravatar, else their company's logo or website icon. Gravatar and those websites learn which addresses you look at."
   },
   "crashReports": {
     "title": "Crash reports",

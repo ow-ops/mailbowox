@@ -19,6 +19,7 @@ export default function SettingsTab() {
   const remoteContent = usePref('remoteContent');
   const conversations = usePref('conversations');
   const inboxCategories = usePref('inboxCategories');
+  const contactPictures = usePref('contactPictures');
   const remoteSenders = usePref('remoteSenders');
 
   return (
@@ -70,6 +71,12 @@ export default function SettingsTab() {
             onPress={() => router.push('/remote-senders')}
           />
         )}
+        <ToggleRow
+          title={t('settings.privacy.pictures')}
+          detail={t('settings.privacy.picturesDetail')}
+          value={contactPictures}
+          onValueChange={(value) => setPref('contactPictures', value)}
+        />
       </Section>
 
       {asksForRelay() && <RelaySettings />}

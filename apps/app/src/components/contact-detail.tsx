@@ -51,7 +51,7 @@ function Detail({ item }: { item: StoredContact }) {
     <ScrollView contentContainerStyle={styles.scroll} contentInsetAdjustmentBehavior="automatic">
       <View style={styles.content}>
         <View style={styles.header}>
-          <ContactAvatar name={name} photo={embeddedPhoto(contact.photo)} size={72} />
+          <ContactAvatar name={name} photo={embeddedPhoto(contact.photo)} email={contact.emails[0]?.value} size={72} />
           <View style={styles.headerText}>
             <ThemedText themeColor="heading" style={styles.title} accessibilityRole="header">
               {name}

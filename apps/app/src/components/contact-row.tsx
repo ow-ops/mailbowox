@@ -25,7 +25,7 @@ export function ContactRow({ contact }: { contact: Row }) {
               styles.row,
               { borderBottomColor: theme.border, backgroundColor: pressed ? theme.surface : theme.page },
             ]}>
-            <ContactAvatar name={name} />
+            <ContactAvatar name={name} email={contact.email} />
             <View style={styles.text}>
               <ThemedText type="label" numberOfLines={1}>
                 {name}

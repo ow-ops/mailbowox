@@ -217,6 +217,11 @@ function wrapStore(store: native.MailStoreLike): MailStore {
     setDraftAttachments: (slot, attachments) =>
       store.setDraftAttachments(slot, attachments.map((a) => ({ ...a, size: BigInt(a.size) }))),
     setOwnAddresses: (account, emails) => store.setOwnAddresses(account, emails),
+    avatar: async (email) => {
+      const found = await store.avatar(email);
+      return found && { source: found.source, checkedAt: Number(found.checkedAt) };
+    },
+    setAvatar: (email, source) => store.setAvatar(email, source),
     moveSender: (account, email, category) => store.moveSender(account, email, toCategory(category)),
     draftAttachments: async (slot) =>
       (await store.draftAttachments(slot)).map((a) => ({ ...a, size: Number(a.size) })),
