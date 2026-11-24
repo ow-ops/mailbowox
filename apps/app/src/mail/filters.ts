@@ -9,14 +9,16 @@ export type FilterKey = 'unread' | 'flagged' | 'toMe' | 'ccMe' | 'attachments' |
 
 export const FILTER_KEYS: FilterKey[] = ['unread', 'flagged', 'toMe', 'ccMe', 'attachments', 'today'];
 
-const filters = createStore<Record<FilterKey, boolean>>(() => ({
+const NONE: Record<FilterKey, boolean> = {
   unread: false,
   flagged: false,
   toMe: false,
   ccMe: false,
   attachments: false,
   today: false,
-}));
+};
+
+const filters = createStore(() => NONE);
 
 export const useFilters = () => useStore(filters);
 
@@ -38,6 +40,11 @@ export function listFilter(on: Record<FilterKey, boolean>, accounts: Account[], 
 const hiddenAccounts = createStore<{ hidden: string[] }>(() => ({ hidden: [] }));
 
 export const useHiddenAccounts = () => useStore(hiddenAccounts, (state) => state.hidden);
+
+export function clearFilters() {
+  filters.setState(NONE);
+  hiddenAccounts.setState({ hidden: [] });
+}
 
 export const toggleAccount = (id: string) =>
   hiddenAccounts.setState(({ hidden }) => ({

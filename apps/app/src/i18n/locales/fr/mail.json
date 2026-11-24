@@ -145,6 +145,8 @@
   },
   "filters": {
     "label": "Afficher seulement",
+    "button": "Filtrer",
+    "clear": "Effacer",
     "unread": "Non lus",
     "flagged": "Suivis",
     "toMe": "À moi",

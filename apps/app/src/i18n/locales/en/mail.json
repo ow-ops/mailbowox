@@ -145,6 +145,8 @@
   },
   "filters": {
     "label": "Show only",
+    "button": "Filter",
+    "clear": "Clear",
     "unread": "Unread",
     "flagged": "Flagged",
     "toMe": "To me",

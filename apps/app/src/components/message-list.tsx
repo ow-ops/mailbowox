@@ -6,7 +6,6 @@ import { StyleSheet, View } from 'react-native';
 
 import { useAccounts } from '@/accounts/store';
 import { Button } from '@/components/button';
-import { CategoryBar } from '@/components/category-bar';
 import { ErrorExplanation } from '@/components/error-explanation';
 import { ListFilters } from '@/components/list-filters';
 import { OfflineBanner } from '@/components/offline-banner';
@@ -86,8 +85,7 @@ export function MessageList({ view, selected, onOpen }: Props) {
       ListHeaderComponent={
         <>
           <OfflineBanner />
-          {categories && <CategoryBar />}
-          <ListFilters view={view} />
+          <ListFilters view={view} categories={categories} />
           <OutboxBanners accounts={boxes.map((box) => box.account)} />
           {!notSynced && (
             <SyncFailureBanners errors={failing} title={(email) => t('mail.list.syncFailed', { email })} />
