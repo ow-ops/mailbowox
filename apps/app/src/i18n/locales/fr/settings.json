@@ -32,6 +32,12 @@
     "remove": "Supprimer l’adresse",
     "duplicate": "Ce compte utilise déjà cette adresse."
   },
+  "accountName": {
+    "none": "Aucun",
+    "placeholder": "Votre nom",
+    "hint": "Affiché aux personnes à qui vous écrivez depuis {{email}}.",
+    "save": "Enregistrer"
+  },
   "signature": {
     "title": "Signature",
     "none": "Aucune",

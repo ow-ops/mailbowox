@@ -144,6 +144,7 @@ function RootStack() {
         <Stack.Screen name="account" />
         <Stack.Screen name="identity" options={{ title: t('settings.identity.title') }} />
         <Stack.Screen name="signature" options={{ title: t('settings.signature.title') }} />
+        <Stack.Screen name="account-name" options={{ title: t('settings.account.name') }} />
         <Stack.Screen name="remote-senders" />
         <Stack.Screen name="sync" />
       </Stack.Protected>

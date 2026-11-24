@@ -117,6 +117,12 @@ export function setIdentities(id: string, identities: Address[]) {
   });
 }
 
+export function setDisplayName(id: string, displayName: string) {
+  accountsStore.setState({
+    accounts: getAccounts().map((a) => (a.id === id ? { ...a, displayName, updatedAt: Date.now() } : a)),
+  });
+}
+
 export function setSignature(id: string, signature: string) {
   accountsStore.setState({
     accounts: getAccounts().map((a) => (a.id === id ? { ...a, signature: signature || undefined, updatedAt: Date.now() } : a)),

@@ -44,7 +44,12 @@ function AccountSettings({ account }: { account: Account }) {
   return (
     <SettingsScreen title={account.displayName || account.email}>
       <Section>
-        {account.displayName ? <Row title={t('settings.account.name')} detail={account.displayName} /> : null}
+        <Row
+          title={t('settings.account.name')}
+          detail={account.displayName || t('settings.accountName.none')}
+          chevron
+          onPress={() => router.push({ pathname: '/account-name', params: { account: account.id } })}
+        />
         <Row title={t('settings.account.email')} detail={account.email} />
       </Section>
 
