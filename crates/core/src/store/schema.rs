@@ -161,6 +161,28 @@ const MIGRATIONS: &[&[&str]] = &[
            DELETE FROM message_text WHERE rowid = old.rowid;
          END",
     ],
+    &[
+        "ALTER TABLE messages ADD COLUMN category INTEGER NOT NULL DEFAULT 0",
+        // Each account's own addresses, so its sent mail shows who it writes to.
+        "CREATE TABLE own_addresses (
+           account TEXT NOT NULL,
+           email TEXT NOT NULL,
+           PRIMARY KEY (account, email)
+         )",
+        // People the account writes to: their mail is Primary however it was sent.
+        "CREATE TABLE correspondents (
+           account TEXT NOT NULL,
+           email TEXT NOT NULL,
+           PRIMARY KEY (account, email)
+         )",
+        // Senders moved to a category by hand, with their past and future mail.
+        "CREATE TABLE sender_categories (
+           account TEXT NOT NULL,
+           email TEXT NOT NULL,
+           category INTEGER NOT NULL,
+           PRIMARY KEY (account, email)
+         )",
+    ],
 ];
 
 pub(super) async fn migrate(exec: &Exec) -> Result<(), CoreError> {

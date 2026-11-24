@@ -7,6 +7,7 @@ use mailbowox_sql::rusqlite::Connection;
 
 use super::{MailStore, OlderMail, SqlRunner};
 use crate::{
+    category::Category,
     error::CoreError,
     types::{
         Address, Flags, ListFilter, MailItem, MailboxRef, MessageBody, MessageRef, MessageSummary,
@@ -68,6 +69,7 @@ fn summary(uid: u32, date: i64) -> MessageSummary {
         preview: String::new(),
         has_attachments: false,
         size: 10,
+        category: Category::Primary,
     }
 }
 
@@ -1268,4 +1270,94 @@ async fn a_uid_the_server_reuses_loses_the_old_body_text() {
         found(&store, &[boxed("r", "INBOX")], search_query(&["quokka"])).await,
         []
     );
+}
+
+fn from(mut summary: MessageSummary, email: &str, category: Category) -> MessageSummary {
+    summary.from = vec![Address {
+        name: None,
+        email: email.to_owned(),
+    }];
+    summary.category = category;
+    summary
+}
+
+async fn in_category(store: &MailStore, category: Category) -> Vec<u32> {
+    let filter = ListFilter {
+        category: Some(category),
+        ..ListFilter::default()
+    };
+    page_uids(store, &[boxed("c", "INBOX")], None, 50, &filter).await
+}
+
+#[tokio::test]
+async fn categories_follow_the_rules_until_you_write_to_or_move_a_sender() {
+    let store = store().await;
+    store
+        .set_own_addresses("c".to_owned(), vec!["Me@Example.com".to_owned()])
+        .await
+        .unwrap();
+    let inbox = vec![
+        from(summary(1, 100), "news@shop.example", Category::Promotions),
+        from(summary(2, 200), "bob@example.com", Category::Updates),
+        from(summary(3, 300), "friend@example.com", Category::Primary),
+    ];
+    store
+        .apply_sync(
+            "c",
+            "INBOX",
+            &sync(state(1, 10), true, inbox, vec![], false),
+        )
+        .await
+        .unwrap();
+    assert_eq!(in_category(&store, Category::Promotions).await, [1]);
+    assert_eq!(in_category(&store, Category::Updates).await, [2]);
+
+    // Writing to Bob makes him someone you correspond with: his next mail is Primary.
+    let mut sent = from(summary(1, 250), "me@example.com", Category::Primary);
+    sent.to = vec![Address {
+        name: None,
+        email: "Bob@Example.com".to_owned(),
+    }];
+    store
+        .apply_sync(
+            "c",
+            "Sent",
+            &sync(state(1, 10), true, vec![sent], vec![], false),
+        )
+        .await
+        .unwrap();
+    let next = from(summary(4, 400), "bob@example.com", Category::Updates);
+    store
+        .apply_sync(
+            "c",
+            "INBOX",
+            &sync(state(1, 10), false, vec![next], vec![], false),
+        )
+        .await
+        .unwrap();
+    assert_eq!(in_category(&store, Category::Primary).await, [4, 3]);
+
+    // Moving the shop takes its past and future mail along.
+    store
+        .move_sender(
+            "c".to_owned(),
+            "News@Shop.example".to_owned(),
+            Category::Updates,
+        )
+        .await
+        .unwrap();
+    let later = from(summary(5, 500), "news@shop.example", Category::Promotions);
+    store
+        .apply_sync(
+            "c",
+            "INBOX",
+            &sync(state(1, 10), false, vec![later], vec![], false),
+        )
+        .await
+        .unwrap();
+    assert_eq!(
+        in_category(&store, Category::Promotions).await,
+        Vec::<u32>::new()
+    );
+    assert_eq!(in_category(&store, Category::Updates).await, [5, 2, 1]);
 }

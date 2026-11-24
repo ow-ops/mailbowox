@@ -9,7 +9,6 @@ import type {
   ContactDraft,
   Draft,
   Flags,
-  ListFilter,
   MailboxRef,
   OutgoingAttachment,
   MailboxUids,
@@ -18,6 +17,8 @@ import type {
   AccountConfig as NativeAccountConfig,
   DiscoveredSettings as NativeDiscoveredSettings,
   Mailbox as NativeMailbox,
+  Category as NativeCategory,
+  ListFilter as NativeListFilter,
   MailboxRole as NativeMailboxRole,
   MailItem as NativeMailItem,
   StoredMessage as NativeStoredMessage,
@@ -40,7 +41,6 @@ export type {
   ContactValue,
   Draft,
   Flags,
-  ListFilter,
   OutgoingAttachment,
   SearchQuery,
   StoredContact,
@@ -50,13 +50,15 @@ type EnumName<E> = Uncapitalize<Extract<keyof E, string>>;
 
 export type Security = EnumName<typeof NativeSecurity>;
 export type MailboxRole = EnumName<typeof NativeMailboxRole>;
+export type Category = EnumName<typeof NativeCategory>;
 export type TlsFailure = EnumName<typeof NativeTlsFailure>;
 export type DiscoverySource = 'autoconfig' | 'ispdb' | 'provider' | 'srv' | 'mx' | 'probe';
 
 export type ServerConfig = Omit<NativeServerConfig, 'security'> & { security: Security };
 export type AccountConfig = Omit<NativeAccountConfig, 'imap' | 'smtp'> & { imap: ServerConfig; smtp: ServerConfig };
 export type Mailbox = Omit<NativeMailbox, 'role'> & { role?: MailboxRole };
-export type MessageSummary = Omit<NativeMessageSummary, 'date'> & { date: number };
+export type MessageSummary = Omit<NativeMessageSummary, 'date' | 'category'> & { date: number; category: Category };
+export type ListFilter = Omit<NativeListFilter, 'category'> & { category?: Category };
 export type MessageBody = NativeMessageBody;
 export type MailItem = Omit<NativeMailItem, 'summary'> & { summary: MessageSummary };
 type StoredMessage = Omit<NativeStoredMessage, 'summary'> & { summary: MessageSummary };
@@ -134,6 +136,8 @@ export interface MailStore {
   removeQueued(id: number): Promise<void>;
   setQueuedError(id: number, error: string | null): Promise<void>;
   setDraftAttachments(slot: string, attachments: DraftAttachment[]): Promise<void>;
+  setOwnAddresses(account: string, emails: string[]): Promise<void>;
+  moveSender(account: string, email: string, category: Category): Promise<void>;
   draftAttachments(slot: string): Promise<DraftAttachment[]>;
 }
 

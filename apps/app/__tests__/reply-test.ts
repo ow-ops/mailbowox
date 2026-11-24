@@ -19,6 +19,7 @@ const original: MessageSummary = {
   preview: '',
   hasAttachments: false,
   size: 100,
+  category: 'primary',
 };
 
 const SELF = 'me@example.org';

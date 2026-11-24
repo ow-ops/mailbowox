@@ -9,7 +9,7 @@ import { isOnline } from '@/utils/network';
 import type { Cursor, MailboxRole } from '@/core';
 import { queryClient } from '@/utils/query-client';
 
-import { isFiltered, listFilter, useFilters } from './filters';
+import { hasCategories, isFiltered, listFilter, useCategoryChoice, useFilters } from './filters';
 import type { Conversation, MailboxGeneration, MailboxRef, MessageRef } from './refs';
 import { isEmptyQuery, parseQuery, rankResults, storeQuery } from './search';
 import { withSession } from './session';
@@ -27,15 +27,18 @@ export function useConversations(view: MailView) {
   const boxes = boxesOf(view, accounts);
   const grouped = usePref('conversations');
   const on = useFilters();
-  const filter = listFilter({ ...on, unread: on.unread || view.kind === 'unread' }, accounts);
+  const choice = useCategoryChoice();
+  const sorted = usePref('inboxCategories') && hasCategories(view) && choice !== 'all';
+  const filter = listFilter({ ...on, unread: on.unread || view.kind === 'unread' }, accounts, sorted ? choice : undefined);
   return useInfiniteQuery({
     queryKey: ['messages', view.kind, boxes, grouped, filter],
     initialPageParam: undefined as Cursor | undefined,
     queryFn: async ({ pageParam }) => {
       const store = await mailStore();
-      // A filtered list shows what is cached: paging the server for a few matches could walk every mailbox to
-      // its first message. Offline, the list ends where the cache does.
-      if (isFiltered(filter) || !isOnline()) return store.page(boxes, pageParam, PAGE_SIZE, grouped, filter);
+      // A filtered list, or a category other than Primary, shows what is cached: paging the server for a few
+      // matches could walk every mailbox to its first message. Offline, the list ends where the cache does.
+      const sparse = isFiltered(filter) || (filter.category !== undefined && filter.category !== 'primary');
+      if (sparse || !isOnline()) return store.page(boxes, pageParam, PAGE_SIZE, grouped, filter);
       return store.loadPage(boxes, pageParam, PAGE_SIZE, grouped, filter, fetchOlder);
     },
     // A short page is not the end: conversations fold several messages into a row, and the cache may stop

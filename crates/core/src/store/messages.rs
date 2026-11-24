@@ -8,6 +8,7 @@ use super::{
     threads::{ThreadIndex, assign_threads, base_subject, thread_ids},
 };
 use crate::{
+    category::Category,
     error::CoreError,
     types::{
         KnownMessage, MailItem, Mailbox, MessageRef, MessageSummary, Oldest, StoredMessage,
@@ -102,6 +103,13 @@ fn remove(r: &MessageRef) -> [Statement; 2] {
             params: message_key(r).to_vec(),
         },
     ]
+}
+
+fn sender(summary: &MessageSummary) -> String {
+    summary
+        .from
+        .first()
+        .map_or_default(|from| from.email.to_lowercase())
 }
 
 /// A conversation with no message left has no use for its ids and subject.
@@ -216,12 +224,14 @@ fn upsert(
         let summary = &item.summary;
         statements.push(statement!(
             // An update keeps the row, and with it the message's place in the search index.
-            "INSERT INTO messages (account, mailbox, uid, uid_validity, date, seen, flagged, thread, summary, search)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            "INSERT INTO messages (account, mailbox, uid, uid_validity, date, seen, flagged, thread, summary, search, category)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(
+               (SELECT category FROM sender_categories WHERE account = ?1 AND email = ?11),
+               CASE WHEN EXISTS (SELECT 1 FROM correspondents WHERE account = ?1 AND email = ?11) THEN 0 ELSE ?12 END))
              ON CONFLICT (account, mailbox, uid) DO UPDATE SET
                uid_validity = excluded.uid_validity, date = excluded.date, seen = excluded.seen,
                flagged = excluded.flagged, thread = excluded.thread, summary = excluded.summary,
-               search = excluded.search",
+               search = excluded.search, category = excluded.category",
             account,
             item.mailbox.as_str(),
             i64::from(summary.uid),
@@ -231,7 +241,24 @@ fn upsert(
             i64::from(summary.flags.flagged),
             thread.as_str(),
             json(summary)?,
-            search_text(summary)
+            search_text(summary),
+            sender(summary),
+            summary.category.code()
+        ));
+        // Mail the account sent tells who it writes to.
+        let recipients: Vec<String> = summary
+            .to
+            .iter()
+            .chain(&summary.cc)
+            .map(|a| a.email.to_lowercase())
+            .collect();
+        statements.push(statement!(
+            "INSERT OR IGNORE INTO correspondents (account, email)
+             SELECT ?1, value FROM json_each(?2)
+             WHERE EXISTS (SELECT 1 FROM own_addresses WHERE account = ?1 AND email = ?3)",
+            account,
+            json(&recipients)?,
+            sender(summary)
         ));
         for address in summary.from.iter().chain(&summary.to).chain(&summary.cc) {
             statements.push(statement!(
@@ -481,6 +508,53 @@ impl MailStore {
             .collect()
     }
 
+    /// The account's own addresses, which tell its sent mail apart.
+    pub async fn set_own_addresses(
+        &self,
+        account: String,
+        emails: Vec<String>,
+    ) -> Result<(), CoreError> {
+        let mut statements = vec![statement!(
+            "DELETE FROM own_addresses WHERE account = ?",
+            account.as_str()
+        )];
+        statements.extend(emails.into_iter().map(|email| {
+            statement!(
+                "INSERT OR IGNORE INTO own_addresses (account, email) VALUES (?, ?)",
+                account.as_str(),
+                email.to_lowercase()
+            )
+        }));
+        self.exec.batch(statements).await.map(drop)
+    }
+
+    /// Puts the sender's past and future mail in `category`.
+    pub async fn move_sender(
+        &self,
+        account: String,
+        email: String,
+        category: Category,
+    ) -> Result<(), CoreError> {
+        let email = email.to_lowercase();
+        self.exec
+            .batch(vec![
+                statement!(
+                    "INSERT OR REPLACE INTO sender_categories (account, email, category) VALUES (?, ?, ?)",
+                    account.as_str(),
+                    email.as_str(),
+                    category.code()
+                ),
+                statement!(
+                    "UPDATE messages SET category = ? WHERE account = ? AND lower(json_extract(summary, '$.from[0].email')) = ?",
+                    category.code(),
+                    account,
+                    email
+                ),
+            ])
+            .await
+            .map(drop)
+    }
+
     pub async fn delete_account(&self, account: String) -> Result<(), CoreError> {
         let account = account.as_str();
         let _writing = self.writes.lock().await;
@@ -495,6 +569,9 @@ impl MailStore {
             "outbox",
             "address_books",
             "contacts",
+            "own_addresses",
+            "correspondents",
+            "sender_categories",
         ]
         .map(|table| statement!(format!("DELETE FROM {table} WHERE account = ?"), account));
         self.exec.batch(statements.to_vec()).await?;

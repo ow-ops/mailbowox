@@ -299,6 +299,8 @@ mod tests {
             preview: preview.into(),
             has_attachments: false,
             size: 0,
+
+            category: mailbowox_core::Category::Primary,
         }
     }
 

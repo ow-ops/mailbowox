@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { useAccounts } from '@/accounts/store';
 import { Button } from '@/components/button';
+import { CategoryBar } from '@/components/category-bar';
 import { ErrorExplanation } from '@/components/error-explanation';
 import { ListFilters } from '@/components/list-filters';
 import { OfflineBanner } from '@/components/offline-banner';
@@ -19,10 +20,11 @@ import { useTheme } from '@/hooks/use-theme';
 import { sameMessage, type MessageRef, type StoredItem , Conversation } from '@/mail/refs';
 import { explainError } from '@/core/errors';
 import { useConversations, useMailboxes } from '@/mail/queries';
-import { isFiltered, useFilters } from '@/mail/filters';
+import { hasCategories, isFiltered, useFilters } from '@/mail/filters';
 import { conversationKey, useSelection } from '@/mail/selection';
 import { retrySync, syncMailbox, useSyncErrors } from '@/mail/sync';
 import { boxesOf, type MailView } from '@/mail/view';
+import { usePref } from '@/prefs/store';
 import { isOnline, useOnline } from '@/utils/network';
 import { settleAll } from '@/utils/settle';
 
@@ -44,6 +46,7 @@ export function MessageList({ view, selected, onOpen }: Props) {
   const conversations = query.data?.pages.flat() ?? [];
   const selection = useSelection();
   const filtered = isFiltered(useFilters());
+  const categories = usePref('inboxCategories') && hasCategories(view);
   // The same object while neither changes, so the rows are not all rendered again with the list.
   const extraData = useMemo(() => ({ selected, selection }), [selected, selection]);
   const boxes = boxesOf(view, accounts);
@@ -83,6 +86,7 @@ export function MessageList({ view, selected, onOpen }: Props) {
       ListHeaderComponent={
         <>
           <OfflineBanner />
+          {categories && <CategoryBar />}
           <ListFilters />
           <OutboxBanners accounts={boxes.map((box) => box.account)} />
           {!notSynced && (

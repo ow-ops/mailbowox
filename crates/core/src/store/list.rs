@@ -36,6 +36,10 @@ fn narrowed(alias: &str, filter: &ListFilter) -> Result<(String, Vec<Value>), Co
             "json_extract({alias}.summary, '$.has_attachments')"
         ));
     }
+    if let Some(category) = filter.category {
+        conditions.push(format!("{alias}.category = ?"));
+        params.push(category.code().into());
+    }
     if filter.to_me {
         let me: Vec<String> = filter.me.iter().map(|email| email.to_lowercase()).collect();
         let me = json(&me)?;

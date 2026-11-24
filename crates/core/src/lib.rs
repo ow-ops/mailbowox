@@ -17,6 +17,7 @@
 
 mod body;
 mod carddav;
+mod category;
 mod compose;
 mod dav;
 mod discover;
@@ -39,6 +40,7 @@ mod types;
 mod unsubscribe;
 mod vcard;
 
+pub use category::Category;
 pub use error::{CoreError, TlsFailure};
 pub use session::MailSession;
 pub use store::{MailStore, OlderMail, SqlRunner};

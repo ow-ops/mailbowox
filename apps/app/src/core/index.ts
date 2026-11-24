@@ -2,6 +2,8 @@ import * as native from '@mailbowox/core-native';
 
 import type {
   AccountConfig,
+  Category,
+  ListFilter,
   Core,
   DiscoveredSettings,
   DiscoverySource,
@@ -40,8 +42,23 @@ const toConfig = (config: AccountConfig): native.AccountConfig => ({
   smtp: toServer(config.smtp),
 });
 
-const fromSummary = (summary: native.MessageSummary): MessageSummary => ({ ...summary, date: Number(summary.date) });
-const toSummary = (summary: MessageSummary): native.MessageSummary => ({ ...summary, date: BigInt(summary.date) });
+const toCategory = (category: Category) => native.Category[capitalize(category)];
+const fromCategory = (category: native.Category) => uncapitalize(native.Category[category]) as Category;
+
+const fromSummary = (summary: native.MessageSummary): MessageSummary => ({
+  ...summary,
+  date: Number(summary.date),
+  category: fromCategory(summary.category),
+});
+const toSummary = (summary: MessageSummary): native.MessageSummary => ({
+  ...summary,
+  date: BigInt(summary.date),
+  category: toCategory(summary.category),
+});
+const toFilter = (filter: ListFilter): native.ListFilter => ({
+  ...filter,
+  category: filter.category === undefined ? undefined : toCategory(filter.category),
+});
 const fromStored = (message: native.StoredMessage) => ({ ...message, summary: fromSummary(message.summary) });
 const fromConversation = (c: native.Conversation) => ({
   latest: fromStored(c.latest),
@@ -147,12 +164,12 @@ function wrapStore(store: native.MailStoreLike): MailStore {
     mailboxes: async (account) => (await store.mailboxes(account)).map(fromMailbox),
     unreadCounts: (account) => store.unreadCounts(account),
     page: async (boxes, before, limit, grouped, filter) =>
-      (await store.page(boxes, before && { ...before, date: BigInt(before.date) }, limit, grouped, filter)).map(
+      (await store.page(boxes, before && { ...before, date: BigInt(before.date) }, limit, grouped, toFilter(filter))).map(
         fromConversation,
       ),
     loadPage: async (boxes, before, limit, grouped, filter, fetchOlder) => {
       const older = { fetchOlder: async (from: native.MessageRef, count: number) => (await fetchOlder(from, count)).map(toSummary) };
-      const page = await store.loadPage(boxes, before && { ...before, date: BigInt(before.date) }, limit, grouped, filter, older);
+      const page = await store.loadPage(boxes, before && { ...before, date: BigInt(before.date) }, limit, grouped, toFilter(filter), older);
       return page.map(fromConversation);
     },
     conversation: async (message, grouped) => {
@@ -199,6 +216,8 @@ function wrapStore(store: native.MailStoreLike): MailStore {
     setQueuedError: (id, error) => store.setQueuedError(BigInt(id), error ?? undefined),
     setDraftAttachments: (slot, attachments) =>
       store.setDraftAttachments(slot, attachments.map((a) => ({ ...a, size: BigInt(a.size) }))),
+    setOwnAddresses: (account, emails) => store.setOwnAddresses(account, emails),
+    moveSender: (account, email, category) => store.moveSender(account, email, toCategory(category)),
     draftAttachments: async (slot) =>
       (await store.draftAttachments(slot)).map((a) => ({ ...a, size: Number(a.size) })),
   });

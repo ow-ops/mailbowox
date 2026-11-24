@@ -18,6 +18,7 @@ export default function SettingsTab() {
   const accounts = useAccounts();
   const remoteContent = usePref('remoteContent');
   const conversations = usePref('conversations');
+  const inboxCategories = usePref('inboxCategories');
   const remoteSenders = usePref('remoteSenders');
 
   return (
@@ -44,6 +45,12 @@ export default function SettingsTab() {
           detail={t('settings.reading.conversationsDetail')}
           value={conversations}
           onValueChange={(value) => setPref('conversations', value)}
+        />
+        <ToggleRow
+          title={t('settings.reading.categories')}
+          detail={t('settings.reading.categoriesDetail')}
+          value={inboxCategories}
+          onValueChange={(value) => setPref('inboxCategories', value)}
         />
       </Section>
 

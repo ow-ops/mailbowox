@@ -16,7 +16,8 @@ import { NativeMenu } from '@/components/native-menu';
 import { QueryState } from '@/components/query-state';
 import { ShortcutTooltip } from '@/components/shortcut-tooltip';
 import { ThemedText } from '@/components/themed-text';
-import type { AttachmentInfo, MessageBody } from '@/core';
+import type { Address, AttachmentInfo, Category, MessageBody } from '@/core';
+import { explainError } from '@/core/errors';
 import { Hairline, Press, Radius, Spacing, TouchTarget } from '@/constants/theme';
 import { useShortcuts } from '@/hooks/use-shortcuts';
 import { useTheme } from '@/hooks/use-theme';
@@ -30,6 +31,8 @@ import type { ReplyMode } from '@/mail/reply';
 import { withSession } from '@/mail/session';
 import { useMailView } from '@/mail/view';
 import { setPref, usePref } from '@/prefs/store';
+import { mailStore } from '@/mail/store';
+import { invalidateMail } from '@/utils/query-client';
 import { shareFile } from '@/utils/share-file';
 import { confirmAction } from '@/utils/dialog';
 import { formatSize } from '@/utils/size';
@@ -486,8 +489,46 @@ function Header({ item }: { item: StoredItem }) {
           {fullTime(summary.date)}
         </ThemedText>
         {account && <AccountMark account={account} />}
+        {sender && <SenderCategory item={item} sender={sender} />}
       </View>
     </View>
+  );
+}
+
+const CATEGORY_ICONS: Record<Category, string> = {
+  primary: 'person',
+  transactions: 'cart',
+  updates: 'bell',
+  promotions: 'tag',
+};
+
+// Moving a sender takes its past and future mail to the category, in this account.
+function SenderCategory({ item, sender }: { item: StoredItem; sender: Address }) {
+  const { t } = useTranslation();
+  const enabled = usePref('inboxCategories');
+  if (!enabled) return null;
+  const move = async (category: Category) => {
+    const label = t(`mail.categories.${category}`);
+    try {
+      await (await mailStore()).moveSender(item.account, sender.email, category);
+      invalidateMail();
+      showToast(t('mail.categories.moved', { name: addressName(sender), category: label }));
+    } catch (error) {
+      showError(t('mail.categories.moveFailed'), explainError(error).summary);
+    }
+  };
+  return (
+    <NativeMenu
+      label={t('mail.categories.move')}
+      groups={[
+        (Object.keys(CATEGORY_ICONS) as Category[]).map((category) => ({
+          key: category,
+          title: t('mail.categories.moveTo', { category: t(`mail.categories.${category}`) }),
+          icon: CATEGORY_ICONS[category],
+          onPress: () => void move(category),
+        })),
+      ]}
+    />
   );
 }
 

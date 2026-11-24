@@ -13,7 +13,7 @@ const doc = (accounts: VaultDocument['accounts'], prefsAt = 0): VaultDocument =>
   accounts,
   prefs: {
     updatedAt: prefsAt,
-    value: { remoteContent: prefsAt ? 'never' : 'ask', conversations: true, relayUrl: '', relayToken: '', accountColors: {}, remoteSenders: [] },
+    value: { remoteContent: prefsAt ? 'never' : 'ask', conversations: true, inboxCategories: true, relayUrl: '', relayToken: '', accountColors: {}, remoteSenders: [] },
   },
 });
 

@@ -148,5 +148,17 @@
     "toMe": "To me",
     "attachments": "Attachments",
     "empty": "Nothing cached matches these filters."
+  },
+  "categories": {
+    "label": "Category",
+    "primary": "Primary",
+    "transactions": "Transactions",
+    "updates": "Updates",
+    "promotions": "Promotions",
+    "all": "All",
+    "move": "Move sender to a category",
+    "moveTo": "Move to {{category}}",
+    "moved": "Mail from {{name}} now goes to {{category}}.",
+    "moveFailed": "Couldn't move the sender"
   }
 }

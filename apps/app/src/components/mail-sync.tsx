@@ -1,5 +1,9 @@
+import { useEffect } from 'react';
+
 import { useAccounts } from '@/accounts/store';
+import { ownAddresses } from '@/mail/filters';
 import { useFlushOutbox } from '@/mail/outbox';
+import { mailStore } from '@/mail/store';
 import { useWatchMailbox } from '@/mail/sync';
 import { INBOX, useMailView } from '@/mail/view';
 
@@ -8,6 +12,12 @@ export function MailSync() {
   const accounts = useAccounts();
   const view = useMailView();
   useFlushOutbox();
+  // The store learns who each account writes to from its sent mail, which it tells apart by these.
+  useEffect(() => {
+    void mailStore().then((store) =>
+      Promise.all(accounts.map((account) => store.setOwnAddresses(account.id, ownAddresses(account)))),
+    );
+  }, [accounts]);
   return (
     <>
       {accounts.map((account) => (

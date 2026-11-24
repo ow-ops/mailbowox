@@ -11,7 +11,10 @@ use io_imap::types::{
 };
 use mail_parser::{AddressList, HeaderName, MessageParser, MessageRef};
 
-use crate::types::{Address, Flags, MessageSummary};
+use crate::{
+    category,
+    types::{Address, Flags, MessageSummary},
+};
 
 const PREVIEW_CHARS: usize = 200;
 const PREVIEW_BYTES: u32 = 2048;
@@ -37,6 +40,7 @@ const HEADER_FIELDS: [&str; 12] = [
 pub(crate) fn summary_items() -> MacroOrMessageDataItemNames<'static> {
     let fields = HEADER_FIELDS
         .iter()
+        .chain(&category::HEADERS)
         .map(|&field| AString::try_from(field).expect("header names are atoms"))
         .collect::<Vec<_>>();
     let fields = Vec1::try_from(fields).expect("the field list is not empty");
@@ -143,6 +147,7 @@ pub(crate) fn summary(items: &[MessageDataItem<'_>]) -> Option<MessageSummary> {
         preview: message.map_or_default(preview),
         has_attachments,
         size,
+        category: message.map_or_default(category::classify),
     })
 }
 

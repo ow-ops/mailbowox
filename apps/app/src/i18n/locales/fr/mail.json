@@ -148,5 +148,17 @@
     "toMe": "À moi",
     "attachments": "Pièces jointes",
     "empty": "Aucun message enregistré ne correspond à ces filtres."
+  },
+  "categories": {
+    "label": "Catégorie",
+    "primary": "Principal",
+    "transactions": "Transactions",
+    "updates": "Actualités",
+    "promotions": "Promotions",
+    "all": "Tout",
+    "move": "Déplacer l'expéditeur dans une catégorie",
+    "moveTo": "Déplacer vers {{category}}",
+    "moved": "Les messages de {{name}} iront désormais dans {{category}}.",
+    "moveFailed": "Impossible de déplacer l'expéditeur"
   }
 }

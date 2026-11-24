@@ -203,6 +203,7 @@ mod tests {
             preview: String::new(),
             has_attachments: false,
             size: 10,
+            category: crate::category::Category::Primary,
         }
     }
 

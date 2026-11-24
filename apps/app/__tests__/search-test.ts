@@ -25,6 +25,7 @@ const item = (uid: number, date: number, fields: Partial<MessageSummary> = {}): 
     preview: '',
     hasAttachments: false,
     size: 10,
+    category: 'primary',
     ...fields,
   },
 });

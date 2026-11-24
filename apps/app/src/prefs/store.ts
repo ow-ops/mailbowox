@@ -13,6 +13,7 @@ export type Prefs = {
   // Lowercased addresses whose remote images load without asking.
   remoteSenders: string[];
   conversations: boolean;
+  inboxCategories: boolean;
   relayUrl: string;
   relayToken: string;
   // Hue index per account email, synced so every device shows an account in the same colour.
@@ -23,6 +24,7 @@ export const prefsSchema = v.looseObject({
   // A value added by a newer app reads as the default here rather than failing the whole document.
   remoteContent: v.fallback(v.picklist(PREF_OPTIONS.remoteContent), 'ask'),
   conversations: v.optional(v.boolean(), true),
+  inboxCategories: v.optional(v.boolean(), true),
   relayUrl: v.optional(v.string(), ''),
   relayToken: v.optional(v.string(), ''),
   accountColors: v.optional(v.record(v.string(), v.number()), {}),

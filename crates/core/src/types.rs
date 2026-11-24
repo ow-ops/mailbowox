@@ -102,6 +102,10 @@ pub struct MessageSummary {
     pub preview: String,
     pub has_attachments: bool,
     pub size: u32,
+    /// From the headers; the store puts people you write to and senders you
+    /// moved in a category of their own before it.
+    #[serde(default)]
+    pub category: crate::category::Category,
 }
 
 #[derive(
@@ -346,6 +350,7 @@ pub struct ListFilter {
     /// Mail with one of `me` in To or Cc.
     pub to_me: bool,
     pub me: Vec<String>,
+    pub category: Option<crate::category::Category>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]

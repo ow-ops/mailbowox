@@ -33,6 +33,7 @@ const message = (to: string[], cc: string[] = [], deliveredTo: string[] = []): M
   preview: '',
   hasAttachments: false,
   size: 1,
+  category: 'primary',
 });
 
 const reply = (original: MessageSummary, arrivedIn: string) => replySender(accounts, original, arrivedIn);

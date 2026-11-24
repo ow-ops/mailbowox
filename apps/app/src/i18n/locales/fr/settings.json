@@ -142,7 +142,9 @@
   "reading": {
     "title": "Lecture",
     "conversations": "Regrouper par conversation",
-    "conversationsDetail": "Affiche un message et ses réponses, y compris les vôtres, sur une seule ligne."
+    "conversationsDetail": "Affiche un message et ses réponses, y compris les vôtres, sur une seule ligne.",
+    "categories": "Catégories de la boîte de réception",
+    "categoriesDetail": "Trie la boîte de réception en Principal, Transactions, Actualités et Promotions sur cet appareil. Tout garde l'ensemble dans une seule liste."
   },
   "privacy": {
     "title": "Confidentialité",

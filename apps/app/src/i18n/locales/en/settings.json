@@ -142,7 +142,9 @@
   "reading": {
     "title": "Reading",
     "conversations": "Group by conversation",
-    "conversationsDetail": "Shows a message and its replies, yours included, as one row."
+    "conversationsDetail": "Shows a message and its replies, yours included, as one row.",
+    "categories": "Inbox categories",
+    "categoriesDetail": "Sorts the inbox into Primary, Transactions, Updates and Promotions on this device. All keeps everything in one list."
   },
   "privacy": {
     "title": "Privacy",
