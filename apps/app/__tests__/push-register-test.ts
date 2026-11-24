@@ -86,7 +86,7 @@ describe('push registration', () => {
     });
   });
 
-  it('sends the public key and auth on iOS, never the private key', async () => {
+  it('sends the public key and auth, never the private key', async () => {
     fetchMock.mockResolvedValueOnce(Response.json({ id: 'r1', secret: 's' }, { status: 201 }));
     await enablePush(account);
 

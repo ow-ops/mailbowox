@@ -4,7 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 
 import { PUSH_KEYCHAIN_SERVICE, PUSH_KEYS_KEY } from './config';
 
-// Read by the notification service extension while the phone is locked.
+// Read while the phone is locked: by the notification service extension on iOS, the push task on Android.
 const OPTIONS: SecureStore.SecureStoreOptions = {
   keychainService: PUSH_KEYCHAIN_SERVICE,
   keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,

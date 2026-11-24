@@ -55,7 +55,6 @@ function gatewayError(status: number) {
 }
 
 async function deviceKeys() {
-  if (Platform.OS !== 'ios') return undefined;
   const { publicKey, auth } = await getOrCreatePushKeys();
   return { p256dh: publicKey, auth };
 }
@@ -80,7 +79,7 @@ async function register(account: Account, device: Device) {
   if (!response.ok) throw gatewayError(response.status);
   const issued = v.safeParse(unregistration, await response.json());
   if (!issued.success) throw gatewayError(response.status);
-  const registration: Registration = { ...issued.output, ...device, keys: !!keys };
+  const registration: Registration = { ...issued.output, ...device, keys: true };
   writeItem(key(account.id), JSON.stringify(registration));
   return registration;
 }
@@ -141,8 +140,7 @@ export async function syncPush(account: Account) {
   const registration = saved(account.id);
   if (!registration) return;
   const device = await currentDevice();
-  const missingKeys = Platform.OS === 'ios' && !registration.keys;
-  if (device.token !== registration.token || device.platform !== registration.platform || missingKeys) {
+  if (device.token !== registration.token || device.platform !== registration.platform || !registration.keys) {
     await register(account, device);
   }
 }

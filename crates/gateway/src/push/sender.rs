@@ -1,5 +1,5 @@
 //! What reaches APNs and FCM: a hash of the account address and its unread count, plus an
-//! encrypted preview on iOS.
+//! encrypted preview.
 
 use std::time::Duration;
 
@@ -61,12 +61,16 @@ fn apns_payload<'a>(
     payload
 }
 
-/// Android gets a data-only message; the app's background task shows a localised notification.
-fn fcm_message(token: &str, ping: &Ping) -> Value {
+/// Android gets a data-only message; the app's background task shows the notification.
+fn fcm_message(token: &str, ping: &Ping, preview: Option<&str>) -> Value {
+    let mut data = json!({ "body": json!(ping).to_string() });
+    if let Some(preview) = preview {
+        data["m"] = json!(preview);
+    }
     json!({
         "message": {
             "token": token,
-            "data": { "body": json!(ping).to_string() },
+            "data": data,
             "android": { "priority": "high" },
         }
     })
@@ -127,7 +131,7 @@ impl Notify for Providers {
                 let payload = apns_payload(token, apns.topic(), ping, preview);
                 apns.send(platform == Platform::IosSandbox, payload).await
             }
-            (Platform::Android, _, Some(fcm)) => fcm.send(&fcm_message(token, ping)).await,
+            (Platform::Android, _, Some(fcm)) => fcm.send(&fcm_message(token, ping, preview)).await,
             _ => Outcome::Failed,
         };
         outcome.into()
@@ -197,13 +201,22 @@ mod tests {
     #[test]
     fn fcm_message_is_data_only_with_the_ping() {
         let ping = ping("alice@example.org", 7);
-        let message = fcm_message("tok", &ping);
+        let message = fcm_message("tok", &ping, None);
         assert_eq!(keys(&message["message"]), ["android", "data", "token"]);
         assert_eq!(keys(&message["message"]["data"]), ["body"]);
         let body: Value =
             serde_json::from_str(message["message"]["data"]["body"].as_str().unwrap()).unwrap();
         assert_eq!(body, json!({ "account": ping.account, "unread": 7 }));
         assert!(!message.to_string().contains("alice"));
+    }
+
+    #[test]
+    fn a_sealed_preview_goes_to_the_android_app() {
+        let ping = ping("alice@example.org", 7);
+        let message = fcm_message("tok", &ping, Some("c2VhbGVk"));
+        assert_eq!(keys(&message["message"]["data"]), ["body", "m"]);
+        assert_eq!(message["message"]["data"]["m"], "c2VhbGVk");
+        assert!(message["message"].get("notification").is_none());
     }
 
     #[test]
