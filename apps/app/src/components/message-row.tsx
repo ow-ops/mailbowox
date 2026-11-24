@@ -1,7 +1,7 @@
 import { Link, router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View, type AccessibilityActionEvent } from 'react-native';
+import { Platform, Pressable, StyleSheet, View, type AccessibilityActionEvent } from 'react-native';
 
 import { accountLabel } from '@/accounts/colors';
 import type { Account } from '@/accounts/store';
@@ -136,7 +136,8 @@ export function MessageRow({
   const row = (
     <Pressable
       onPress={selecting ? () => toggleSelected(key) : onOpen && (() => onOpen(item))}
-      onLongPress={selecting ? undefined : () => startSelecting(key)}
+      // On iOS a long press shows the preview and its menu instead, which offers Select.
+      onLongPress={selecting || Platform.OS === 'ios' ? undefined : () => startSelecting(key)}
       accessibilityRole={selecting ? 'checkbox' : onOpen ? 'button' : 'link'}
       accessibilityLabel={label}
       accessibilityState={selecting ? { checked } : { selected }}
@@ -227,10 +228,28 @@ export function MessageRow({
       {onOpen || selecting ? (
         row
       ) : (
-        <Link
-          href={{ pathname: '/message', params: messageParams(item) }}
-          asChild>
-          {row}
+        <Link href={{ pathname: '/message', params: messageParams(item) }} asChild>
+          <Link.Trigger>{row}</Link.Trigger>
+          <Link.Preview />
+          <Link.Menu>
+            <Link.MenuAction
+              title={t('mail.actions.reply')}
+              icon="arrowshape.turn.up.left"
+              onPress={() => router.push({ pathname: '/compose', params: { mode: 'reply', ...messageParams(item) } })}
+            />
+            <Link.MenuAction title={leading.label} icon={unread ? 'envelope.open' : 'envelope.badge'} onPress={actions.toggleSeen} />
+            <Link.MenuAction
+              title={flagged ? t('mail.actions.unflag') : t('mail.actions.flag')}
+              icon={flagged ? 'flag.slash' : 'flag'}
+              onPress={actions.toggleFlagged}
+            />
+            <Link.MenuAction title={t('mail.actions.move')} icon="folder" onPress={move} />
+            {actions.archive ? (
+              <Link.MenuAction title={t('mail.actions.archive')} icon="archivebox" onPress={actions.archive} />
+            ) : null}
+            <Link.MenuAction title={t('mail.actions.delete')} icon="trash" destructive onPress={actions.remove} />
+            <Link.MenuAction title={t('mail.select.start')} icon="checkmark.circle" onPress={() => startSelecting(key)} />
+          </Link.Menu>
         </Link>
       )}
     </SwipeActions>
