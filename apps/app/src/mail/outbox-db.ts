@@ -110,3 +110,16 @@ export async function getDraftAttachments(slot: string): Promise<DraftAttachment
     data: row.data ? Uint8Array.from(row.data).buffer : undefined,
   }));
 }
+
+// Every account with queued mail, for finding what a removed account left behind.
+export async function queuedAccounts() {
+  const db = await database();
+  const rows = await db.getAllAsync<{ account: string }>('SELECT DISTINCT account FROM outbox');
+  return rows.map((row) => row.account);
+}
+
+export async function deleteQueuedMessages(account: string) {
+  await transaction(async (db) => {
+    await db.runAsync('DELETE FROM outbox WHERE account = ?', account);
+  });
+}

@@ -4,6 +4,7 @@ mod bodies;
 mod exec;
 mod list;
 mod messages;
+mod paging;
 mod schema;
 mod search;
 mod threads;
@@ -12,6 +13,7 @@ use std::sync::Arc;
 
 use exec::Exec;
 pub use exec::SqlRunner;
+pub use paging::OlderMail;
 
 use crate::{
     error::CoreError,
@@ -25,6 +27,7 @@ pub struct MailStore {
     /// Held from the reads a write depends on to the write, as a batch is the
     /// only transaction and a sync reads the thread index before writing.
     writes: async_lock::Mutex<()>,
+    exhausted: paging::Exhausted,
 }
 
 impl MailStore {
@@ -52,6 +55,7 @@ impl MailStore {
         Ok(Arc::new(Self {
             exec,
             writes: async_lock::Mutex::new(()),
+            exhausted: paging::Exhausted::default(),
         }))
     }
 }
@@ -105,6 +109,9 @@ impl MailStore {
         };
         let result = session.sync(mailbox.clone(), since, known, limit).await?;
         self.apply_sync(&account, &mailbox, &result).await?;
+        if result.reset || result.truncated {
+            self.exhausted.resume(&account, &mailbox);
+        }
         let arrived = match since {
             Some(state) if !result.reset => result
                 .changed

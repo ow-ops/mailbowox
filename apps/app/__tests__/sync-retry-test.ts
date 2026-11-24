@@ -3,9 +3,9 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { retrySync, useSyncErrors, useWatchMailbox } from '@/mail/sync';
 import { withSession } from '@/mail/session';
 
-jest.mock('expo-router', () => require('../jest/expo-router'));
+jest.mock('expo-router', () => jest.requireActual('../jest/expo-router'));
 jest.mock('@/mail/session', () => ({ withSession: jest.fn() }));
-jest.mock('@/mail/db', () => ({}));
+jest.mock('@/mail/store', () => ({ mailStore: jest.fn() }));
 jest.mock('@/utils/query-client', () => ({ queryClient: {}, invalidateMail: jest.fn() }));
 jest.mock('@/accounts/store', () => ({}));
 jest.mock('@/core', () => ({ core: {} }));

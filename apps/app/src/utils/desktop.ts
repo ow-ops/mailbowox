@@ -1,7 +1,8 @@
 // Set by the desktop shell (apps/desktop) before the page runs.
 type Shell = {
   __TAURI__?: {
-    core: { invoke<T>(command: string, args: Record<string, unknown>): Promise<T> };
+    // Bytes go as the raw request body.
+    core: { invoke<T>(command: string, args: Record<string, unknown> | Uint8Array): Promise<T> };
     event: { listen<T>(event: string, handler: (event: { payload: T }) => void): Promise<() => void> };
   };
   __MAILBOWOX_RELAY__?: { url: string; token: string };

@@ -99,7 +99,18 @@ const SCHEMA = `
   );
 `;
 
-export const MIGRATIONS = [SCHEMA];
+// The mail cache moved to the core's store; mail is synced again there. The outbox and draft attachments stay.
+const DROP_CACHE = `
+  DROP TABLE mailboxes;
+  DROP TABLE messages;
+  DROP TABLE sync_state;
+  DROP TABLE bodies;
+  DROP TABLE thread_ids;
+  DROP TABLE thread_subjects;
+  DROP TABLE addresses;
+`;
+
+export const MIGRATIONS = [SCHEMA, DROP_CACHE];
 
 export const database = lazyDatabase('mail.db', MIGRATIONS);
 

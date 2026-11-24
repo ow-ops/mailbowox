@@ -41,7 +41,7 @@ mod vcard;
 
 pub use error::{CoreError, TlsFailure};
 pub use session::MailSession;
-pub use store::{MailStore, SqlRunner};
+pub use store::{MailStore, OlderMail, SqlRunner};
 pub use transport::AddrFilter;
 pub use types::*;
 

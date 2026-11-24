@@ -1,7 +1,6 @@
 import type { MessageSummary } from '@/core';
-import type { StoredItem } from '@/mail/refs';
+import type { Conversation, StoredItem } from '@/mail/refs';
 import { allSelected, conversationKey, seenChange, selectedConversations, toggled } from '@/mail/selection';
-import type { Conversation } from '@/mail/threads';
 
 const message = (uid: number, seen: boolean, mailbox = 'INBOX'): StoredItem => ({
   account: 'a',

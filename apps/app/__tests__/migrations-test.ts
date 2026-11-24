@@ -94,14 +94,14 @@ describe('mail outbox', () => {
   });
 });
 
-describe('mail indexes', () => {
-  it('serves the unread count from the partial index', async () => {
+describe('the mail database', () => {
+  it('keeps the outbox and draft attachments once the cache has moved to the core', async () => {
     const db = await open();
+    await migrate(db, 'mail', mail.slice(0, 1));
+    await db.runAsync("INSERT INTO outbox (account, queued_at, draft) VALUES ('a', 1, '{}')");
     await migrate(db, 'mail', mail);
-    const plan = await db.getAllAsync<{ detail: string }>(
-      "EXPLAIN QUERY PLAN SELECT mailbox, COUNT(*) FROM messages WHERE account = 'a' AND seen = 0 GROUP BY mailbox",
-    );
-    expect(plan.map((row) => row.detail).join('\n')).toContain('messages_unread');
+    expect(await tables(db)).toEqual(['draft_attachments', 'outbox', 'outbox_attachments', 'sqlite_sequence']);
+    expect(await db.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM outbox')).toEqual({ n: 1 });
   });
 });
 

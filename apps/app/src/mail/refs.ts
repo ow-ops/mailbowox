@@ -1,4 +1,6 @@
-import type { MessageSummary } from '@/core';
+import type { Conversation, MessageSummary } from '@/core';
+
+export type { Conversation } from '@/core';
 
 export type MailboxRef = { account: string; mailbox: string };
 export type MailboxGeneration = MailboxRef & { uidValidity: number };
@@ -13,3 +15,5 @@ export const sameMessage = (a: MessageRef, b: MessageRef) => messageKey(a) === m
 
 export const messageParams = ({ account, mailbox, uidValidity, uid }: MessageRef) =>
   ({ account, mailbox, uidValidity: String(uidValidity), uid: String(uid) });
+
+export const single = (item: StoredItem): Conversation => ({ latest: item, messages: [item], inView: [item] });

@@ -13,10 +13,9 @@ import { BorderWidth, Fonts, Hairline, Radius, Spacing } from '@/constants/theme
 import { useTheme } from '@/hooks/use-theme';
 import { useMessageActions } from '@/mail/actions';
 import { addressName, sameAddress } from '@/mail/address';
-import { messageParams, type MailItem, type StoredItem } from '@/mail/refs';
+import { messageParams, type MailItem, type StoredItem , Conversation } from '@/mail/refs';
 import { useBlockedCount, useRoleMailbox } from '@/mail/queries';
 import { conversationKey, startSelecting, toggleSelected } from '@/mail/selection';
-import type { Conversation } from '@/mail/threads';
 import { listTime } from '@/utils/time';
 
 type Props = {

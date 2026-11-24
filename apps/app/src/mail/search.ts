@@ -1,4 +1,4 @@
-import type { Address, MessageSummary } from '@/core';
+import type { Address, MessageSummary, SearchQuery as StoreQuery } from '@/core';
 
 import { normalize } from '@/utils/text';
 
@@ -40,14 +40,20 @@ export function parseQuery(text: string): SearchQuery {
 
 export const isEmptyQuery = (query: SearchQuery) => !query.server && !query.attachments;
 
+// What the store narrows by; a field's value is then checked against its own field here.
+export const storeQuery = (query: SearchQuery): StoreQuery => ({
+  terms: [...query.words, ...query.fields.map(({ value }) => value)],
+  fields: query.fields.length > 0,
+  seen: query.seen,
+  flagged: !!query.flagged,
+  attachments: !!query.attachments,
+});
+
 const names = (addresses: Address[]) => addresses.flatMap((a) => (a.name ? [a.name, a.email] : [a.email]));
 
 const people = (summary: MessageSummary) => names([...summary.from, ...summary.to, ...summary.cc]);
 
 const heading = (summary: MessageSummary) => normalize([summary.subject, ...people(summary)].join('\n'));
-
-// What the local search looks in, stored with each message.
-export const searchText = (summary: MessageSummary) => `${heading(summary)}\n${normalize(summary.preview)}`;
 
 // to: also looks in Cc, as someone a message was sent to may be in either.
 function fieldText(summary: MessageSummary, field: Field) {
@@ -56,7 +62,7 @@ function fieldText(summary: MessageSummary, field: Field) {
 }
 
 // The flags are left to the database and the server, which filter on them before this runs.
-export const matchesQuery = (summary: MessageSummary, query: SearchQuery) =>
+const matchesQuery = (summary: MessageSummary, query: SearchQuery) =>
   query.fields.every(({ field, value }) => normalize(fieldText(summary, field)).includes(value)) &&
   (!query.attachments || summary.hasAttachments);
 

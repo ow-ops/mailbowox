@@ -1,7 +1,6 @@
 import { createStore, useStore } from 'zustand';
 
-import { messageKey, sameMessage, type MailItem, type MessageRef } from './refs';
-import type { Conversation } from './threads';
+import { messageKey, sameMessage, type MailItem, type MessageRef , Conversation } from './refs';
 
 export const conversationKey = ({ latest }: Conversation) => messageKey(latest);
 

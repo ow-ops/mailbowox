@@ -1,11 +1,17 @@
-use std::sync::{Arc, Mutex, PoisonError};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex, PoisonError},
+};
 
 use mailbowox_sql::rusqlite::Connection;
 
-use super::{MailStore, SqlRunner};
-use crate::types::{
-    Address, Cursor, Flags, ListFilter, MailItem, MailboxRef, MessageBody, MessageRef,
-    MessageSummary, SyncResult, SyncState,
+use super::{MailStore, OlderMail, SqlRunner};
+use crate::{
+    error::CoreError,
+    types::{
+        Address, Flags, ListFilter, MailItem, MailboxRef, MessageBody, MessageRef, MessageSummary,
+        PageCursor, SearchQuery, StoredMessage, SyncResult, SyncState,
+    },
 };
 
 /// Answers each batch the way the OPFS worker and the desktop shell do, through the wire format.
@@ -145,7 +151,7 @@ async fn uids(store: &MailStore, account: &str, mailbox: &str) -> Vec<u32> {
 async fn page_uids(
     store: &MailStore,
     boxes: &[MailboxRef],
-    before: Option<&Cursor>,
+    before: Option<&PageCursor>,
     limit: u32,
     filter: &ListFilter,
 ) -> Vec<u32> {
@@ -383,7 +389,7 @@ async fn pages_merge_accounts_newest_first_and_continue_after_a_cursor() {
         .collect();
     assert_eq!(rows, [("a", 1), ("b", 7)]);
     let last = &first[1].latest;
-    let cursor = Cursor {
+    let cursor = PageCursor {
         date: last.summary.date,
         account: last.account.clone(),
         uid: last.uid,
@@ -722,7 +728,7 @@ async fn an_account_s_data_is_listed_until_it_is_deleted() {
 #[tokio::test]
 async fn the_conversations_query_walks_the_date_index_without_sorting_the_mailbox() {
     let store = store().await;
-    let cursor = Cursor {
+    let cursor = PageCursor {
         date: 0,
         account: "a".to_owned(),
         uid: 0,
@@ -773,4 +779,408 @@ async fn a_native_store_keeps_its_file() {
     let again = MailStore::open(path).await.expect("reopened");
     assert_eq!(uids(&again, "a", "INBOX").await, [1]);
     let _ = std::fs::remove_dir_all(dir);
+}
+
+/// The server's whole mailbox per account, newest first, handed out a few at a time.
+struct Server {
+    mail: HashMap<String, Vec<MessageSummary>>,
+    per_fetch: usize,
+}
+
+#[async_trait::async_trait]
+impl OlderMail for Server {
+    async fn fetch_older(
+        &self,
+        before: MessageRef,
+        _limit: u32,
+    ) -> Result<Vec<MessageSummary>, CoreError> {
+        Ok(self.mail.get(&before.account).map_or_default(|all| {
+            all.iter()
+                .filter(|s| s.uid < before.uid)
+                .take(self.per_fetch)
+                .cloned()
+                .collect()
+        }))
+    }
+}
+
+async fn page_all(
+    store: &MailStore,
+    boxes: &[MailboxRef],
+    grouped: bool,
+    server: Arc<Server>,
+) -> Vec<Vec<StoredMessage>> {
+    let limit = 6;
+    let mut pages = Vec::new();
+    let mut cursor = None;
+    loop {
+        let page: Vec<StoredMessage> = store
+            .load_page(
+                boxes.to_vec(),
+                cursor.clone(),
+                limit,
+                grouped,
+                ListFilter::default(),
+                server.clone(),
+            )
+            .await
+            .unwrap()
+            .into_iter()
+            .map(|c| c.latest)
+            .collect();
+        // A short page is not the end: the list ends with the page that comes back empty.
+        cursor = page.last().map(|last| PageCursor {
+            date: last.summary.date,
+            account: last.account.clone(),
+            uid: last.uid,
+        });
+        if page.is_empty() {
+            return pages;
+        }
+        pages.push(page);
+    }
+}
+
+fn mailbox_of(
+    count: u32,
+    offset: i64,
+    thread: impl Fn(u32) -> Option<&'static str>,
+) -> Vec<MessageSummary> {
+    (1..=count)
+        .rev()
+        .map(|uid| {
+            let date = i64::from(uid) * 10 + offset;
+            let id = format!("m-{uid}-{date}");
+            let references: Vec<&str> = thread(uid).into_iter().collect();
+            said(uid, date, &id, &references)
+        })
+        .collect()
+}
+
+/// Two accounts whose mail interleaves; the server holds 30 messages each and sync kept the newest 5.
+async fn two_accounts(
+    store: &MailStore,
+    alice: &str,
+    bob: &str,
+    thread: impl Fn(u32) -> Option<&'static str>,
+) -> Arc<Server> {
+    let mut mail = HashMap::new();
+    for (account, all) in [
+        (alice, mailbox_of(30, 0, &thread)),
+        (bob, mailbox_of(30, 5, |_| None)),
+    ] {
+        let newest = all.iter().take(5).cloned().collect();
+        store
+            .apply_sync(
+                account,
+                "INBOX",
+                &sync(state(1, 31), true, newest, vec![], false),
+            )
+            .await
+            .unwrap();
+        mail.insert(account.to_owned(), all);
+    }
+    Arc::new(Server { mail, per_fetch: 2 })
+}
+
+#[tokio::test]
+async fn paging_fetches_through_a_gap_and_on_to_the_older_mail() {
+    let store = store().await;
+    let server = mailbox_of(12, 0, |_| None);
+    store
+        .apply_sync(
+            "gap",
+            "INBOX",
+            &sync(
+                state(1, 4),
+                true,
+                server.iter().skip(9).cloned().collect(),
+                vec![],
+                false,
+            ),
+        )
+        .await
+        .unwrap();
+    // Nine more arrived and the sync brought the newest two: 4 to 10 are on the server only.
+    store
+        .apply_sync(
+            "gap",
+            "INBOX",
+            &sync(
+                state(1, 13),
+                false,
+                server.iter().take(2).cloned().collect(),
+                vec![],
+                true,
+            ),
+        )
+        .await
+        .unwrap();
+    let older = Arc::new(Server {
+        mail: HashMap::from([("gap".to_owned(), server)]),
+        per_fetch: 3,
+    });
+    let uids: Vec<u32> = page_all(&store, &[boxed("gap", "INBOX")], false, older)
+        .await
+        .concat()
+        .iter()
+        .map(|m| m.uid)
+        .collect();
+    assert_eq!(uids, (1..=12).rev().collect::<Vec<_>>());
+}
+
+#[tokio::test]
+async fn paging_two_accounts_lists_every_message_once_newest_first() {
+    let store = store().await;
+    let server = two_accounts(&store, "alice", "bob", |_| None).await;
+    let pages = page_all(
+        &store,
+        &[boxed("alice", "INBOX"), boxed("bob", "INBOX")],
+        false,
+        server,
+    )
+    .await;
+    let dates: Vec<i64> = pages.concat().iter().map(|m| m.summary.date).collect();
+    assert_eq!(dates.len(), 60);
+    assert!(dates.is_sorted_by(|a, b| a >= b), "{dates:?}");
+    assert!(pages.iter().rev().skip(1).all(|page| page.len() == 6));
+}
+
+#[tokio::test]
+async fn paging_keeps_conversations_in_date_order_when_one_account_is_mostly_one_thread() {
+    let store = store().await;
+    // Alice's messages 5 to 20 all answer one conversation, so a batch of them adds a single row.
+    let server = two_accounts(&store, "alice-t", "bob-t", |uid| {
+        (5..=20).contains(&uid).then_some("long")
+    })
+    .await;
+    let rows = page_all(
+        &store,
+        &[boxed("alice-t", "INBOX"), boxed("bob-t", "INBOX")],
+        true,
+        server,
+    )
+    .await
+    .concat();
+    let dates: Vec<i64> = rows.iter().map(|m| m.summary.date).collect();
+    assert!(dates.is_sorted_by(|a, b| a >= b), "{dates:?}");
+    assert_eq!(rows.iter().filter(|m| m.account == "bob-t").count(), 30);
+    assert_eq!(
+        rows.iter().filter(|m| m.account == "alice-t").count(),
+        30 - 15
+    );
+}
+
+fn search_query(terms: &[&str]) -> SearchQuery {
+    SearchQuery {
+        terms: terms.iter().map(|t| (*t).to_owned()).collect(),
+        ..SearchQuery::default()
+    }
+}
+
+async fn found(store: &MailStore, boxes: &[MailboxRef], query: SearchQuery) -> Vec<(String, u32)> {
+    store
+        .search(boxes.to_vec(), query, 50)
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|m| (m.mailbox, m.uid))
+        .collect()
+}
+
+fn with(mut summary: MessageSummary, change: impl FnOnce(&mut MessageSummary)) -> MessageSummary {
+    change(&mut summary);
+    summary
+}
+
+#[tokio::test]
+async fn search_finds_every_word_across_subject_people_and_preview_newest_first() {
+    let store = store().await;
+    let elise = Address {
+        name: Some("Élise Martin".to_owned()),
+        email: "elise@shop.example".to_owned(),
+    };
+    let inbox = vec![
+        with(summary(52, 520), |s| {
+            "Invoice for March".clone_into(&mut s.subject);
+            s.from = vec![elise];
+        }),
+        with(summary(51, 510), |s| {
+            "the invoice is attached".clone_into(&mut s.preview);
+        }),
+        with(summary(50, 500), |s| {
+            s.to = vec![Address {
+                name: None,
+                email: "team@example.com".to_owned(),
+            }];
+        }),
+    ];
+    store
+        .apply_sync(
+            "a",
+            "INBOX",
+            &sync(state(1, 100), true, inbox, vec![], false),
+        )
+        .await
+        .unwrap();
+    let archive = vec![with(summary(9, 90), |s| {
+        "Old invoice".clone_into(&mut s.subject);
+    })];
+    store
+        .apply_sync(
+            "a",
+            "Archive",
+            &sync(state(1, 100), true, archive, vec![], false),
+        )
+        .await
+        .unwrap();
+    let both = [boxed("a", "INBOX"), boxed("a", "Archive")];
+    let at = |mailbox: &str, uid| (mailbox.to_owned(), uid);
+
+    assert_eq!(
+        found(&store, &both, search_query(&["invoice"])).await,
+        [at("INBOX", 52), at("INBOX", 51), at("Archive", 9)]
+    );
+    assert_eq!(
+        found(&store, &both, search_query(&["elise", "invoice"])).await,
+        [at("INBOX", 52)]
+    );
+    assert_eq!(
+        found(&store, &both, search_query(&["team@example"])).await,
+        [at("INBOX", 50)]
+    );
+    assert_eq!(
+        found(&store, &both, search_query(&["invoice", "holiday"])).await,
+        []
+    );
+    assert_eq!(
+        found(&store, &[boxed("a", "Archive")], search_query(&["invoice"])).await,
+        [at("Archive", 9)]
+    );
+
+    // Found by a search below the list, it stays out of the list until paging reaches it.
+    store
+        .put_messages(vec![MailItem {
+            account: "a".to_owned(),
+            mailbox: "INBOX".to_owned(),
+            uid_validity: 1,
+            summary: with(summary(3, 30), |s| {
+                "Ancient invoice".clone_into(&mut s.subject);
+            }),
+        }])
+        .await
+        .unwrap();
+    assert_eq!(
+        found(&store, &[boxed("a", "INBOX")], search_query(&["ancient"])).await,
+        [at("INBOX", 3)]
+    );
+    assert_eq!(uids(&store, "a", "INBOX").await, [52, 51, 50]);
+    store
+        .add_older(
+            "a".to_owned(),
+            "INBOX".to_owned(),
+            1,
+            vec![summary(10, 100), summary(3, 30)],
+        )
+        .await
+        .unwrap();
+    assert_eq!(uids(&store, "a", "INBOX").await, [52, 51, 50, 10, 3]);
+}
+
+#[tokio::test]
+async fn search_filters_on_flags_and_attachments_and_widens_for_fields() {
+    let store = store().await;
+    let changed = vec![
+        with(summary(3, 300), |s| {
+            s.has_attachments = true;
+            s.flags.flagged = true;
+            s.flags.seen = true;
+        }),
+        with(summary(2, 200), |s| "invoice".clone_into(&mut s.preview)),
+        with(summary(1, 100), |s| s.flags.seen = true),
+    ];
+    store
+        .apply_sync(
+            "o",
+            "INBOX",
+            &sync(state(1, 10), true, changed, vec![], false),
+        )
+        .await
+        .unwrap();
+    let inbox = [boxed("o", "INBOX")];
+    let uids_for = |query: SearchQuery| {
+        let (store, inbox) = (store.clone(), inbox.clone());
+        async move {
+            found(&store, &inbox, query)
+                .await
+                .into_iter()
+                .map(|(_, uid)| uid)
+                .collect::<Vec<_>>()
+        }
+    };
+    assert_eq!(
+        uids_for(SearchQuery {
+            seen: Some(false),
+            ..SearchQuery::default()
+        })
+        .await,
+        [2]
+    );
+    assert_eq!(
+        uids_for(SearchQuery {
+            seen: Some(true),
+            ..SearchQuery::default()
+        })
+        .await,
+        [3, 1]
+    );
+    assert_eq!(
+        uids_for(SearchQuery {
+            flagged: true,
+            ..SearchQuery::default()
+        })
+        .await,
+        [3]
+    );
+    assert_eq!(
+        uids_for(SearchQuery {
+            attachments: true,
+            ..SearchQuery::default()
+        })
+        .await,
+        [3]
+    );
+
+    // A field's value only narrows here, so more candidates than a page come back for the app to check.
+    let crowded: Vec<MessageSummary> = (100..160)
+        .map(|uid| {
+            with(summary(uid, i64::from(uid)), |s| {
+                "About elise".clone_into(&mut s.subject);
+            })
+        })
+        .collect();
+    store
+        .apply_sync(
+            "c",
+            "INBOX",
+            &sync(state(1, 200), true, crowded, vec![], false),
+        )
+        .await
+        .unwrap();
+    let narrow = store
+        .search(vec![boxed("c", "INBOX")], search_query(&["elise"]), 50)
+        .await
+        .unwrap();
+    let wide = store
+        .search(
+            vec![boxed("c", "INBOX")],
+            SearchQuery {
+                fields: true,
+                ..search_query(&["elise"])
+            },
+            50,
+        )
+        .await
+        .unwrap();
+    assert_eq!((narrow.len(), wide.len()), (50, 60));
 }

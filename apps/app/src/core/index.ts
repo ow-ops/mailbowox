@@ -6,8 +6,11 @@ import type {
   DiscoveredSettings,
   DiscoverySource,
   Flags,
+  Mailbox,
   MailboxRole,
+  MailItem,
   MailSession,
+  MailStore,
   MessageSummary,
   Security,
   ServerConfig,
@@ -37,6 +40,21 @@ const toConfig = (config: AccountConfig): native.AccountConfig => ({
 });
 
 const fromSummary = (summary: native.MessageSummary): MessageSummary => ({ ...summary, date: Number(summary.date) });
+const toSummary = (summary: MessageSummary): native.MessageSummary => ({ ...summary, date: BigInt(summary.date) });
+const fromStored = (message: native.StoredMessage) => ({ ...message, summary: fromSummary(message.summary) });
+const fromConversation = (c: native.Conversation) => ({
+  latest: fromStored(c.latest),
+  messages: c.messages.map(fromStored),
+  inView: c.inView.map(fromStored),
+});
+const fromMailbox = (mailbox: native.Mailbox) => ({
+  ...mailbox,
+  role: mailbox.role === undefined ? undefined : fromRole(mailbox.role),
+});
+const toMailbox = (mailbox: Mailbox): native.Mailbox => ({
+  ...mailbox,
+  role: mailbox.role === undefined ? undefined : native.MailboxRole[capitalize(mailbox.role)],
+});
 
 function fromDiscovered(found: native.DiscoveredSettings | undefined): DiscoveredSettings | undefined {
   return (
@@ -80,18 +98,19 @@ function explainErrors<T extends object>(calls: T): T {
   ) as T;
 }
 
+// The store takes the session the core made, not the app's wrapper around it.
+const natives = new WeakMap<MailSession, native.MailSessionLike>();
+
+const nativeOf = (session: MailSession) => {
+  const found = natives.get(session);
+  if (!found) throw new Error('not a session the core opened');
+  return found;
+};
+
 function wrap(session: native.MailSessionLike): MailSession {
-  return explainErrors<MailSession>({
-    listMailboxes: async () =>
-      (await session.listMailboxes()).map((mailbox) => ({
-        ...mailbox,
-        role: mailbox.role === undefined ? undefined : fromRole(mailbox.role),
-      })),
+  const wrapped = explainErrors<MailSession>({
+    listMailboxes: async () => (await session.listMailboxes()).map(fromMailbox),
     createMailbox: (name) => session.createMailbox(name),
-    sync: async (mailbox, since, known, limit) => {
-      const result = await session.sync(mailbox, since, known, limit);
-      return { ...result, changed: result.changed.map(fromSummary) };
-    },
     fetchOlder: async (mailbox, uidValidity, beforeUid, limit) =>
       (await session.fetchOlder(mailbox, uidValidity, beforeUid, limit)).map(fromSummary),
     fetchBody: (mailbox, uidValidity, uid, allowRemote) => session.fetchBody(mailbox, uidValidity, uid, allowRemote),
@@ -105,6 +124,55 @@ function wrap(session: native.MailSessionLike): MailSession {
     append: (mailbox, raw, flags) => session.append(mailbox, raw, { ...noFlags, ...flags }),
     waitForChanges: (mailbox, timeoutSecs) => session.waitForChanges(mailbox, timeoutSecs),
     logout: () => session.logout(),
+  });
+  natives.set(wrapped, session);
+  return wrapped;
+}
+
+function wrapStore(store: native.MailStoreLike): MailStore {
+  return explainErrors<MailStore>({
+    syncMailbox: async (session, account, mailbox, limit) => {
+      const outcome = await store.syncMailbox(nativeOf(session), account, mailbox, limit);
+      return { ...outcome, arrived: outcome.arrived.map(fromSummary) };
+    },
+    saveMailboxes: (account, mailboxes) => store.saveMailboxes(account, mailboxes.map(toMailbox)),
+    mailboxes: async (account) => (await store.mailboxes(account)).map(fromMailbox),
+    unreadCounts: (account) => store.unreadCounts(account),
+    page: async (boxes, before, limit, grouped, filter) =>
+      (await store.page(boxes, before && { ...before, date: BigInt(before.date) }, limit, grouped, filter)).map(
+        fromConversation,
+      ),
+    loadPage: async (boxes, before, limit, grouped, filter, fetchOlder) => {
+      const older = { fetchOlder: async (from: native.MessageRef, count: number) => (await fetchOlder(from, count)).map(toSummary) };
+      const page = await store.loadPage(boxes, before && { ...before, date: BigInt(before.date) }, limit, grouped, filter, older);
+      return page.map(fromConversation);
+    },
+    conversation: async (message, grouped) => {
+      const found = await store.conversation(message, grouped);
+      return found && fromConversation(found);
+    },
+    message: async (message) => {
+      const found = await store.message(message);
+      return found && fromStored(found);
+    },
+    messages: async (refs) => (await store.messages(refs)).map(fromStored),
+    threadItems: async (account, mailbox, uidValidity, thread) =>
+      (await store.threadItems(account, mailbox, uidValidity, thread)).map(fromStored),
+    putMessages: (items: MailItem[]) => store.putMessages(items.map((item) => ({ ...item, summary: toSummary(item.summary) }))),
+    addOlder: (account, mailbox, uidValidity, summaries) =>
+      store.addOlder(account, mailbox, uidValidity, summaries.map(toSummary)),
+    removeMessages: (refs) => store.removeMessages(refs),
+    oldest: async (account, mailbox) => {
+      const found = await store.oldest(account, mailbox);
+      return found && { ...found, date: Number(found.date) };
+    },
+    cachedBody: (message, allowRemote) => store.cachedBody(message, allowRemote),
+    fetchBody: (session, message, allowRemote) => store.fetchBody(nativeOf(session), message, allowRemote),
+    blockedCount: (message) => store.blockedCount(message),
+    seenAddresses: () => store.seenAddresses(),
+    search: async (boxes, query, limit) => (await store.search(boxes, query, limit)).map(fromStored),
+    storedAccounts: () => store.storedAccounts(),
+    deleteAccount: (account) => store.deleteAccount(account),
   });
 }
 
@@ -124,6 +192,8 @@ export const core = explainErrors<Core>({
   updateContact: (config, contact, draft) => native.updateContact(toConfig(config), contact, draft),
   deleteContact: (config, href, etag) => native.deleteContact(toConfig(config), href, etag),
   unsubscribeOneClick: (url) => native.unsubscribeOneClick(url),
+  openStore: async (path) => wrapStore(await native.MailStore.open(path)),
+  openStoreWith: async (run, database) => wrapStore(await native.MailStore.openWith({ run: (request) => run(request) }, database)),
 });
 
 // On web the core is a WebAssembly module that must load before the first call; natively this resolves at once.

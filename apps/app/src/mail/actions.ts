@@ -5,16 +5,15 @@ import { t } from '@/i18n';
 import { confirmAction } from '@/utils/dialog';
 import { showError, showToast } from '@/utils/toast';
 
-import { getMailboxes, putMessages, removeMessages, roleMailbox } from './db';
-import type { MailboxGeneration, MailItem } from './refs';
+import type { Conversation, MailboxGeneration, MailItem } from './refs';
 import { explainError } from '@/core/errors';
-import { mailboxLabel } from './mailboxes';
+import { mailboxLabel, roleMailbox } from './mailboxes';
 import { invalidateMail } from '@/utils/query-client';
 import { useRoleMailbox } from './queries';
 import { seenChange } from './selection';
 import { withSession } from './session';
+import { mailStore } from './store';
 import { refreshMailboxes } from './sync';
-import type { Conversation } from './threads';
 
 type FlagChange = { items: MailItem[]; flag: 'seen' | 'flagged'; value: boolean };
 
@@ -49,13 +48,13 @@ export function useSetFlag() {
         s.setFlags(mailbox, uidValidity, uids, value ? { [flag]: true } : {}, value ? {} : { [flag]: true }),
       ),
     onMutate: async ({ items, flag, value }) => {
-      await putMessages(
+      await (await mailStore()).putMessages(
         items.map((item) => ({ ...item, summary: { ...item.summary, flags: { ...item.summary.flags, [flag]: value } } })),
       );
       invalidateMail();
     },
     onError: async (_error, { items }) => {
-      await putMessages(items);
+      await (await mailStore()).putMessages(items);
       invalidateMail();
     },
   });
@@ -107,7 +106,7 @@ async function moveBack(moved: Moved[]) {
     if (!copied) continue;
     const back = await withSession(account, (s) => s.moveMessages(destination, copied.uidValidity, copied.uids, mailbox));
     if (!back) continue;
-    await putMessages(
+    await (await mailStore()).putMessages(
       back.uids.map((uid, i) => ({ ...items[i], uid, uidValidity: back.uidValidity, summary: { ...items[i].summary, uid } })),
     );
   }
@@ -120,7 +119,7 @@ const undoable = (moved: Moved[]) =>
 async function movedLabel(destination: Destination, account: string) {
   if (destination === 'archive') return t('mail.actions.archived');
   if (destination === 'trash') return t('mail.actions.trashed');
-  const mailbox = (await getMailboxes(account)).find((m) => m.name === destination.mailbox);
+  const mailbox = (await (await mailStore()).mailboxes(account)).find((m) => m.name === destination.mailbox);
   return t('mail.actions.moved', { mailbox: mailbox ? mailboxLabel(mailbox) : destination.mailbox });
 }
 
@@ -128,7 +127,7 @@ export function useMoveMessages() {
   return useMutation({
     mutationFn: ({ items, destination }: { items: MailItem[]; destination: Destination }) => moveAll(items, destination),
     onMutate: async ({ items }) => {
-      await removeMessages(items);
+      await (await mailStore()).removeMessages(items);
       invalidateMail();
     },
     onSuccess: async (moved, { destination }) => {
@@ -139,7 +138,7 @@ export function useMoveMessages() {
       });
     },
     onError: async (_error, { items }) => {
-      await putMessages(items);
+      await (await mailStore()).putMessages(items);
       invalidateMail();
     },
   });

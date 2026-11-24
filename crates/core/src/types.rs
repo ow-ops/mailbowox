@@ -329,7 +329,7 @@ pub struct MailboxRef {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
-pub struct Cursor {
+pub struct PageCursor {
     pub date: i64,
     pub account: String,
     pub uid: u32,

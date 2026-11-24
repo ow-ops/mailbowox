@@ -9,7 +9,7 @@ import { Hairline, Press, Spacing, TouchTarget } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useBulkActions } from '@/mail/actions';
 import { seenChange, setMovingItems, stopSelecting } from '@/mail/selection';
-import type { Conversation } from '@/mail/threads';
+import type { Conversation } from '@/mail/refs';
 
 type Props = { selected: Conversation[]; inArchive: boolean };
 

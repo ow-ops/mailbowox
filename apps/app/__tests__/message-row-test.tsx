@@ -1,19 +1,18 @@
 import { fireEvent, screen, userEvent } from '@testing-library/react-native';
 
 import { MessageRow } from '@/components/message-row';
-import type { StoredItem } from '@/mail/refs';
+import { single, type Conversation, type StoredItem } from '@/mail/refs';
 import { conversationKey, stopSelecting, useSelection } from '@/mail/selection';
-import { single, type Conversation } from '@/mail/threads';
 import { renderWithQueries } from '../jest/render';
 
 jest.mock('@mailbowox/core-native', () => ({}));
-jest.mock('expo-router', () => require('../jest/expo-router'));
+jest.mock('expo-router', () => jest.requireActual('../jest/expo-router'));
 jest.mock('@/components/swipe-actions', () => ({ SwipeActions: ({ children }: { children: unknown }) => children }));
 jest.mock('@/accounts/use-account-color', () => ({ useAccountColor: () => '#c8b8ec' }));
 jest.mock('@/mail/actions', () => ({ useMessageActions: jest.fn() }));
 jest.mock('@/mail/queries', () => ({ useBlockedCount: () => ({ data: 0 }), useRoleMailbox: () => 'Trash' }));
 
-const { useMessageActions } = require('@/mail/actions');
+const useMessageActions = jest.mocked(jest.requireMock<typeof import('@/mail/actions')>('@/mail/actions').useMessageActions);
 
 const actions = { toggleSeen: jest.fn(), toggleFlagged: jest.fn(), archive: jest.fn(), remove: jest.fn() };
 

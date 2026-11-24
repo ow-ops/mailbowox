@@ -1,43 +1,27 @@
 import { keepPreviousData, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query';
 
 import { useAccounts, type Account } from '@/accounts/store';
-import type { MailboxRole } from '@/core';
 import { t } from '@/i18n';
 import { useDebounced } from '@/hooks/use-debounced';
 import { usePref } from '@/prefs/store';
 import { isOnline } from '@/utils/network';
 
-import { getBlockedCount, getBody, getMailboxes, getMessage, getMessages, getThreadItems, getSeenAddresses, getThreads, getUnreadCounts, pageConversations, pageMessages, putMessages, saveBody, searchMessages, type Cursor } from './db';
-import type { MailboxGeneration, MailboxRef, MessageRef, StoredItem } from './refs';
-import { loadPage } from './paging';
+import type { Cursor, ListFilter, MailboxRole } from '@/core';
 import { queryClient } from '@/utils/query-client';
+
+import type { Conversation, MailboxGeneration, MailboxRef, MessageRef } from './refs';
+import { isEmptyQuery, parseQuery, rankResults, storeQuery } from './search';
 import { withSession } from './session';
+import { mailStore } from './store';
 import { PAGE_SIZE } from './sync';
-import { isEmptyQuery, parseQuery, rankResults } from './search';
-import { conversation, single, type Conversation } from './threads';
 import { boxesOf, type MailView } from './view';
 
-const fetchOlder = (before: MessageRef) =>
-  withSession(before.account, (s) => s.fetchOlder(before.mailbox, before.uidValidity, before.uid, PAGE_SIZE));
+const fetchOlder = (before: MessageRef, limit: number) =>
+  withSession(before.account, (s) => s.fetchOlder(before.mailbox, before.uidValidity, before.uid, limit));
 
 const HIDDEN_ROLES: (MailboxRole | undefined)[] = ['trash', 'junk'];
 
-async function hiddenMailboxes(account: string) {
-  return (await getMailboxes(account)).filter((m) => HIDDEN_ROLES.includes(m.role)).map((m) => m.name);
-}
-
-async function withConversations(latest: StoredItem[]) {
-  const members = await getThreads(latest);
-  const accounts = [...new Set(latest.map((item) => item.account))];
-  const hidden = new Map(await Promise.all(accounts.map(async (a) => [a, await hiddenMailboxes(a)] as const)));
-  return latest.map((item) =>
-    conversation(
-      item,
-      members.filter((m) => m.account === item.account && m.thread === item.thread),
-      hidden.get(item.account) ?? [],
-    ),
-  );
-}
+const ALL: ListFilter = { unread: false, flagged: false, attachments: false, toMe: false, me: [] };
 
 export function useConversations(view: MailView) {
   const boxes = boxesOf(view, useAccounts());
@@ -46,14 +30,13 @@ export function useConversations(view: MailView) {
     queryKey: ['messages', view.kind, boxes, grouped],
     initialPageParam: undefined as Cursor | undefined,
     queryFn: async ({ pageParam }) => {
-      const page = grouped ? pageConversations : pageMessages;
+      const store = await mailStore();
       // Unread lists what is cached: paging the server for it could walk every inbox to its first message.
       // Offline, the list ends where the cache does.
-      const items =
-        view.kind === 'unread' || !isOnline()
-          ? await page(boxes, pageParam, PAGE_SIZE, view.kind === 'unread')
-          : await loadPage(boxes, pageParam, page, PAGE_SIZE, fetchOlder);
-      return grouped ? withConversations(items) : items.map(single);
+      if (view.kind === 'unread' || !isOnline()) {
+        return store.page(boxes, pageParam, PAGE_SIZE, grouped, { ...ALL, unread: view.kind === 'unread' });
+      }
+      return store.loadPage(boxes, pageParam, PAGE_SIZE, grouped, ALL, fetchOlder);
     },
     // A short page is not the end: conversations fold several messages into a row, and the cache may stop
     // above mail the server still has. The list ends with the page that comes back empty.
@@ -66,7 +49,10 @@ export function useConversations(view: MailView) {
 
 export const mailboxesQuery = (accountId: string) => ({
   queryKey: ['mailboxes', accountId],
-  queryFn: async () => ({ mailboxes: await getMailboxes(accountId), unread: await getUnreadCounts(accountId) }),
+  queryFn: async () => {
+    const store = await mailStore();
+    return { mailboxes: await store.mailboxes(accountId), unread: Object.fromEntries(await store.unreadCounts(accountId)) };
+  },
 });
 
 export function useMailboxes(accountId: string) {
@@ -81,14 +67,15 @@ export function useUnreadCount(view: MailView) {
   });
 }
 
-export const useSeenAddresses = () => useQuery({ queryKey: ['addresses'], queryFn: getSeenAddresses });
+export const useSeenAddresses = () =>
+  useQuery({ queryKey: ['addresses'], queryFn: async () => (await mailStore()).seenAddresses() });
 
 export function useRoleMailbox(accountId: string, role: MailboxRole) {
   return useMailboxes(accountId).data?.mailboxes.find((m) => m.role === role)?.name;
 }
 
 export function useMessage(ref: MessageRef) {
-  return useQuery({ queryKey: ['message', ref], queryFn: () => getMessage(ref) });
+  return useQuery({ queryKey: ['message', ref], queryFn: async () => (await (await mailStore()).message(ref)) ?? null });
 }
 
 // Null once the message has left its mailbox.
@@ -96,11 +83,7 @@ export function useConversation(ref: MessageRef) {
   const grouped = usePref('conversations');
   return useQuery({
     queryKey: ['message', ref, grouped],
-    queryFn: async () => {
-      const item = await getMessage(ref);
-      if (!item) return null;
-      return grouped ? (await withConversations([item]))[0] : single(item);
-    },
+    queryFn: async () => (await (await mailStore()).conversation(ref, grouped)) ?? null,
   });
 }
 
@@ -110,9 +93,10 @@ export function useMoveItems(box: MailboxGeneration, target: { uid: number } | {
     queryKey: ['message', box, target],
     enabled: target !== null,
     queryFn: async () => {
+      const store = await mailStore();
       if (!target) return [];
-      if ('thread' in target) return getThreadItems(box, target.thread);
-      const item = await getMessage({ ...box, uid: target.uid });
+      if ('thread' in target) return store.threadItems(box.account, box.mailbox, box.uidValidity, target.thread);
+      const item = await store.message({ ...box, uid: target.uid });
       return item ? [item] : [];
     },
   });
@@ -124,11 +108,11 @@ export function useBody(ref: MessageRef, allowRemote: boolean) {
     staleTime: Infinity,
     refetchOnReconnect: true,
     queryFn: async () => {
-      const cached = await getBody(ref, allowRemote);
+      const store = await mailStore();
+      const cached = await store.cachedBody(ref, allowRemote);
       if (cached) return cached;
       if (!isOnline()) throw new Error(t('mail.reader.offline'));
-      const body = await withSession(ref.account, (s) => s.fetchBody(ref.mailbox, ref.uidValidity, ref.uid, allowRemote));
-      await saveBody(ref, body, allowRemote);
+      const body = await withSession(ref.account, (s) => store.fetchBody(s, ref, allowRemote));
       queryClient.invalidateQueries({ queryKey: ['blocked', ref] });
       return body;
     },
@@ -137,7 +121,7 @@ export function useBody(ref: MessageRef, allowRemote: boolean) {
 
 // How many remote loads the reader blocked in this message, for a quiet marker in the list.
 export function useBlockedCount(ref: MessageRef) {
-  return useQuery({ queryKey: ['blocked', ref], queryFn: () => getBlockedCount(ref) });
+  return useQuery({ queryKey: ['blocked', ref], queryFn: async () => (await (await mailStore()).blockedCount(ref)) ?? null });
 }
 
 export type SearchScope = 'mailbox' | 'all';
@@ -149,9 +133,10 @@ const SERVER_DELAY = 600;
 // Every mailbox searches all of each account's mailboxes but Trash and Junk, as conversations leave them out.
 async function searchBoxes(view: MailView, scope: SearchScope, accounts: Account[]) {
   if (scope === 'mailbox') return boxesOf(view, accounts);
+  const store = await mailStore();
   const lists = await Promise.all(
     accounts.map(async ({ id }) =>
-      (await getMailboxes(id))
+      (await store.mailboxes(id))
         .filter((m) => m.selectable && !HIDDEN_ROLES.includes(m.role))
         .map((m) => ({ account: id, mailbox: m.name })),
     ),
@@ -161,6 +146,7 @@ async function searchBoxes(view: MailView, scope: SearchScope, accounts: Account
 
 // The newest server matches per mailbox, with the summaries of those not cached fetched and stored.
 async function searchServer(boxes: MailboxRef[], query: string) {
+  const store = await mailStore();
   const accounts = [...new Set(boxes.map((box) => box.account))];
   const found = await Promise.all(
     accounts.map((account) =>
@@ -170,11 +156,11 @@ async function searchServer(boxes: MailboxRef[], query: string) {
           const { uidValidity, uids } = await session.search(box.mailbox, query);
           const generation = { ...box, uidValidity };
           const matches = uids.slice(0, SERVER_RESULTS).map((uid) => ({ ...generation, uid }));
-          const cached = new Set((await getMessages(matches)).map((item) => item.uid));
+          const cached = new Set((await store.messages(matches)).map((item) => item.uid));
           const missing = matches.map(({ uid }) => uid).filter((uid) => !cached.has(uid));
           if (missing.length) {
             const summaries = await session.fetchSummaries(box.mailbox, uidValidity, missing);
-            await putMessages(summaries.map((summary) => ({ ...generation, uid: summary.uid, summary })));
+            await store.putMessages(summaries.map((summary) => ({ ...generation, summary })));
           }
           refs.push(...matches);
         }
@@ -205,8 +191,9 @@ export function useSearch(view: MailView, scope: SearchScope, query: string) {
   const results = useQuery({
     queryKey: ['search', ...key, text, found],
     queryFn: async () => {
-      const local = await searchMessages(await searchBoxes(view, scope, accounts), parsed, LOCAL_RESULTS);
-      return rankResults([...local, ...(await getMessages(found ?? []))], parsed);
+      const store = await mailStore();
+      const local = await store.search(await searchBoxes(view, scope, accounts), storeQuery(parsed), LOCAL_RESULTS);
+      return rankResults([...local, ...(await store.messages(found ?? []))], parsed);
     },
     enabled: !isEmptyQuery(parsed),
     placeholderData: keepPreviousData,

@@ -15,7 +15,7 @@ import { messageKey, sameMessage, type MessageRef, type StoredItem } from '@/mai
 import { explainError } from '@/core/errors';
 import { mailboxLabel } from '@/mail/mailboxes';
 import { mailboxesQuery, type SearchScope, type useSearch } from '@/mail/queries';
-import { single } from '@/mail/threads';
+import { single } from '@/mail/refs';
 import type { MailView } from '@/mail/view';
 
 // The results come from the screen, which also moves through them with the keyboard.

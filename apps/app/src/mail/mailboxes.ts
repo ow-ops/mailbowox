@@ -3,6 +3,8 @@ import type { SymbolViewProps } from 'expo-symbols';
 import type { Mailbox, MailboxRole } from '@/core';
 import { t } from '@/i18n';
 
+import { mailStore } from './store';
+
 const ROLE_ORDER: MailboxRole[] = ['inbox', 'drafts', 'sent', 'archive', 'flagged', 'all', 'junk', 'trash'];
 
 const ROLE_ICONS: Record<MailboxRole, SymbolViewProps['name']> = {
@@ -33,4 +35,8 @@ export const mailboxDepth = (mailbox: Mailbox) =>
 export function orderMailboxes(mailboxes: Mailbox[]) {
   const rank = (m: Mailbox) => (m.role ? ROLE_ORDER.indexOf(m.role) : ROLE_ORDER.length);
   return mailboxes.filter((m) => m.selectable).sort((a, b) => rank(a) - rank(b));
+}
+
+export async function roleMailbox(account: string, role: MailboxRole) {
+  return (await (await mailStore()).mailboxes(account)).find((m) => m.role === role)?.name;
 }

@@ -34,7 +34,6 @@ export function unsubscribeMethods(body: Pick<MessageBody, 'listUnsubscribe' | '
   const https = body.listUnsubscribe.find((url) => /^https:/i.test(url));
   const mail = body.listUnsubscribe.filter((url) => /^mailto:/i.test(url)).map(mailto)[0];
   const methods: UnsubscribeMethod[] = [];
-  // Bodies cached before the flag existed have no value for it.
   if (https && body.listUnsubscribeOneClick) methods.push({ kind: 'oneClick', url: https });
   if (mail) methods.push(mail);
   if (https) methods.push({ kind: 'web', url: https });

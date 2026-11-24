@@ -2,7 +2,7 @@ import { accountConfig, type Account } from '@/accounts/store';
 import { core, type Draft } from '@/core';
 import { t } from '@/i18n';
 
-import { roleMailbox } from './db';
+import { roleMailbox } from './mailboxes';
 import { withSession } from './session';
 import { syncMailbox } from './sync';
 

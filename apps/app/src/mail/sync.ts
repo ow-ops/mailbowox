@@ -6,10 +6,10 @@ import { core, type MailSession } from '@/core';
 import { useAppActive } from '@/hooks/use-app-active';
 import { isOnline, useOnline } from '@/utils/network';
 
-import { applySync, getKnown, getSyncState, roleMailbox, saveMailboxes } from './db';
+import { roleMailbox } from './mailboxes';
 import { announceNewMail } from './new-mail';
-import { resumePaging } from './paging';
 import type { MailboxRef } from './refs';
+import { mailStore } from './store';
 import { invalidateMail, queryClient } from '@/utils/query-client';
 import { withSession } from './session';
 import { INBOX } from './view';
@@ -33,20 +33,12 @@ function clearSyncError(accountId: string) {
 export const useSyncErrors = () => useStore(syncErrors);
 
 async function syncWith(session: MailSession, box: MailboxRef) {
-  const since = await getSyncState(box);
-  const known = since ? await getKnown({ ...box, uidValidity: since.uidValidity }) : [];
-  const result = await session.sync(box.mailbox, since, known, PAGE_SIZE);
-  // Removed while the server was answering: its data is being deleted, and this would put some back.
-  if (!accountExists(box.account)) return;
-  await applySync(box, result);
-  if (result.reset || result.truncated) resumePaging(box);
+  const store = await mailStore();
+  const outcome = await store.syncMailbox(session, box.account, box.mailbox, PAGE_SIZE);
+  // Removed while the server was answering: its data is being deleted, and this sync put some back.
+  if (!accountExists(box.account)) return store.deleteAccount(box.account);
   invalidateMail();
-  if (box.mailbox !== INBOX || !since || result.reset) return;
-  // `changed` also lists old messages whose flags moved; the new ones start at the last known next UID.
-  announceNewMail(
-    box.account,
-    result.changed.filter((message) => message.uid >= since.uidNext && !message.flags.seen),
-  );
+  if (box.mailbox === INBOX) announceNewMail(box.account, outcome.arrived);
 }
 
 export const syncMailbox = (box: MailboxRef) => withSession(box.account, (session) => syncWith(session, box));
@@ -54,7 +46,7 @@ export const syncMailbox = (box: MailboxRef) => withSession(box.account, (sessio
 export async function refreshMailboxes(accountId: string) {
   const mailboxes = await withSession(accountId, (s) => s.listMailboxes());
   if (!accountExists(accountId)) return;
-  await saveMailboxes(accountId, mailboxes);
+  await (await mailStore()).saveMailboxes(accountId, mailboxes);
   queryClient.invalidateQueries({ queryKey: ['mailboxes', accountId] });
 }
 

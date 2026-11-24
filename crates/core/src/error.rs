@@ -98,6 +98,14 @@ impl CoreError {
     }
 }
 
+impl From<uniffi::UnexpectedUniFFICallbackError> for CoreError {
+    fn from(error: uniffi::UnexpectedUniFFICallbackError) -> Self {
+        Self::Protocol {
+            message: error.reason,
+        }
+    }
+}
+
 impl From<io::Error> for CoreError {
     fn from(err: io::Error) -> Self {
         err.get_ref()

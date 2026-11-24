@@ -7,7 +7,9 @@ use super::{
 };
 use crate::{
     error::CoreError,
-    types::{Conversation, Cursor, ListFilter, MailboxRef, MailboxRole, MessageRef, StoredMessage},
+    types::{
+        Conversation, ListFilter, MailboxRef, MailboxRole, MessageRef, PageCursor, StoredMessage,
+    },
 };
 
 fn in_boxes(boxes: &[MailboxRef], alias: &str) -> (String, Vec<Value>) {
@@ -65,7 +67,7 @@ fn shown(
     Ok((format!("{within} AND {}{narrow}", listed(alias)), params))
 }
 
-fn cursor_params(before: Option<&Cursor>) -> Vec<Value> {
+fn cursor_params(before: Option<&PageCursor>) -> Vec<Value> {
     before.map_or_else(Vec::new, |c| {
         vec![
             c.date.into(),
@@ -81,7 +83,7 @@ fn limit_value(limit: u32) -> Value {
 
 fn messages_page(
     boxes: &[MailboxRef],
-    before: Option<&Cursor>,
+    before: Option<&PageCursor>,
     limit: u32,
     filter: &ListFilter,
 ) -> Result<Statement, CoreError> {
@@ -108,7 +110,7 @@ fn messages_page(
 /// its index: left to choose, SQLite scans the mailbox's newer messages for each row.
 pub(super) fn conversations_page(
     boxes: &[MailboxRef],
-    before: Option<&Cursor>,
+    before: Option<&PageCursor>,
     limit: u32,
     filter: &ListFilter,
 ) -> Result<Statement, CoreError> {
@@ -160,7 +162,7 @@ impl MailStore {
     pub async fn page(
         &self,
         boxes: Vec<MailboxRef>,
-        before: Option<Cursor>,
+        before: Option<PageCursor>,
         limit: u32,
         grouped: bool,
         filter: ListFilter,
