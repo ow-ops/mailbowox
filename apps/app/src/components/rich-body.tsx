@@ -11,7 +11,7 @@ import { Button } from '@/components/button';
 import { IconButton } from '@/components/icon-button';
 import { TextField } from '@/components/text-field';
 import { textStyles } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { BorderWidth, ColumnWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type Editor = EnrichedTextInputInstance;
@@ -31,10 +31,12 @@ type Props = EditorRefs & {
   autoFocus?: boolean;
   onChange: (html: string) => void;
   minHeight?: number;
+  // Drawn as a form field, like TextField, rather than as a page of the composer.
+  field?: boolean;
 };
 
 export function RichBody(props: Props) {
-  const { editorRef, selectionRef, defaultValue, label, autoFocus, onChange, minHeight = 200 } = props;
+  const { editorRef, selectionRef, defaultValue, label, autoFocus, onChange, minHeight = 200, field } = props;
   const theme = useTheme();
   return (
     <EnrichedTextInput
@@ -61,6 +63,13 @@ export function RichBody(props: Props) {
         minHeight,
         paddingHorizontal: Spacing.three,
         paddingVertical: Spacing.two,
+        ...(field && {
+          borderWidth: BorderWidth.input,
+          borderRadius: Radius.md,
+          borderCurve: 'continuous',
+          borderColor: theme.outline,
+          backgroundColor: theme.field,
+        }),
       }}
     />
   );
@@ -93,7 +102,7 @@ export function FormatBar({ editorRef, selectionRef }: EditorRefs) {
   };
 
   return (
-    <View>
+    <View style={styles.formats}>
       <View style={styles.bar} accessibilityRole="toolbar" accessibilityLabel={t('compose.format.label')}>
         {FORMATS.map(({ key, ios, material, run }) => (
           <IconButton
@@ -135,7 +144,9 @@ export function FormatBar({ editorRef, selectionRef }: EditorRefs) {
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row' },
-  link: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingHorizontal: Spacing.three },
+  formats: { width: '100%', maxWidth: ColumnWidth },
+  // The glyphs line up with what is below them, not their touch areas.
+  bar: { flexDirection: 'row', marginLeft: -Spacing.oneHalf },
+  link: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, marginBottom: Spacing.two },
   url: { flex: 1 },
 });

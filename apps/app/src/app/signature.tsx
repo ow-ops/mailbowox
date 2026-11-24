@@ -36,6 +36,7 @@ function SignatureForm({ account }: { account: Account }) {
         label={t('settings.signature.placeholder')}
         autoFocus
         minHeight={120}
+        field
         onChange={setHtml}
       />
       <FormatBar editorRef={editorRef} selectionRef={selectionRef} />
