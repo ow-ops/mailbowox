@@ -31,6 +31,7 @@ import type { ReplyMode } from '@/mail/reply';
 import { withSession } from '@/mail/session';
 import { useMailView } from '@/mail/view';
 import { setPref, usePref } from '@/prefs/store';
+import { printConversation } from '@/mail/printing';
 import { mailStore } from '@/mail/store';
 import { invalidateMail } from '@/utils/query-client';
 import { shareFile } from '@/utils/share-file';
@@ -97,6 +98,7 @@ function ConversationReader({ conversation }: { conversation: Conversation }) {
     <Reader
       key={messageKey(expanded)}
       item={expanded}
+      messages={messages}
       subject={messages[0].summary.subject}
       older={
         hidden.length
@@ -163,13 +165,15 @@ function CollapsedMessage({ item, onExpand }: { item: StoredItem; onExpand: () =
 
 type ReaderProps = {
   item: StoredItem;
+  // The whole conversation, for printing.
+  messages: StoredItem[];
   subject: string;
   older: ReactNode[];
   newer: ReactNode[];
   onLoaded: () => void;
 };
 
-function Reader({ item, subject, older, newer, onLoaded }: ReaderProps) {
+function Reader({ item, messages, subject, older, newer, onLoaded }: ReaderProps) {
   const { t } = useTranslation();
   const theme = useTheme();
   const remotePref = usePref('remoteContent');
@@ -245,7 +249,7 @@ function Reader({ item, subject, older, newer, onLoaded }: ReaderProps) {
         )}
       </View>
       {newer.length > 0 && <ScrollView style={styles.newer}>{newer}</ScrollView>}
-      <ActionBar item={item} />
+      <ActionBar item={item} messages={messages} />
     </View>
   );
 }
@@ -289,7 +293,7 @@ function Unsubscribe({ item, body }: { item: StoredItem; body: MessageBody }) {
 // Below this width, Reply all, Forward, Flag and Mark as unread move into the More menu.
 const FULL_BAR = 560;
 
-function ActionBar({ item }: { item: StoredItem }) {
+function ActionBar({ item, messages }: { item: StoredItem; messages: StoredItem[] }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const [width, setWidth] = useState(0);
@@ -302,6 +306,10 @@ function ActionBar({ item }: { item: StoredItem }) {
       pathname: '/compose',
       params: { mode, ...messageParams(item) },
     });
+  const print = () =>
+    void printConversation(t, messages).catch((error: unknown) =>
+      showError(t('mail.print.failed'), explainError(error).summary),
+    );
   const flagLabel = flags.flagged ? t('mail.actions.unflag') : t('mail.actions.flag');
   const seenLabel = flags.seen ? t('mail.actions.markUnread') : t('mail.actions.markRead');
   useShortcuts({
@@ -367,6 +375,13 @@ function ActionBar({ item }: { item: StoredItem }) {
               onPress={actions.toggleSeen}
             />
           </ShortcutTooltip>
+          <ShortcutTooltip label={t('mail.print.action')}>
+            <IconButton
+              icon={{ ios: 'printer', android: 'print', web: 'print' }}
+              label={t('mail.print.action')}
+              onPress={print}
+            />
+          </ShortcutTooltip>
         </View>
       ) : (
         <NativeMenu
@@ -400,6 +415,7 @@ function ActionBar({ item }: { item: StoredItem }) {
                 onPress: actions.toggleSeen,
               },
             ],
+            [{ key: 'print', title: t('mail.print.action'), icon: 'printer', onPress: print }],
           ]}
         />
       )}

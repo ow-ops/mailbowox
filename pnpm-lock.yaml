@@ -255,6 +255,9 @@ importers:
       expo-notifications:
         specifier: ~58.1.9
         version: 58.1.9(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1)(typescript@6.0.3)
+      expo-print:
+        specifier: ~58.0.9
+        version: 58.0.9(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))
       expo-router:
         specifier: ~58.0.32
         version: 58.0.32(475b3fb2ca0151e936b10308aeb054ef)
@@ -3465,6 +3468,12 @@ packages:
     peerDependencies:
       expo: '*'
       react: '*'
+      react-native: '*'
+
+  expo-print@58.0.9:
+    resolution: {integrity: sha512-LkjyzbbpTd9oaxZOIx7pIiZtPRZgp1FOG1B1akTs0i+2HfT5UNyVFNKgsfQKa/7Xo+Ec9+Pr73SLwRbYEtBL9Q==}
+    peerDependencies:
+      expo: '*'
       react-native: '*'
 
   expo-router@58.0.32:
@@ -9722,6 +9731,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
+
+  expo-print@58.0.9(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)):
+    dependencies:
+      expo: 58.0.26(ab72de19d5c3f790a0cf522ea6d4a0f7)
+      react-native: 0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
 
   expo-router@58.0.32(475b3fb2ca0151e936b10308aeb054ef):
     dependencies:

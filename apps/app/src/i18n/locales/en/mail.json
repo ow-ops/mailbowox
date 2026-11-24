@@ -160,5 +160,10 @@
     "moveTo": "Move to {{category}}",
     "moved": "Mail from {{name}} now goes to {{category}}.",
     "moveFailed": "Couldn't move the sender"
+  },
+  "print": {
+    "action": "Print",
+    "from": "From: {{list}}",
+    "failed": "Couldn't print"
   }
 }
