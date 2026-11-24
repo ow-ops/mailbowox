@@ -97,4 +97,5 @@ export interface Core {
   createContact(config: AccountConfig, addressBook: string, draft: ContactDraft): Promise<Contact>;
   updateContact(config: AccountConfig, contact: Contact, draft: ContactDraft): Promise<Contact>;
   deleteContact(config: AccountConfig, href: string, etag: string | undefined): Promise<void>;
+  unsubscribeOneClick(url: string): Promise<void>;
 }

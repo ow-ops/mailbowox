@@ -16,7 +16,7 @@ import { NativeMenu } from '@/components/native-menu';
 import { QueryState } from '@/components/query-state';
 import { ShortcutTooltip } from '@/components/shortcut-tooltip';
 import { ThemedText } from '@/components/themed-text';
-import type { AttachmentInfo } from '@/core';
+import type { AttachmentInfo, MessageBody } from '@/core';
 import { Hairline, Press, Radius, Spacing, TouchTarget } from '@/constants/theme';
 import { useShortcuts } from '@/hooks/use-shortcuts';
 import { useTheme } from '@/hooks/use-theme';
@@ -25,13 +25,16 @@ import { addressName, formatAddress } from '@/mail/address';
 import { messageKey, messageParams, sameMessage, type MessageRef, type StoredItem } from '@/mail/refs';
 import { useBody, useConversation } from '@/mail/queries';
 import { remoteNotice } from '@/mail/remote-notice';
+import { unsubscribe, unsubscribeMethods } from '@/mail/unsubscribe';
 import type { ReplyMode } from '@/mail/reply';
 import { withSession } from '@/mail/session';
 import { single, type Conversation } from '@/mail/threads';
 import { useMailView } from '@/mail/view';
 import { setPref, usePref } from '@/prefs/store';
 import { shareFile } from '@/utils/share-file';
+import { confirmAction } from '@/utils/dialog';
 import { formatSize } from '@/utils/size';
+import { showError, showToast } from '@/utils/toast';
 import { fullTime, listTime } from '@/utils/time';
 
 type MessageReaderProps = {
@@ -223,6 +226,7 @@ function Reader({ item, subject, older, newer, onLoaded }: ReaderProps) {
           />
         </View>
       )}
+      {body.data && <Unsubscribe item={item} body={body.data} />}
       <View style={[styles.body, { borderTopColor: theme.border }]}>
         {body.data ? (
           body.data.html ? (
@@ -240,6 +244,42 @@ function Reader({ item, subject, older, newer, onLoaded }: ReaderProps) {
       </View>
       {newer.length > 0 && <ScrollView style={styles.newer}>{newer}</ScrollView>}
       <ActionBar item={item} />
+    </View>
+  );
+}
+
+function Unsubscribe({ item, body }: { item: StoredItem; body: MessageBody }) {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const methods = unsubscribeMethods(body);
+  const sender = item.summary.from[0];
+  const name = sender ? addressName(sender) : t('mail.reader.theSender');
+  const run = useMutation({
+    mutationFn: () => unsubscribe(item, methods),
+    onSuccess: (outcome) => {
+      if (outcome === 'done') showToast(t('mail.unsubscribe.done', { name }));
+    },
+    onError: (error) => showError(t('mail.unsubscribe.failed'), error instanceof Error ? error.message : undefined),
+  });
+  if (!methods.length || run.data === 'done') return null;
+  return (
+    <View style={styles.remote}>
+      <SymbolView
+        name={{ ios: 'envelope.badge.person.crop', android: 'unsubscribe', web: 'unsubscribe' }}
+        size={16}
+        tintColor={theme.muted}
+      />
+      <ThemedText type="meta" style={styles.grow}>
+        {t('mail.unsubscribe.notice', { name })}
+      </ThemedText>
+      <Button
+        label={t('mail.unsubscribe.action')}
+        accessibilityLabel={t('mail.unsubscribe.confirm', { name })}
+        variant="outline"
+        size="small"
+        loading={run.isPending}
+        onPress={() => confirmAction(t('mail.unsubscribe.confirm', { name }), t('mail.unsubscribe.action'), () => run.mutate())}
+      />
     </View>
   );
 }

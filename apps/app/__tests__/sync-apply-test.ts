@@ -46,7 +46,7 @@ describe('applySync', () => {
   it('updates changed flags, adds new mail and removes vanished messages with their bodies', async () => {
     await saveBody(
       { ...inbox, uidValidity: 1, uid: 1 },
-      { uid: 1, text: 'hi', hasRemoteContent: false, blockedRemote: 0, attachments: [], listUnsubscribe: [] },
+      { uid: 1, text: 'hi', hasRemoteContent: false, blockedRemote: 0, attachments: [], listUnsubscribe: [], listUnsubscribeOneClick: false },
       false,
     );
     await applySync(inbox, {
@@ -74,7 +74,7 @@ describe('applySync', () => {
     const box = { account: 'rebuilt', mailbox: 'INBOX' };
     const previous = { ...box, uid: 1, uidValidity: 1 };
     const current = { ...previous, uidValidity: 2 };
-    const body = { uid: 1, text: 'old message', hasRemoteContent: false, blockedRemote: 0, attachments: [], listUnsubscribe: [] };
+    const body = { uid: 1, text: 'old message', hasRemoteContent: false, blockedRemote: 0, attachments: [], listUnsubscribe: [], listUnsubscribeOneClick: false };
     const initial = { state, reset: true, changed: [summary(1, 100)], vanished: [], truncated: false };
     await applySync(box, initial);
     await applySync(box, { ...initial, state: { ...state, uidValidity: 2 }, changed: [summary(1, 200)] });
@@ -97,9 +97,9 @@ describe('getBlockedCount', () => {
   it('keeps the count of the body last read, and nothing for an unopened message', async () => {
     const ref = { ...inbox, uidValidity: 2, uid: 1 };
     expect(await getBlockedCount(ref)).toBeNull();
-    await saveBody(ref, { uid: 1, html: '<p>x</p>', hasRemoteContent: true, blockedRemote: 3, attachments: [], listUnsubscribe: [] }, false);
+    await saveBody(ref, { uid: 1, html: '<p>x</p>', hasRemoteContent: true, blockedRemote: 3, attachments: [], listUnsubscribe: [], listUnsubscribeOneClick: false }, false);
     expect(await getBlockedCount(ref)).toBe(3);
-    await saveBody(ref, { uid: 1, html: '<p>x</p>', hasRemoteContent: true, blockedRemote: 0, attachments: [], listUnsubscribe: [] }, true);
+    await saveBody(ref, { uid: 1, html: '<p>x</p>', hasRemoteContent: true, blockedRemote: 0, attachments: [], listUnsubscribe: [], listUnsubscribeOneClick: false }, true);
     expect(await getBlockedCount(ref)).toBe(0);
   });
 });

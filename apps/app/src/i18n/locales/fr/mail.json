@@ -133,5 +133,12 @@
     "all": "Tous les raccourcis clavier",
     "enter": "Entrée",
     "escape": "Échap"
+  },
+  "unsubscribe": {
+    "notice": "{{name}} envoie ce message à une liste de diffusion.",
+    "action": "Se désabonner",
+    "confirm": "Se désabonner de {{name}} ?",
+    "done": "Désabonnement de {{name}} effectué.",
+    "failed": "Désabonnement impossible"
   }
 }

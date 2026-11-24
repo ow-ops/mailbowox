@@ -25,7 +25,7 @@ const big = (uid: number) => ({
   text: 'x'.repeat(20 * 1024 * 1024),
   hasRemoteContent: false,
   blockedRemote: 0,
-  listUnsubscribe: [],
+  listUnsubscribe: [], listUnsubscribeOneClick: false,
   attachments: [],
 });
 

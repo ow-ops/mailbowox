@@ -29,7 +29,7 @@ const body = (text: string, attachments: AttachmentInfo[] = []): MessageBody => 
   text,
   hasRemoteContent: false,
   blockedRemote: 0,
-  listUnsubscribe: [],
+  listUnsubscribe: [], listUnsubscribeOneClick: false,
   attachments,
 });
 

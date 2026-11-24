@@ -133,5 +133,12 @@
     "all": "All keyboard shortcuts",
     "enter": "Enter",
     "escape": "Esc"
+  },
+  "unsubscribe": {
+    "notice": "{{name}} sends this to a mailing list.",
+    "action": "Unsubscribe",
+    "confirm": "Unsubscribe from {{name}}?",
+    "done": "Unsubscribed from {{name}}.",
+    "failed": "Couldn't unsubscribe"
   }
 }

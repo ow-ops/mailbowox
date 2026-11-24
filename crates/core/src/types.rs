@@ -165,7 +165,11 @@ pub struct MessageBody {
     /// with `allow_remote`.
     pub blocked_remote: u32,
     pub attachments: Vec<AttachmentInfo>,
+    /// The `mailto:` and `https:` URLs of `List-Unsubscribe`, in its order.
     pub list_unsubscribe: Vec<String>,
+    /// `List-Unsubscribe-Post` asks for one-click unsubscription (RFC 8058):
+    /// a POST to the https URL, with `unsubscribe_one_click`.
+    pub list_unsubscribe_one_click: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]

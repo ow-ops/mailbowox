@@ -33,6 +33,15 @@ pub fn message_body(uid: u32, raw: &[u8], allow_remote: bool) -> Result<MessageB
                 .filter_map(|url| url.address().map(Into::into))
                 .collect()
         }),
+        list_unsubscribe_one_click: root
+            .headers()
+            .get("List-Unsubscribe-Post")
+            .and_then(|header| header.value().as_text())
+            .is_some_and(|value| {
+                value
+                    .trim()
+                    .eq_ignore_ascii_case("List-Unsubscribe=One-Click")
+            }),
     })
 }
 
@@ -190,5 +199,32 @@ mod tests {
             "{html}"
         );
         assert_eq!(body.blocked_remote, 0);
+    }
+
+    #[test]
+    fn a_list_offering_one_click_unsubscription_says_so() {
+        let raw = concat!(
+            "Subject: news\r\n",
+            "List-Unsubscribe: <mailto:leave@list.example?subject=stop>, <https://list.example/u?id=1>\r\n",
+            "List-Unsubscribe-Post: List-Unsubscribe=One-Click\r\n",
+            "Content-Type: text/plain\r\n\r\nhi\r\n",
+        );
+        let body = message_body(1, raw.as_bytes(), false).expect("a body");
+        assert_eq!(
+            body.list_unsubscribe,
+            [
+                "mailto:leave@list.example?subject=stop",
+                "https://list.example/u?id=1"
+            ]
+        );
+        assert!(body.list_unsubscribe_one_click);
+
+        let plain = message_body(
+            1,
+            b"Subject: x\r\nList-Unsubscribe: <https://list.example/u>\r\n\r\nhi",
+            false,
+        )
+        .expect("a body");
+        assert!(!plain.list_unsubscribe_one_click);
     }
 }

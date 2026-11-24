@@ -35,6 +35,7 @@ mod summary;
 mod tls;
 mod transport;
 mod types;
+mod unsubscribe;
 mod vcard;
 
 pub use error::{CoreError, TlsFailure};
@@ -191,4 +192,12 @@ pub async fn delete_contact(
     etag: Option<String>,
 ) -> Result<(), CoreError> {
     carddav::delete(&config, &href, etag.as_deref()).await
+}
+
+/// Posts `List-Unsubscribe=One-Click` to the list's https URL (RFC 8058).
+/// A 2xx or 3xx answer counts as done; redirects are not followed.
+#[cfg_attr(not(target_arch = "wasm32"), uniffi::export(async_runtime = "tokio"))]
+#[cfg_attr(target_arch = "wasm32", uniffi::export)]
+pub async fn unsubscribe_one_click(url: String) -> Result<(), CoreError> {
+    unsubscribe::one_click(&url).await
 }

@@ -123,6 +123,7 @@ export const core = explainErrors<Core>({
   createContact: (config, addressBook, draft) => native.createContact(toConfig(config), addressBook, draft),
   updateContact: (config, contact, draft) => native.updateContact(toConfig(config), contact, draft),
   deleteContact: (config, href, etag) => native.deleteContact(toConfig(config), href, etag),
+  unsubscribeOneClick: (url) => native.unsubscribeOneClick(url),
 });
 
 // On web the core is a WebAssembly module that must load before the first call; natively this resolves at once.
