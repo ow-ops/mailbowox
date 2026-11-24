@@ -43,5 +43,6 @@
     "date": "Date: {{date}}",
     "subject": "Subject: {{subject}}",
     "to": "To: {{list}}"
-  }
+  },
+  "attachPhotos": "Attach photos"
 }

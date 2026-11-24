@@ -35,7 +35,7 @@ import { setPref, usePref } from '@/prefs/store';
 import { printConversation } from '@/mail/printing';
 import { mailStore } from '@/mail/store';
 import { invalidateMail } from '@/utils/query-client';
-import { shareFile } from '@/utils/share-file';
+import { openFile } from '@/utils/open-file';
 import { confirmAction } from '@/utils/dialog';
 import { formatSize } from '@/utils/size';
 import { showError, showToast } from '@/utils/toast';
@@ -568,8 +568,9 @@ function Attachments({ message, attachments }: { message: MessageRef; attachment
       const data = await withSession(message.account, (s) =>
         s.fetchAttachment(message.mailbox, message.uidValidity, message.uid, info),
       );
-      await shareFile(info.filename ?? t('mail.reader.attachment'), info.mimeType, data);
+      await openFile(info.filename ?? t('mail.reader.attachment'), info.mimeType, data);
     },
+    onError: (error) => showError(t('mail.reader.openFailed'), explainError(error).summary),
   });
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.attachments}>

@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { File } from 'expo-file-system';
 import { router, Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -49,6 +50,24 @@ const attachment = (filename: string, mimeType: string | undefined, data: ArrayB
   size: data.byteLength,
   data,
 });
+
+// iOS hands HEIC photos over as JPEG in its compatible mode; the name follows the format it got.
+async function pickPhotos(): Promise<DraftAttachment[]> {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    allowsMultipleSelection: true,
+    preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+  });
+  if (result.canceled) return [];
+  return Promise.all(
+    result.assets.map(async (asset, i) => {
+      const jpeg = asset.mimeType === 'image/jpeg';
+      const name = asset.fileName ?? `photo-${i + 1}.jpg`;
+      const filename = jpeg ? name.replace(/\.(heic|heif)$/i, '.jpg') : name;
+      return attachment(filename, asset.mimeType, await new File(asset.uri).arrayBuffer());
+    }),
+  );
+}
 
 async function pickAttachments(): Promise<DraftAttachment[]> {
   const result = await DocumentPicker.getDocumentAsync({ multiple: true });
@@ -234,7 +253,7 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
   });
 
   const attach = useMutation({
-    mutationFn: pickAttachments,
+    mutationFn: (from: 'files' | 'photos') => (from === 'photos' ? pickPhotos() : pickAttachments()),
     onSuccess: (picked) => {
       if (picked.length) edit(setAttachments)([...attachments, ...picked]);
     },
@@ -415,9 +434,18 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
               label={t('compose.attach')}
               variant="outline"
               size="small"
-              loading={attach.isPending}
-              onPress={() => attach.mutate()}
+              loading={attach.isPending && attach.variables === 'files'}
+              onPress={() => attach.mutate('files')}
             />
+            {Platform.OS !== 'web' && (
+              <Button
+                label={t('compose.attachPhotos')}
+                variant="outline"
+                size="small"
+                loading={attach.isPending && attach.variables === 'photos'}
+                onPress={() => attach.mutate('photos')}
+              />
+            )}
             <Button
               label={t('compose.saveDraft')}
               variant="outline"

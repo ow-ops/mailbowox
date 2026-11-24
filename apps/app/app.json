@@ -116,7 +116,14 @@
         }
       ],
       "@bacons/apple-targets",
-      "@sentry/react-native/expo"
+      "@sentry/react-native/expo",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "mailbowox attaches the photos you pick to your message.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
