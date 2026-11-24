@@ -14,12 +14,12 @@ import { AddressField, allRecipients, emptyRecipients } from '@/components/addre
 import { Button } from '@/components/button';
 import { SenderPicker } from '@/components/sender-picker';
 import { ThemedText, textStyles } from '@/components/themed-text';
-import type { Address, AttachmentInfo, Draft, OutgoingAttachment } from '@/core';
+import type { Address, AttachmentInfo, Draft, DraftAttachment, OutgoingAttachment } from '@/core';
 import { ColumnWidth, frameless, Hairline, Press, Radius, Spacing, TouchTarget } from '@/constants/theme';
 import { useFileDrop } from '@/hooks/use-file-drop';
 import { useTheme } from '@/hooks/use-theme';
 import { isEmail } from '@/mail/address';
-import { getDraftAttachments, setDraftAttachments, type DraftAttachment } from '@/mail/outbox-db';
+import { mailStore } from '@/mail/store';
 import { explainError } from '@/core/errors';
 import { senders, setLastFrom, type Sender } from '@/mail/from';
 import { messageParams, type MessageRef } from '@/mail/refs';
@@ -122,7 +122,9 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
 
   useEffect(() => {
     if (!touched || !restored) return;
-    setDraftAttachments(slot, attachments).catch((error: unknown) =>
+    mailStore()
+      .then((store) => store.setDraftAttachments(slot, attachments))
+      .catch((error: unknown) =>
       showError(t('compose.attachmentsNotKept'), explainError(error).summary),
     );
   }, [slot, touched, restored, attachments, t]);
@@ -152,7 +154,9 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
     };
     if (!saved || returned) fetchMissing(attachments);
     else
-      getDraftAttachments(slot).then(
+      mailStore()
+        .then((store) => store.draftAttachments(slot))
+        .then(
         (list) => {
           if (!open) return;
           setAttachments(list);

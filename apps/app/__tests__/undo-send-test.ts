@@ -2,12 +2,12 @@ import { waitFor } from '@testing-library/react-native';
 import { AppState } from 'react-native';
 
 import type { Draft } from '@/core';
-import { getQueuedMessages } from '@/mail/outbox-db';
+import { store } from '../jest/mail-store';
 import { cancelQueued } from '@/mail/outbox';
 import { sendWithUndo } from '@/mail/undo-send';
 import { showError, showToast } from '@/utils/toast';
 
-jest.mock('expo-sqlite', () => jest.requireActual('../jest/expo-sqlite'));
+jest.mock('@/mail/store', () => jest.requireActual('../jest/mail-store'));
 jest.mock('@/utils/network', () => ({ isOnline: jest.fn(() => true), useOnline: () => true }));
 jest.mock('@/utils/toast', () => ({ showToast: jest.fn(() => 1), dismissToast: jest.fn(), showError: jest.fn() }));
 jest.mock('@/utils/query-client', () => ({ invalidateMail: jest.fn() }));
@@ -34,7 +34,7 @@ const draft: Draft = {
   attachments: [],
 };
 
-const queued = async () => (await getQueuedMessages()).length;
+const queued = async () => (await store.queuedMessages()).length;
 const toasts = () => (showToast as jest.Mock).mock.calls.map(([message]) => message);
 const pressUndo = () => (showToast as jest.Mock).mock.calls[0][1].onClick();
 const windowPasses = () => jest.advanceTimersByTimeAsync(5000);
@@ -44,7 +44,7 @@ beforeEach(async () => {
   jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'] });
   isOnline.mockReturnValue(true);
   core.sendMessage.mockReset().mockResolvedValue(new Uint8Array());
-  for (const { id } of await getQueuedMessages()) await cancelQueued(id);
+  for (const { id } of await store.queuedMessages()) await cancelQueued(id);
 });
 
 afterEach(() => jest.useRealTimers());

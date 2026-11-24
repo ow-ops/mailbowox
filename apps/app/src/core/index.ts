@@ -12,6 +12,7 @@ import type {
   MailSession,
   MailStore,
   MessageSummary,
+  QueuedMessage,
   Security,
   ServerConfig,
   TlsFailure,
@@ -129,6 +130,13 @@ function wrap(session: native.MailSessionLike): MailSession {
   return wrapped;
 }
 
+const fromQueued = (queued: native.QueuedMessage): QueuedMessage => ({
+  ...queued,
+  id: Number(queued.id),
+  queuedAt: Number(queued.queuedAt),
+  error: queued.error ?? null,
+});
+
 function wrapStore(store: native.MailStoreLike): MailStore {
   return explainErrors<MailStore>({
     syncMailbox: async (session, account, mailbox, limit) => {
@@ -173,6 +181,19 @@ function wrapStore(store: native.MailStoreLike): MailStore {
     search: async (boxes, query, limit) => (await store.search(boxes, query, limit)).map(fromStored),
     storedAccounts: () => store.storedAccounts(),
     deleteAccount: (account) => store.deleteAccount(account),
+    enqueue: async (account, draft, error) => Number(await store.enqueue(account, draft, error ?? undefined)),
+    queuedMessages: async () => (await store.queuedMessages()).map(fromQueued),
+    queuedMessage: async (id) => {
+      const found = await store.queuedMessage(BigInt(id));
+      return found && fromQueued(found);
+    },
+    queuedAttachments: (id) => store.queuedAttachments(BigInt(id)),
+    removeQueued: (id) => store.removeQueued(BigInt(id)),
+    setQueuedError: (id, error) => store.setQueuedError(BigInt(id), error ?? undefined),
+    setDraftAttachments: (slot, attachments) =>
+      store.setDraftAttachments(slot, attachments.map((a) => ({ ...a, size: BigInt(a.size) }))),
+    draftAttachments: async (slot) =>
+      (await store.draftAttachments(slot)).map((a) => ({ ...a, size: Number(a.size) })),
   });
 }
 

@@ -4,6 +4,7 @@ mod bodies;
 mod exec;
 mod list;
 mod messages;
+mod outbox;
 mod paging;
 mod schema;
 mod search;

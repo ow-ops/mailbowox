@@ -183,7 +183,7 @@ pub struct OutgoingAttachment {
     pub data: Vec<u8>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record, serde::Serialize, serde::Deserialize)]
 pub struct Draft {
     pub from: Address,
     pub to: Vec<Address>,
@@ -194,6 +194,8 @@ pub struct Draft {
     pub html: Option<String>,
     pub in_reply_to: Option<String>,
     pub references: Vec<String>,
+    /// Kept in rows of their own by the outbox.
+    #[serde(skip)]
     pub attachments: Vec<OutgoingAttachment>,
 }
 
@@ -365,4 +367,26 @@ pub struct SearchQuery {
     pub seen: Option<bool>,
     pub flagged: bool,
     pub attachments: bool,
+}
+
+/// A message waiting in the outbox; its draft comes without the attachments.
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct QueuedMessage {
+    pub id: i64,
+    pub account: String,
+    /// Unix seconds.
+    pub queued_at: i64,
+    pub error: Option<String>,
+    pub draft: Draft,
+}
+
+/// An attachment of a composer's local draft. One that was still downloading
+/// when the draft was kept has no data, and is fetched again when it reopens.
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct DraftAttachment {
+    pub key: String,
+    pub filename: String,
+    pub mime_type: String,
+    pub size: u64,
+    pub data: Option<Vec<u8>>,
 }

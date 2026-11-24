@@ -1,5 +1,4 @@
 import { lazyDatabase } from '@/db/migrate';
-import { transactionQueue } from '@/db/transactions';
 
 const SCHEMA = `
   CREATE TABLE mailboxes (
@@ -99,7 +98,8 @@ const SCHEMA = `
   );
 `;
 
-// The mail cache moved to the core's store; mail is synced again there. The outbox and draft attachments stay.
+// mail.db is only read once more, by legacy-outbox.ts: the mail cache, then the outbox and draft attachments,
+// moved to the core's store. Mail is synced again there.
 const DROP_CACHE = `
   DROP TABLE mailboxes;
   DROP TABLE messages;
@@ -113,7 +113,3 @@ const DROP_CACHE = `
 export const MIGRATIONS = [SCHEMA, DROP_CACHE];
 
 export const database = lazyDatabase('mail.db', MIGRATIONS);
-
-export const transaction = transactionQueue(database);
-
-export const nowSeconds = () => Math.floor(Date.now() / 1000);

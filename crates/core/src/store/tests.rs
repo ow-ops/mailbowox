@@ -37,7 +37,7 @@ impl SqlRunner for Wire {
     }
 }
 
-async fn store() -> Arc<MailStore> {
+pub(super) async fn store() -> Arc<MailStore> {
     let connection = Connection::open_in_memory().expect("a database");
     mailbowox_sql::prepare(&connection, false).expect("prepared");
     MailStore::open_with(

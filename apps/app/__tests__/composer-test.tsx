@@ -10,7 +10,7 @@ import { sendWithUndo } from '@/mail/undo-send';
 import { renderWithQueries } from '../jest/render';
 
 jest.mock('@mailbowox/core-native', () => ({}));
-jest.mock('expo-router', () => require('../jest/expo-router'));
+jest.mock('expo-router', () => jest.requireActual('../jest/expo-router'));
 jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
 jest.mock('expo-file-system', () => ({ File: jest.fn() }));
 const mockAccount: { id: string; email: string; displayName: string; signature?: string } = {
@@ -28,14 +28,7 @@ jest.mock('@/mail/send', () => ({ saveDraft: jest.fn() }));
 jest.mock('@/mail/forward', () => ({ fetchForwarded: jest.fn() }));
 jest.mock('@/mail/undo-send', () => ({ sendWithUndo: jest.fn() }));
 jest.mock('@/mail/from', () => ({ ...jest.requireActual('@/mail/from'), setLastFrom: jest.fn() }));
-jest.mock('@/mail/outbox-db', () => {
-  const attachments = new Map<string, unknown[]>();
-  return {
-    getDraftAttachments: async (slot: string) => attachments.get(slot) ?? [],
-    setDraftAttachments: async (slot: string, list: unknown[]) => void attachments.set(slot, list),
-    clear: () => attachments.clear(),
-  };
-});
+jest.mock('@/mail/store', () => jest.requireActual('../jest/mail-store'));
 jest.mock('@/utils/kv', () => {
   const items = new Map<string, string>();
   return {
@@ -45,15 +38,15 @@ jest.mock('@/utils/kv', () => {
   };
 });
 
-const { router } = require('expo-router');
+const { router } = jest.requireMock<typeof import('../jest/expo-router')>('expo-router');
 
 const sender = { account: 'a', address: { name: 'Me', email: 'me@example.org' } };
 
 beforeEach(() => {
   jest.clearAllMocks();
   delete mockAccount.signature;
-  require('@/utils/kv').clear();
-  require('@/mail/outbox-db').clear();
+  jest.requireMock<{ clear: () => void }>('@/utils/kv').clear();
+  jest.requireMock<typeof import('../jest/mail-store')>('@/mail/store').store.clear();
 });
 
 // The buttons of the last Alert, by label.

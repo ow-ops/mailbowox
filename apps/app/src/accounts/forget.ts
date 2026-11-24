@@ -2,7 +2,6 @@ import { deleteAccountData as deleteContactData, storedAccounts as contactAccoun
 import { removeAccountDrafts } from '@/mail/local-drafts';
 import { setNotifyNewMail } from '@/mail/new-mail';
 import { invalidateContacts, invalidateMail } from '@/utils/query-client';
-import { deleteQueuedMessages, queuedAccounts } from '@/mail/outbox-db';
 import { closeSession } from '@/mail/session';
 import { mailStore } from '@/mail/store';
 import { dropPush } from '@/push/register';
@@ -11,7 +10,6 @@ import { accountExists, accountsReadable, removeAccount, type Account } from './
 
 const stores = [
   [async () => (await mailStore()).storedAccounts(), async (id: string) => (await mailStore()).deleteAccount(id)],
-  [queuedAccounts, deleteQueuedMessages],
   [contactAccounts, deleteContactData],
 ] as const;
 

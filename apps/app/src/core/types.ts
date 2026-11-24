@@ -11,6 +11,7 @@ import type {
   Flags,
   ListFilter,
   MailboxRef,
+  OutgoingAttachment,
   MailboxUids,
   MessageRef,
   SearchQuery,
@@ -65,6 +66,9 @@ type StoredMessage = Omit<NativeStoredMessage, 'summary'> & { summary: MessageSu
 export type Conversation = { latest: StoredMessage; messages: StoredMessage[]; inView: StoredMessage[] };
 export type Cursor = { date: number; account: string; uid: number };
 type Oldest = { uid: number; date: number; uidValidity: number };
+export type QueuedMessage = { id: number; account: string; queuedAt: number; error: string | null; draft: Draft };
+// A composer's local draft attachment; `data` is missing while a forwarded one is still downloading.
+export type DraftAttachment = { key: string; filename: string; mimeType: string; size: number; data?: ArrayBuffer };
 type SyncOutcome = { reset: boolean; truncated: boolean; arrived: MessageSummary[] };
 export type DiscoveredSettings = Omit<NativeDiscoveredSettings, 'imap' | 'smtp' | 'source'> & {
   imap?: ServerConfig;
@@ -117,6 +121,14 @@ export interface MailStore {
   search(boxes: MailboxRef[], query: SearchQuery, limit: number): Promise<StoredMessage[]>;
   storedAccounts(): Promise<string[]>;
   deleteAccount(account: string): Promise<void>;
+  enqueue(account: string, draft: Draft, error: string | null): Promise<number>;
+  queuedMessages(): Promise<QueuedMessage[]>;
+  queuedMessage(id: number): Promise<QueuedMessage | undefined>;
+  queuedAttachments(id: number): Promise<OutgoingAttachment[]>;
+  removeQueued(id: number): Promise<void>;
+  setQueuedError(id: number, error: string | null): Promise<void>;
+  setDraftAttachments(slot: string, attachments: DraftAttachment[]): Promise<void>;
+  draftAttachments(slot: string): Promise<DraftAttachment[]>;
 }
 
 export interface Core {

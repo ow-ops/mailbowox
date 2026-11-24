@@ -4,12 +4,12 @@ import { createElement, type ReactNode } from 'react';
 
 import type { Draft } from '@/core';
 import i18n from '@/i18n';
-import { enqueueMessage, getQueuedMessages } from '@/mail/outbox-db';
+import { store } from '../jest/mail-store';
 import { explainSendError, restoreError } from '@/core/errors';
 import { cancelQueued, flushOutbox, holdMessage, releaseMessage, sendAgain, useFlushOutbox } from '@/mail/outbox';
 import { isOnline } from '@/utils/network';
 
-jest.mock('expo-sqlite', () => jest.requireActual('../jest/expo-sqlite'));
+jest.mock('@/mail/store', () => jest.requireActual('../jest/mail-store'));
 jest.mock('@/utils/network', () => ({ isOnline: jest.fn(() => true), useOnline: () => true }));
 jest.mock('@/utils/query-client', () => ({ invalidateMail: jest.fn() }));
 jest.mock('@/hooks/use-app-active', () => ({ useAppActive: () => true }));
@@ -39,20 +39,20 @@ const explained = (stored: string | null) => stored && explainSendError(restoreE
 
 const summaryOf = (stored: string | null) => (stored ? explainSendError(restoreError(stored)).summary : null);
 
-const subjects = async () => (await getQueuedMessages()).map((message) => message.draft.subject);
+const subjects = async () => (await store.queuedMessages()).map((message) => message.draft.subject);
 
 const failure = (tag: string) => Object.assign(new Error(tag), { tag });
 
 beforeEach(async () => {
   online.mockReturnValue(true);
   core.sendMessage.mockReset();
-  for (const { id } of await getQueuedMessages()) await cancelQueued(id);
+  for (const { id } of await store.queuedMessages()) await cancelQueued(id);
 });
 
 describe('flushOutbox', () => {
   it('sends queued messages oldest first, attachments included, and empties the queue', async () => {
-    await enqueueMessage('a', draft('first'));
-    await enqueueMessage('a', draft('second'));
+    await store.enqueue('a', draft('first'), null);
+    await store.enqueue('a', draft('second'), null);
     core.sendMessage.mockResolvedValue(new Uint8Array());
 
     await flushOutbox();
@@ -64,8 +64,8 @@ describe('flushOutbox', () => {
   });
 
   it('keeps everything queued when the connection drops mid-run', async () => {
-    await enqueueMessage('a', draft('first'));
-    await enqueueMessage('a', draft('second'));
+    await store.enqueue('a', draft('first'), null);
+    await store.enqueue('a', draft('second'), null);
     core.sendMessage.mockRejectedValue(failure('Network'));
 
     await flushOutbox();
@@ -75,13 +75,13 @@ describe('flushOutbox', () => {
   });
 
   it('records why a message was refused and still sends the next one', async () => {
-    await enqueueMessage('a', draft('refused'));
-    await enqueueMessage('a', draft('fine'));
+    await store.enqueue('a', draft('refused'), null);
+    await store.enqueue('a', draft('fine'), null);
     core.sendMessage.mockRejectedValueOnce(failure('Invalid')).mockResolvedValue(new Uint8Array());
 
     await flushOutbox();
 
-    const left = await getQueuedMessages();
+    const left = await store.queuedMessages();
     expect(left.map((message) => [message.draft.subject, explained(message.error)])).toEqual([
       ['refused', { summary: "Part of the message isn't valid.", detail: 'Invalid' }],
     ]);
@@ -90,7 +90,7 @@ describe('flushOutbox', () => {
 
 describe('flushOutbox when sending may have succeeded', () => {
   const queueOne = async (subject: string) => {
-    await enqueueMessage('a', draft(subject));
+    await store.enqueue('a', draft(subject), null);
   };
 
   it('holds a message the server never confirmed, and sends it again only when asked', async () => {
@@ -101,7 +101,7 @@ describe('flushOutbox when sending may have succeeded', () => {
     await flushOutbox();
 
     expect(core.sendMessage).toHaveBeenCalledTimes(1);
-    const [left] = await getQueuedMessages();
+    const [left] = await store.queuedMessages();
     expect(summaryOf(left.error)).toMatch(/Send it again only if the recipients didn't get it/);
 
     await sendAgain(left.id);
@@ -114,7 +114,7 @@ describe('flushOutbox when sending may have succeeded', () => {
     await queueOne('interrupted');
     let during: string | null = null;
     core.sendMessage.mockImplementation(async () => {
-      [{ error: during }] = await getQueuedMessages();
+      [{ error: during }] = await store.queuedMessages();
       return new Uint8Array();
     });
 
@@ -131,19 +131,19 @@ describe('flushOutbox when sending may have succeeded', () => {
     await flushOutbox();
     await flushOutbox();
 
-    const [left] = await getQueuedMessages();
+    const [left] = await store.queuedMessages();
     expect(summaryOf(left.error)).toBe("The server didn't accept it.");
   });
 });
 
 describe('flushOutbox errors', () => {
   it('records a certificate failure instead of waiting silently', async () => {
-    await enqueueMessage('a', draft('bad certificate'));
+    await store.enqueue('a', draft('bad certificate'), null);
     core.sendMessage.mockRejectedValue(failure('Tls'));
 
     await flushOutbox();
 
-    const [left] = await getQueuedMessages();
+    const [left] = await store.queuedMessages();
     expect(explained(left.error)).toEqual({ summary: "Couldn't set up a secure connection to the server.", detail: 'Tls' });
   });
 });
@@ -153,12 +153,12 @@ describe('outbox errors in French', () => {
   afterAll(() => i18n.changeLanguage('en'));
 
   it('explains a refused message in the language it is shown in, keeping the server reply', async () => {
-    await enqueueMessage('a', draft('refusé'));
+    await store.enqueue('a', draft('refusé'), null);
     core.sendMessage.mockRejectedValue(failure('Protocol'));
 
     await flushOutbox();
 
-    const [left] = await getQueuedMessages();
+    const [left] = await store.queuedMessages();
     expect(explained(left.error)).toEqual({ summary: 'Le serveur ne l’a pas accepté.', detail: 'Protocol' });
   });
 });
@@ -171,7 +171,7 @@ describe('useFlushOutbox', () => {
     createElement(QueryClientProvider, { client: new QueryClient() }, children);
 
   it('retries a message the server could not take after 30 seconds, then backs off', async () => {
-    await enqueueMessage('a', draft('later'));
+    await store.enqueue('a', draft('later'), null);
     core.sendMessage.mockRejectedValue(failure('Network'));
 
     const { unmount } = await renderHook(useFlushOutbox, { wrapper });
@@ -188,9 +188,9 @@ describe('useFlushOutbox', () => {
 
 describe('flushOutbox while the user cancels', () => {
   it('does not send a message cancelled while an earlier one was sending', async () => {
-    await enqueueMessage('a', draft('first'));
-    await enqueueMessage('a', draft('cancelled'));
-    const [, cancelled] = await getQueuedMessages();
+    await store.enqueue('a', draft('first'), null);
+    await store.enqueue('a', draft('cancelled'), null);
+    const [, cancelled] = await store.queuedMessages();
     let accept = () => {};
     core.sendMessage.mockImplementationOnce(() => new Promise((resolve) => (accept = () => resolve(new Uint8Array()))));
 
@@ -205,7 +205,7 @@ describe('flushOutbox while the user cancels', () => {
   });
 
   it('shares one run between concurrent flushes', async () => {
-    await enqueueMessage('a', draft('once'));
+    await store.enqueue('a', draft('once'), null);
     core.sendMessage.mockResolvedValue(new Uint8Array());
 
     await Promise.all([flushOutbox(), flushOutbox()]);
@@ -230,7 +230,7 @@ describe('holdMessage', () => {
   it('sends the messages queued around a held one', async () => {
     core.sendMessage.mockResolvedValue(new Uint8Array());
     await holdMessage('a', draft('held'));
-    await enqueueMessage('a', draft('free'));
+    await store.enqueue('a', draft('free'), null);
 
     await flushOutbox();
 
@@ -240,8 +240,8 @@ describe('holdMessage', () => {
 
 describe('cancelQueued', () => {
   it('removes the message so it is never sent', async () => {
-    await enqueueMessage('a', draft('cancelled'));
-    const [{ id }] = await getQueuedMessages();
+    await store.enqueue('a', draft('cancelled'), null);
+    const [{ id }] = await store.queuedMessages();
 
     await cancelQueued(id);
     await flushOutbox();

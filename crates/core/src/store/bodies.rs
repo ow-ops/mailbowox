@@ -2,7 +2,7 @@ use mailbowox_sql::{Value, statement};
 
 use super::{
     MailStore,
-    messages::{COLUMNS, MESSAGE, answers, integer, json, message_key, parse, stored, text},
+    messages::{COLUMNS, MESSAGE, answers, integer, json, message_key, now, parse, stored, text},
 };
 use crate::{
     error::CoreError,
@@ -10,14 +10,6 @@ use crate::{
 };
 
 const BODY_CACHE_BYTES: i64 = 50 * 1024 * 1024;
-
-fn now() -> i64 {
-    web_time::SystemTime::now()
-        .duration_since(web_time::UNIX_EPOCH)
-        .map_or(0, |elapsed| {
-            i64::try_from(elapsed.as_secs()).unwrap_or(i64::MAX)
-        })
-}
 
 /// How many messages that mention a field's value are checked against the
 /// field itself: far above a page of results, and still a bound on one keystroke.

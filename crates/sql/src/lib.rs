@@ -60,6 +60,13 @@ impl From<i64> for Value {
     }
 }
 
+impl From<u64> for Value {
+    /// SQLite has no unsigned integers; anything past `i64::MAX` saturates.
+    fn from(number: u64) -> Self {
+        Self::Integer(i64::try_from(number).unwrap_or(i64::MAX))
+    }
+}
+
 impl From<Vec<u8>> for Value {
     fn from(bytes: Vec<u8>) -> Self {
         Self::Blob(bytes)

@@ -1,7 +1,7 @@
-import { setDraftAttachments } from '@/mail/outbox-db';
+import { store } from '../jest/mail-store';
 import { readLocalDraft, removeAccountDrafts, writeLocalDraft, type LocalDraft } from '@/mail/local-drafts';
 
-jest.mock('@/mail/outbox-db', () => ({ setDraftAttachments: jest.fn(async () => {}) }));
+jest.mock('@/mail/store', () => jest.requireActual('../jest/mail-store'));
 
 jest.mock('@/utils/kv', () => {
   const items = new Map<string, string>();
@@ -31,7 +31,7 @@ it('drops the drafts of a removed account, with their attachments, and keeps the
   expect(readLocalDraft('new/')).toBeUndefined();
   expect(readLocalDraft('reply/a/INBOX/1')).toBeUndefined();
   expect(readLocalDraft('reply/b/INBOX/1')).toEqual(draft('b'));
-  expect(setDraftAttachments).toHaveBeenCalledTimes(2);
-  expect(setDraftAttachments).toHaveBeenCalledWith('new/', []);
-  expect(setDraftAttachments).toHaveBeenCalledWith('reply/a/INBOX/1', []);
+  expect(store.setDraftAttachments).toHaveBeenCalledTimes(2);
+  expect(store.setDraftAttachments).toHaveBeenCalledWith('new/', []);
+  expect(store.setDraftAttachments).toHaveBeenCalledWith('reply/a/INBOX/1', []);
 });

@@ -7,16 +7,17 @@ import type { Draft } from '@/core';
 import { useAppActive } from '@/hooks/use-app-active';
 import { isOnline, useOnline } from '@/utils/network';
 
-import { enqueueMessage, getQueuedAttachments, getQueuedMessage, getQueuedMessages, removeQueuedMessage, setQueuedError } from './outbox-db';
 import { coreErrorKind, isUnconfirmed, restoreError, storeError } from '@/core/errors';
 import { invalidateMail } from '@/utils/query-client';
 import { deliver } from './send';
+import { mailStore } from './store';
 import { useSyncErrors } from './sync';
 
 const FIRST_RETRY = 30_000;
 const LAST_RETRY = 10 * 60_000;
 
-export const useQueuedMessages = () => useQuery({ queryKey: ['outbox'], queryFn: getQueuedMessages });
+export const useQueuedMessages = () =>
+  useQuery({ queryKey: ['outbox'], queryFn: async () => (await mailStore()).queuedMessages() });
 
 const sending = createStore<{ id: number | null }>(() => ({ id: null }));
 
@@ -32,7 +33,7 @@ const letGo = (id: number) => held.setState({ ids: held.getState().ids.filter((o
 // Queues a message that flushOutbox passes over until it is released. It is in the outbox from the start,
 // so if the app stops meanwhile the next start sends it.
 export async function holdMessage(account: string, draft: Draft) {
-  const id = await enqueueMessage(account, draft);
+  const id = await (await mailStore()).enqueue(account, draft, null);
   held.setState({ ids: [...held.getState().ids, id] });
   invalidateMail();
   return id;
@@ -46,7 +47,7 @@ export async function releaseMessage(id: number) {
 }
 
 export async function cancelQueued(id: number) {
-  await removeQueuedMessage(id);
+  await (await mailStore()).removeQueued(id);
   letGo(id);
   invalidateMail();
 }
@@ -70,37 +71,38 @@ export function flushOutbox() {
 }
 
 async function run() {
-  for (const { id } of await getQueuedMessages()) {
+  const store = await mailStore();
+  for (const { id } of await store.queuedMessages()) {
     if (!isOnline()) return;
     // Read again: the user may have cancelled it while an earlier message was sending.
-    const queued = await getQueuedMessage(id);
+    const queued = await store.queuedMessage(id);
     if (!queued || unconfirmed(queued.error) || held.getState().ids.includes(id)) continue;
     sending.setState({ id });
     let sent = false;
     try {
-      const attachments = await getQueuedAttachments(id);
-      await setQueuedError(id, INTERRUPTED);
+      const attachments = await store.queuedAttachments(id);
+      await store.setQueuedError(id, INTERRUPTED);
       await deliver(getAccount(queued.account), { ...queued.draft, attachments });
       sent = true;
     } catch (error) {
       if (coreErrorKind(error) === 'unreachable') {
-        await setQueuedError(id, queued.error);
+        await store.setQueuedError(id, queued.error);
         return;
       }
-      await setQueuedError(id, storeError(error));
+      await store.setQueuedError(id, storeError(error));
     } finally {
       sending.setState({ id: null });
     }
     // Outside the try: failing to remove a message that went out must not record it as a failed send. It stays
     // marked as interrupted, for the user to decide.
-    if (sent) await removeQueuedMessage(id);
+    if (sent) await store.removeQueued(id);
     invalidateMail();
   }
 }
 
 // For a message whose sending went unconfirmed, once the user has checked it didn't arrive.
 export async function sendAgain(id: number) {
-  await setQueuedError(id, null);
+  await (await mailStore()).setQueuedError(id, null);
   invalidateMail();
   // A run already going may have passed over it.
   await flushing;

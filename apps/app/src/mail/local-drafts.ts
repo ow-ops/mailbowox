@@ -1,11 +1,11 @@
 import * as v from 'valibot';
 
 import type { Recipients } from './address';
-import type { Address } from '@/core';
+import type { Address, DraftAttachment } from '@/core';
 import { writeItem } from '@/utils/kv';
 import { readJson } from '@/utils/stored';
 
-import { setDraftAttachments, type DraftAttachment } from './outbox-db';
+import { mailStore } from './store';
 
 // What the composer holds, kept on this device until sent, saved to the server or discarded. Attachments
 // live apart in the mail database and are written only when they change; their bytes are too big to rewrite
@@ -54,11 +54,11 @@ export const writeLocalDraft = (slot: string, draft: LocalDraft) => writeAll({ .
 export async function removeLocalDraft(slot: string) {
   const { [slot]: _, ...rest } = readAll();
   writeAll(rest);
-  await setDraftAttachments(slot, []);
+  await (await mailStore()).setDraftAttachments(slot, []);
 }
 
 export async function removeAccountDrafts(account: string) {
   const drafts = Object.entries(readAll());
   writeAll(Object.fromEntries(drafts.filter(([, draft]) => draft.account !== account)));
-  for (const [slot] of drafts.filter(([, draft]) => draft.account === account)) await setDraftAttachments(slot, []);
+  for (const [slot] of drafts.filter(([, draft]) => draft.account === account)) await (await mailStore()).setDraftAttachments(slot, []);
 }

@@ -4,9 +4,9 @@ import type { Draft } from '@/core';
 import { t } from '@/i18n';
 import { dismissToast, showError, showToast } from '@/utils/toast';
 
-import { getQueuedMessage } from './outbox-db';
 import { explainError, explainSendError, isUnconfirmed, restoreError } from '@/core/errors';
 import { cancelQueued, holdMessage, releaseMessage } from './outbox';
+import { mailStore } from './store';
 
 const UNDO_WINDOW = 5000;
 
@@ -22,7 +22,7 @@ export async function sendWithUndo(account: string, draft: Draft, reopen: () => 
 
   const send = async () => {
     await releaseMessage(id);
-    const left = await getQueuedMessage(id);
+    const left = await (await mailStore()).queuedMessage(id);
     if (!left) showToast(t('compose.sent'));
     else if (!left.error) showToast(t('compose.queued'));
     else if (isUnconfirmed(restoreError(left.error))) showToast(t('compose.unconfirmed'));

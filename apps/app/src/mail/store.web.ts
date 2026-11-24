@@ -1,6 +1,8 @@
 import { sqlChannel } from '@mailbowox/core-native/src/sql.web';
 
 import { core, type MailStore } from '@/core';
+
+import { moveLegacyOutbox } from './legacy-outbox';
 import { invoke } from '@/utils/desktop';
 
 const DATABASE = 'store.sqlite3';
@@ -12,10 +14,16 @@ async function run(request: ArrayBuffer): Promise<ArrayBuffer> {
   return reply.buffer.slice(reply.byteOffset, reply.byteOffset + reply.byteLength) as ArrayBuffer;
 }
 
+async function open() {
+  const store = await core.openStoreWith(run, DATABASE);
+  await moveLegacyOutbox(store);
+  return store;
+}
+
 let opened: Promise<MailStore> | undefined;
 
 export const mailStore = () =>
-  (opened ??= core.openStoreWith(run, DATABASE).catch((error: unknown) => {
+  (opened ??= open().catch((error: unknown) => {
     opened = undefined;
     throw error;
   }));

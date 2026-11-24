@@ -41,6 +41,15 @@ pub(super) fn uint(row: &[Value], column: usize) -> Result<u32, CoreError> {
     u32::try_from(integer(row, column)?).map_err(CoreError::storage)
 }
 
+/// Unix seconds.
+pub(super) fn now() -> i64 {
+    web_time::SystemTime::now()
+        .duration_since(web_time::UNIX_EPOCH)
+        .map_or(0, |elapsed| {
+            i64::try_from(elapsed.as_secs()).unwrap_or(i64::MAX)
+        })
+}
+
 pub(super) fn json<T: serde::Serialize>(value: &T) -> Result<String, CoreError> {
     serde_json::to_string(value).map_err(CoreError::storage)
 }
@@ -459,7 +468,7 @@ impl MailStore {
     pub async fn stored_accounts(&self) -> Result<Vec<String>, CoreError> {
         let rows = self
             .rows(statement!(
-                "SELECT account FROM mailboxes UNION SELECT account FROM messages UNION SELECT account FROM sync_state"
+                "SELECT account FROM mailboxes UNION SELECT account FROM messages UNION SELECT account FROM sync_state UNION SELECT account FROM outbox"
             ))
             .await?;
         rows.iter()
@@ -478,6 +487,7 @@ impl MailStore {
             "thread_ids",
             "thread_subjects",
             "addresses",
+            "outbox",
         ]
         .map(|table| statement!(format!("DELETE FROM {table} WHERE account = ?"), account));
         self.exec.batch(statements.to_vec()).await?;
