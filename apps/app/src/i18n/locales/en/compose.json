@@ -52,6 +52,9 @@
     "underline": "Underline",
     "bullets": "Bulleted list",
     "numbers": "Numbered list",
-    "quote": "Quote"
+    "quote": "Quote",
+    "link": "Link",
+    "url": "Link address",
+    "addLink": "Add link"
   }
 }

@@ -231,7 +231,7 @@ describe('composer', () => {
     mockAccount.signature = 'Me\nexample.org';
     await renderWithQueries(<Composer sender={sender} />);
 
-    expect(screen.getByLabelText('Message')).toHaveDisplayValue('\n\n-- \nMe\nexample.org');
+    expect(screen.getByLabelText('Message')).toHaveDisplayValue('\n-- \nMe\nexample.org', { normalizer: (value) => value });
   });
 
   it('forgets the kept copy when the message is discarded', async () => {

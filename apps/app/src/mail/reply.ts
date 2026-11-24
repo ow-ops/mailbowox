@@ -1,7 +1,7 @@
 import type { Address, AttachmentInfo, MessageBody, MessageSummary } from '@/core';
 
 import { sameAddress } from './address';
-import { quotedHtml, signatureText } from './rich';
+import { quotedHtml } from './rich';
 
 export type ReplyMode = 'reply' | 'replyAll' | 'forward';
 
@@ -9,8 +9,7 @@ export type Prefill = {
   to: Address[];
   cc: Address[];
   subject: string;
-  text: string;
-  // The same as `text`, keeping the original's formatting.
+  // The original under its attribution line, formatting kept, for the editor to start from.
   html: string;
   inReplyTo?: string;
   references: string[];
@@ -21,14 +20,6 @@ export type Prefill = {
 export function prefixSubject(subject: string, mode: ReplyMode) {
   if (mode === 'forward') return /^\s*fwd?\s*:/i.test(subject) ? subject : `Fwd: ${subject}`;
   return /^\s*re\s*:/i.test(subject) ? subject : `Re: ${subject}`;
-}
-
-export function quote(text: string) {
-  return text
-    .trimEnd()
-    .split('\n')
-    .map((line) => (line === '' ? '>' : line.startsWith('>') ? `>${line}` : `> ${line}`))
-    .join('\n');
 }
 
 function unique(addresses: Address[]) {
@@ -44,14 +35,12 @@ export function replyPrefill(
   header: string,
 ): Prefill {
   const subject = prefixSubject(original.subject, mode);
-  const text = body.text ?? '';
   if (mode === 'forward') {
     const attachments = body.attachments.filter((a) => !a.inline);
     return {
       to: [],
       cc: [],
       subject,
-      text: `\n\n${header}\n\n${text}`,
       html: quotedHtml(header, body, false),
       references: [],
       attachments,
@@ -73,16 +62,9 @@ export function replyPrefill(
     to,
     cc,
     subject,
-    text: `\n\n${header}\n${quote(text)}`,
     html: quotedHtml(header, body, true),
     inReplyTo: messageId,
     references: messageId ? [...original.references, messageId] : original.references,
     attachments: [],
   };
 }
-
-// The line "-- " is what mail clients take for the start of a signature.
-const block = (signature: string) => (signature ? `\n\n-- \n${signatureText(signature)}` : '');
-
-// `quoted` is the text a reply or forward starts with; the signature goes above it, where the typing happens.
-export const sign = (quoted: string, signature = '') => block(signature) + quoted;

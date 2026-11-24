@@ -1,5 +1,5 @@
 import type { AttachmentInfo, MessageBody, MessageSummary } from '@/core';
-import { prefixSubject, quote, replyPrefill } from '@/mail/reply';
+import { prefixSubject, replyPrefill } from '@/mail/reply';
 
 const original: MessageSummary = {
   uid: 7,
@@ -44,12 +44,6 @@ describe('prefixSubject', () => {
   });
 });
 
-describe('quote', () => {
-  it('prefixes each line and nests quotes already there', () => {
-    expect(quote('one\n\n> earlier\n')).toBe('> one\n>\n>> earlier');
-  });
-});
-
 describe('replyPrefill', () => {
   it('answers where the sender asks for replies', () => {
     const fromList = { ...original, replyTo: [{ email: 'list@example.com' }] };
@@ -67,7 +61,6 @@ describe('replyPrefill', () => {
     expect(prefill.subject).toBe('Re: Q4 planning');
     expect(prefill.inReplyTo).toBe('b@example.com');
     expect(prefill.references).toEqual(['a@example.com', 'b@example.com']);
-    expect(prefill.text).toBe('\n\nClaire wrote:\n> Body');
     expect(prefill.html).toBe('<br><p>Claire wrote:</p><blockquote><p>Body</p></blockquote>');
   });
 
@@ -99,7 +92,6 @@ describe('replyPrefill', () => {
       to: [],
       cc: [],
       subject: 'Fwd: Q4 planning',
-      text: '\n\nForwarded\n\nBody',
       html: '<br><p>Forwarded</p><p>Body</p>',
       references: [],
       attachments: [],

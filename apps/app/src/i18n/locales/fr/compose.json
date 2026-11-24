@@ -52,6 +52,9 @@
     "underline": "Souligné",
     "bullets": "Liste à puces",
     "numbers": "Liste numérotée",
-    "quote": "Citation"
+    "quote": "Citation",
+    "link": "Lien",
+    "url": "Adresse du lien",
+    "addLink": "Ajouter le lien"
   }
 }
