@@ -1,6 +1,6 @@
 //! Statements sent in batches, each run as one transaction: natively beside the
 //! core, in an OPFS worker on the web, and in the desktop shell.
-#![allow(
+#![expect(
     clippy::missing_errors_doc,
     reason = "every error is SQLite's or the wire format's, as text"
 )]
