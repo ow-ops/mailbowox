@@ -186,7 +186,10 @@ impl MailSession {
             }
             span = span.saturating_mul(OLDER_SPAN);
         };
-        summaries(conn, &uids[uids.len().saturating_sub(limit as usize)..]).await
+        let newest = uids
+            .get(uids.len().saturating_sub(limit as usize)..)
+            .unwrap_or_default();
+        summaries(conn, newest).await
     }
 
     /// Downloads and parses the whole message, which marks it \\Seen.

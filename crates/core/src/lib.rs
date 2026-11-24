@@ -58,7 +58,7 @@ uniffi::setup_scaffolding!();
 /// connect directly and ignore it. The token goes in the WebSocket
 /// subprotocol, not the URL.
 #[uniffi::export]
-#[allow(
+#[expect(
     clippy::needless_pass_by_value,
     reason = "UniFFI hands strings over by value"
 )]
@@ -124,7 +124,7 @@ pub async fn send_message(config: AccountConfig, draft: Draft) -> Result<Vec<u8>
 
 /// Builds the raw message without sending it, for saving drafts.
 #[uniffi::export]
-#[allow(
+#[expect(
     clippy::needless_pass_by_value,
     reason = "UniFFI hands records over by value"
 )]

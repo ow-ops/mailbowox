@@ -19,7 +19,7 @@ const PROBE_TIMEOUT: Duration = Duration::from_secs(5);
 const IMAP_PORTS: [(u16, Security); 2] = [(993, Security::Tls), (143, Security::StartTls)];
 const SMTP_PORTS: [(u16, Security); 2] = [(465, Security::Tls), (587, Security::StartTls)];
 
-pub async fn probe(
+pub(crate) async fn probe(
     email: &str,
     domain: &str,
     exchange: Option<&str>,

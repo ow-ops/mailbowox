@@ -19,14 +19,19 @@ use batch::Files;
 use db::{Databases, Outcome};
 use inbox::{Inboxes, Watched, content};
 
-// Tauri hands a command its state by value.
-#[allow(clippy::needless_pass_by_value)]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri hands a command its state by value"
+)]
 #[tauri::command(async)]
 fn db_exec(databases: State<'_, Databases>, name: &str, sql: &str) -> Result<(), String> {
     databases.exec(name, sql)
 }
 
-#[allow(clippy::needless_pass_by_value)]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri hands a command its state by value"
+)]
 #[tauri::command(async)]
 fn db_query(
     databases: State<'_, Databases>,
@@ -37,7 +42,10 @@ fn db_query(
     databases.query(name, sql, params)
 }
 
-#[allow(clippy::needless_pass_by_value)]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri hands a command its state by value"
+)]
 #[tauri::command(async)]
 fn db_batch(
     files: State<'_, Files>,
@@ -50,6 +58,10 @@ fn db_batch(
 }
 
 /// The app hands over every account it shows new mail for, each time that list changes.
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri hands a command its state by value"
+)]
 #[tauri::command]
 fn watch_inboxes(app: AppHandle, inboxes: State<'_, Inboxes>, accounts: Vec<Watched>) {
     inboxes.set(accounts, move |account: &str, message: &MessageSummary| {
@@ -157,7 +169,7 @@ fn main() {
         // First, as the plugin asks. The app keeps running in the tray, so launching it again
         // brings back its window instead of starting a second relay on the same databases.
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
-            show_window(app)
+            show_window(app);
         }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
@@ -238,11 +250,13 @@ fn main() {
         })
         .build(tauri::generate_context!())
         .expect("the desktop shell failed to start")
-        .run(|_app, _event| {
+        .run(|app, event| {
             // A click on the dock icon brings back a window closed to the tray.
             #[cfg(target_os = "macos")]
-            if let tauri::RunEvent::Reopen { .. } = _event {
-                show_window(_app);
+            if let tauri::RunEvent::Reopen { .. } = event {
+                show_window(app);
             }
+            #[cfg(not(target_os = "macos"))]
+            let _ = (app, event);
         });
 }

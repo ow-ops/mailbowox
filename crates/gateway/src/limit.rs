@@ -71,7 +71,7 @@ impl Counter {
 }
 
 #[derive(Clone)]
-pub struct Limits {
+pub(crate) struct Limits {
     counter: Arc<Counter>,
     trust_proxy: bool,
 }
@@ -80,7 +80,7 @@ impl Limits {
     /// Counts in `db` when `shared`, in memory otherwise. With `trust_proxy` the client is the
     /// address the proxy appended to `X-Forwarded-For`, not the peer; a client reaching the
     /// gateway directly could forge it.
-    pub fn new(db: AnyPool, shared: bool, trust_proxy: bool) -> Self {
+    pub(crate) fn new(db: AnyPool, shared: bool, trust_proxy: bool) -> Self {
         let counter = Arc::new(if shared {
             Counter::Database(db)
         } else {
@@ -106,7 +106,7 @@ impl Limits {
 
     /// Lets each client make `max` requests to `router` per `window`. `scope` keeps the
     /// counts of different routes apart.
-    pub fn apply<S>(
+    pub(crate) fn apply<S>(
         &self,
         router: Router<S>,
         scope: &'static str,
@@ -119,7 +119,7 @@ impl Limits {
         let rule = Arc::new(Rule {
             limits: self.clone(),
             scope,
-            window: i64::try_from(window.as_secs()).expect("a window is not centuries"),
+            window: i64::try_from(window.as_secs()).unwrap_or(i64::MAX),
             max,
         });
         router.layer(middleware::from_fn_with_state(rule, enforce))

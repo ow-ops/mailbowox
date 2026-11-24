@@ -22,7 +22,7 @@ fn parse(vcard: &str) -> Result<VCard, CoreError> {
 
 /// The card's own name, else its first address. `None` when it is not a
 /// vCard.
-pub fn contact(href: String, etag: Option<String>, vcard: String) -> Option<Contact> {
+pub(crate) fn contact(href: String, etag: Option<String>, vcard: String) -> Option<Contact> {
     let card = parse(&vcard).ok()?;
     let emails = values(&card, &VCardProperty::Email);
     let name = text(&card, &VCardProperty::Fn)
@@ -49,7 +49,8 @@ pub fn contact(href: String, etag: Option<String>, vcard: String) -> Option<Cont
     })
 }
 
-pub fn new_contact(uid: &str, draft: &ContactDraft) -> String {
+#[expect(clippy::expect_used, reason = "writing to a String cannot fail")]
+pub(crate) fn new_contact(uid: &str, draft: &ContactDraft) -> String {
     let mut card = VCard::default();
     card.entries
         .push(VCardEntry::new(VCardProperty::Uid).with_value(uid.to_owned()));
@@ -62,7 +63,7 @@ pub fn new_contact(uid: &str, draft: &ContactDraft) -> String {
     out
 }
 
-pub fn update_contact(vcard: &str, draft: &ContactDraft) -> Result<String, CoreError> {
+pub(crate) fn update_contact(vcard: &str, draft: &ContactDraft) -> Result<String, CoreError> {
     let mut card = parse(vcard)?;
     card.entries.retain(|entry| {
         !matches!(
@@ -121,14 +122,22 @@ fn set_organization(card: &mut VCard, organization: Option<&str>) {
         return;
     };
 
-    let org = &mut card.entries[index];
-    match (organization, org.values.len()) {
-        (Some(name), 0) => org.values.push(VCardValue::Text(name.to_owned())),
-        (Some(name), _) => org.values[0] = VCardValue::Text(name.to_owned()),
-        (None, 0 | 1) => {
+    let Some(org) = card.entries.get_mut(index) else {
+        return;
+    };
+    match organization {
+        Some(name) => match org.values.first_mut() {
+            Some(first) => *first = VCardValue::Text(name.to_owned()),
+            None => org.values.push(VCardValue::Text(name.to_owned())),
+        },
+        None if org.values.len() <= 1 => {
             card.entries.remove(index);
         }
-        (None, _) => org.values[0] = VCardValue::Text(String::new()),
+        None => {
+            if let Some(first) = org.values.first_mut() {
+                *first = VCardValue::Text(String::new());
+            }
+        }
     }
 }
 
@@ -400,6 +409,6 @@ END:VCARD\r
 
     #[test]
     fn update_refuses_text_that_is_not_a_vcard() {
-        assert!(update_contact("hello", &draft()).is_err());
+        update_contact("hello", &draft()).unwrap_err();
     }
 }

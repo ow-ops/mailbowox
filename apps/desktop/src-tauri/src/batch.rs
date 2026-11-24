@@ -8,7 +8,7 @@ use std::sync::{Mutex, PoisonError};
 use mailbowox_sql::rusqlite::Connection;
 use mailbowox_sql::{answer, prepare};
 
-pub struct Files {
+pub(crate) struct Files {
     open: Mutex<Open>,
 }
 
@@ -18,7 +18,7 @@ struct Open {
 }
 
 impl Files {
-    pub fn new(dir: PathBuf) -> Self {
+    pub(crate) fn new(dir: PathBuf) -> Self {
         Self {
             open: Mutex::new(Open {
                 dir,
@@ -27,7 +27,7 @@ impl Files {
         }
     }
 
-    pub fn answer(&self, bytes: &[u8]) -> Vec<u8> {
+    pub(crate) fn answer(&self, bytes: &[u8]) -> Vec<u8> {
         answer(
             bytes,
             &mut *self.open.lock().unwrap_or_else(PoisonError::into_inner),

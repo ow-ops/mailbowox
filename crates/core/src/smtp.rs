@@ -27,7 +27,7 @@ use crate::{
     types::{Credentials, Security, ServerConfig},
 };
 
-pub struct SmtpConn {
+pub(crate) struct SmtpConn {
     stream: SecureStream,
     buf: Box<[u8]>,
     /// The last write ended a message with its final dot.
@@ -35,14 +35,17 @@ pub struct SmtpConn {
 }
 
 impl SmtpConn {
-    pub async fn open(server: &ServerConfig, credentials: &Credentials) -> Result<Self, CoreError> {
+    pub(crate) async fn open(
+        server: &ServerConfig,
+        credentials: &Credentials,
+    ) -> Result<Self, CoreError> {
         let (mut conn, capabilities) = Self::connect(server).await?;
         conn.authenticate(&capabilities, credentials).await?;
         Ok(conn)
     }
 
     /// Reaches EHLO, through STARTTLS when the server is set up for it, without logging in.
-    pub async fn greet(server: &ServerConfig) -> Result<(), CoreError> {
+    pub(crate) async fn greet(server: &ServerConfig) -> Result<(), CoreError> {
         Self::connect(server).await?.0.quit().await
     }
 
@@ -86,7 +89,7 @@ impl SmtpConn {
                         let n = connected(&mut stream)?
                             .read_some(&mut buf, GREETING_TIMEOUT)
                             .await?;
-                        arg = Some(&buf[..n]);
+                        arg = Some(transport::filled(&buf, n));
                     }
                 },
             }
@@ -136,7 +139,7 @@ impl SmtpConn {
         }
     }
 
-    pub async fn send(
+    pub(crate) async fn send(
         &mut self,
         from: &str,
         recipients: &[&str],
@@ -163,7 +166,7 @@ impl SmtpConn {
         })
     }
 
-    pub async fn quit(mut self) -> Result<(), CoreError> {
+    pub(crate) async fn quit(mut self) -> Result<(), CoreError> {
         self.exec(SmtpQuit::new()).await?;
         self.stream.close().await
     }
@@ -182,7 +185,7 @@ impl SmtpConn {
                 }
                 SmtpCoroutineState::Yielded(SmtpYield::WantsRead) => {
                     let n = self.stream.read_some(&mut self.buf, ANSWER_TIMEOUT).await?;
-                    arg = Some(&self.buf[..n]);
+                    arg = Some(transport::filled(&self.buf, n));
                 }
             }
         }

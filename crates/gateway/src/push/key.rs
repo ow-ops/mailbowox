@@ -18,6 +18,7 @@ pub(super) struct Key {
 }
 
 impl Key {
+    #[expect(clippy::expect_used, reason = "HKDF-SHA256 gives up to 8160 bytes")]
     pub(super) fn new(key: &[u8; 32]) -> Self {
         let hkdf = Hkdf::<Sha256>::new(None, key);
         let mut id = [0; 4];
@@ -33,6 +34,7 @@ impl Key {
         }
     }
 
+    #[expect(clippy::expect_used, reason = "HMAC takes keys of any length")]
     pub(super) fn index(&self, parts: &[&[u8]]) -> String {
         let mut mac = <Hmac<Sha256>>::new_from_slice(&self.index_secret)
             .expect("HMAC takes keys of any length");

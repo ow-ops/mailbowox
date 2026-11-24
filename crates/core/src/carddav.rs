@@ -51,11 +51,14 @@ struct AddressBookProps {
     current_user_privilege_set: Option<Privileges>,
 }
 
-pub async fn discover(config: &AccountConfig) -> Result<Option<String>, CoreError> {
+pub(crate) async fn discover(config: &AccountConfig) -> Result<Option<String>, CoreError> {
     Dav::new(config).discover(config).await
 }
 
-pub async fn list(config: &AccountConfig, home: &str) -> Result<Vec<AddressBook>, CoreError> {
+pub(crate) async fn list(
+    config: &AccountConfig,
+    home: &str,
+) -> Result<Vec<AddressBook>, CoreError> {
     let dav = Dav::new(config);
     let home = dav.url(home)?;
     let propfind = WebdavPropfind::<WebdavMultistatusOf<AddressBookProps>>::new(
@@ -97,7 +100,7 @@ fn address_book(home: &Url, response: WebdavResponseOf<AddressBookProps>) -> Opt
     })
 }
 
-pub async fn sync(
+pub(crate) async fn sync(
     config: &AccountConfig,
     address_book: &str,
     since: Option<ContactSyncState>,
@@ -157,7 +160,7 @@ async fn fetch(dav: &Dav, address_book: &Url, hrefs: &[String]) -> Result<Vec<Co
     Ok(contacts)
 }
 
-pub async fn create(
+pub(crate) async fn create(
     config: &AccountConfig,
     address_book: &str,
     draft: &ContactDraft,
@@ -181,7 +184,7 @@ pub async fn create(
     written(&dav, href, created.etag, vcard).await
 }
 
-pub async fn update(
+pub(crate) async fn update(
     config: &AccountConfig,
     contact: &Contact,
     draft: &ContactDraft,
@@ -202,7 +205,7 @@ pub async fn update(
     written(&dav, href, updated.etag, vcard).await
 }
 
-pub async fn delete(
+pub(crate) async fn delete(
     config: &AccountConfig,
     href: &str,
     etag: Option<&str>,

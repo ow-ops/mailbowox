@@ -17,18 +17,18 @@ use super::watcher::Seen;
 /// Bounds the table, whatever the device tokens registered are worth.
 const MAX_REGISTRATIONS: i64 = 1_000_000;
 
-pub type Error = Box<dyn std::error::Error + Send + Sync>;
+pub(super) type Error = Box<dyn std::error::Error + Send + Sync>;
 
 /// A claimed row: id, sealed registration, key id, UID validity and next UID.
 type Claimed = (String, Vec<u8>, String, Option<i64>, Option<i64>);
 
-pub enum Removal {
+pub(super) enum Removal {
     Removed,
     Missing,
     Forbidden,
 }
 
-pub struct Store {
+pub(super) struct Store {
     db: AnyPool,
     current: Key,
     old: Vec<Key>,
@@ -36,7 +36,7 @@ pub struct Store {
 }
 
 impl Store {
-    pub fn new(db: AnyPool, current: &[u8; 32], old: &[[u8; 32]]) -> Self {
+    pub(super) fn new(db: AnyPool, current: &[u8; 32], old: &[[u8; 32]]) -> Self {
         let current = Key::new(current);
         let old = old
             .iter()
@@ -52,7 +52,7 @@ impl Store {
     }
 
     /// Whether the gateway holds as many registrations as it takes.
-    pub async fn full(&self) -> Result<bool, sqlx::Error> {
+    pub(super) async fn full(&self) -> Result<bool, sqlx::Error> {
         let (count,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM push_registration")
             .fetch_one(&self.db)
             .await?;
@@ -72,7 +72,7 @@ impl Store {
     /// Stores the registration in place of any earlier one for the same account and device, with
     /// the digest of the secret that later removes it. `None` when the device already has
     /// `max_per_device` other accounts.
-    pub async fn add(
+    pub(super) async fn add(
         &self,
         registration: &Registration,
         secret_sha256: &[u8; 32],
@@ -112,8 +112,8 @@ impl Store {
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
         )
         .bind(&id)
-        .bind(&devices[0])
-        .bind(&accounts[0])
+        .bind(devices.first())
+        .bind(accounts.first())
         .bind(sealed)
         .bind(secret_sha256.as_slice())
         .bind(&self.current.id)
@@ -126,7 +126,11 @@ impl Store {
     }
 
     /// Deletes the registration when `secret_sha256` is the one it was stored with.
-    pub async fn remove(&self, id: &str, secret_sha256: &[u8; 32]) -> Result<Removal, sqlx::Error> {
+    pub(super) async fn remove(
+        &self,
+        id: &str,
+        secret_sha256: &[u8; 32],
+    ) -> Result<Removal, sqlx::Error> {
         let row: Option<(Vec<u8>,)> =
             sqlx::query_as("SELECT secret_sha256 FROM push_registration WHERE id = $1")
                 .bind(id)
@@ -150,7 +154,7 @@ impl Store {
     }
 
     /// Drops a registration whose watcher gave up, unless another worker took it meanwhile.
-    pub async fn remove_owned(&self, id: &str, owner: &str) -> Result<(), sqlx::Error> {
+    pub(super) async fn remove_owned(&self, id: &str, owner: &str) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM push_registration WHERE id = $1 AND owner = $2")
             .bind(id)
             .bind(owner)
@@ -160,7 +164,7 @@ impl Store {
     }
 
     /// Extends the owner's leases and returns the ids it still holds.
-    pub async fn renew(&self, owner: &str, until: i64) -> Result<Vec<String>, sqlx::Error> {
+    pub(super) async fn renew(&self, owner: &str, until: i64) -> Result<Vec<String>, sqlx::Error> {
         let ids: Vec<(String,)> = sqlx::query_as(
             "UPDATE push_registration SET lease_until = $1 WHERE owner = $2 RETURNING id",
         )
@@ -172,7 +176,7 @@ impl Store {
     }
 
     /// Records where the inbox of a registration stood, while `owner` still holds it.
-    pub async fn saw(&self, id: &str, owner: &str, seen: Seen) -> Result<(), sqlx::Error> {
+    pub(super) async fn saw(&self, id: &str, owner: &str, seen: Seen) -> Result<(), sqlx::Error> {
         sqlx::query(
             "UPDATE push_registration SET uid_validity = $1, uid_next = $2
              WHERE id = $3 AND owner = $4",
@@ -189,7 +193,7 @@ impl Store {
     /// Takes up to `limit` registrations nobody holds, each with where its inbox last stood.
     /// Those that do not open with any key are logged and given up: their lease runs out
     /// unrenewed, so a worker that has the key can take them.
-    pub async fn claim(
+    pub(super) async fn claim(
         &self,
         owner: &str,
         now: i64,
@@ -281,7 +285,7 @@ impl Store {
     }
 
     /// Hands the owner's registrations back so another worker can take them at once.
-    pub async fn release(&self, owner: &str) -> Result<(), sqlx::Error> {
+    pub(super) async fn release(&self, owner: &str) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE push_registration SET owner = NULL, lease_until = 0 WHERE owner = $1")
             .bind(owner)
             .execute(&self.db)
@@ -304,11 +308,11 @@ fn random_hex<const N: usize>() -> Result<String, getrandom::Error> {
     Ok(hex::encode(bytes))
 }
 
-pub fn new_id() -> Result<String, getrandom::Error> {
+pub(super) fn new_id() -> Result<String, getrandom::Error> {
     random_hex::<16>()
 }
 
-pub fn new_secret() -> Result<String, getrandom::Error> {
+pub(super) fn new_secret() -> Result<String, getrandom::Error> {
     random_hex::<32>()
 }
 

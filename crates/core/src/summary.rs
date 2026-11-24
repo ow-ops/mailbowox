@@ -30,7 +30,11 @@ const HEADER_FIELDS: [&str; 12] = [
     "CONTENT-TRANSFER-ENCODING",
 ];
 
-pub fn summary_items() -> MacroOrMessageDataItemNames<'static> {
+#[expect(
+    clippy::expect_used,
+    reason = "the header names are atoms and the preview length is non-zero"
+)]
+pub(crate) fn summary_items() -> MacroOrMessageDataItemNames<'static> {
     let fields = HEADER_FIELDS
         .iter()
         .map(|&field| AString::try_from(field).expect("header names are atoms"))
@@ -56,28 +60,28 @@ pub fn summary_items() -> MacroOrMessageDataItemNames<'static> {
     ])
 }
 
-pub fn uid_flags_items() -> MacroOrMessageDataItemNames<'static> {
+pub(crate) fn uid_flags_items() -> MacroOrMessageDataItemNames<'static> {
     MacroOrMessageDataItemNames::MessageDataItemNames(vec![
         MessageDataItemName::Uid,
         MessageDataItemName::Flags,
     ])
 }
 
-pub fn uid_of(items: &[MessageDataItem<'_>]) -> Option<u32> {
+pub(crate) fn uid_of(items: &[MessageDataItem<'_>]) -> Option<u32> {
     items.iter().find_map(|item| match item {
         MessageDataItem::Uid(uid) => Some(uid.get()),
         _ => None,
     })
 }
 
-pub fn flags_of(items: &[MessageDataItem<'_>]) -> Option<Flags> {
+pub(crate) fn flags_of(items: &[MessageDataItem<'_>]) -> Option<Flags> {
     items.iter().find_map(|item| match item {
         MessageDataItem::Flags(flags) => Some(Flags::from_fetch(flags)),
         _ => None,
     })
 }
 
-pub fn summary(items: &[MessageDataItem<'_>]) -> Option<MessageSummary> {
+pub(crate) fn summary(items: &[MessageDataItem<'_>]) -> Option<MessageSummary> {
     let mut header: &[u8] = &[];
     let mut text: &[u8] = &[];
     let mut internal_date = 0;

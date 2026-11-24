@@ -1,3 +1,8 @@
+#![expect(
+    clippy::expect_used,
+    reason = "test failures should stop the test at the failed assertion"
+)]
+
 mod common;
 
 use tokio::sync::Mutex;
@@ -181,7 +186,7 @@ async fn ctag_sync_diffs_the_etag_listing() {
         .collect();
     let unchanged = sync(&config, &book, Some(stale), known).await;
     assert_eq!(unchanged.changed, []);
-    assert_eq!(unchanged.removed, [] as [String; 0]);
+    assert!(unchanged.removed.is_empty(), "{:?}", unchanged.removed);
 
     let current = sync(&config, &book, Some(listed.state), Vec::new()).await;
     assert_eq!(current.changed, []);

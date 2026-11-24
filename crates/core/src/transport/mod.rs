@@ -10,15 +10,20 @@ use std::net::IpAddr;
 mod tcp;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub use tcp::{Pipe, configure_relay, connect, sleep, timeout};
+pub(crate) use tcp::{Pipe, configure_relay, connect, sleep, timeout};
 
 #[cfg(target_arch = "wasm32")]
 mod relay;
 
 #[cfg(target_arch = "wasm32")]
-pub use relay::{Pipe, configure_relay, connect, sleep, timeout};
+pub(crate) use relay::{Pipe, configure_relay, connect, sleep, timeout};
 
-pub const READ_CHUNK: usize = 16 * 1024;
+pub(crate) const READ_CHUNK: usize = 16 * 1024;
+
+/// The bytes a read of `n` put in `buf`.
+pub(crate) fn filled(buf: &[u8], n: usize) -> &[u8] {
+    buf.get(..n).unwrap_or(buf)
+}
 
 /// Says whether a connection may go to this address. A host is refused when
 /// any of its addresses is, and the connection goes to the addresses that

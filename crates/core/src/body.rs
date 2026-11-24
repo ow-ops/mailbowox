@@ -9,7 +9,11 @@ use crate::{
     types::{AttachmentInfo, MessageBody},
 };
 
-pub fn message_body(uid: u32, raw: &[u8], allow_remote: bool) -> Result<MessageBody, CoreError> {
+pub(crate) fn message_body(
+    uid: u32,
+    raw: &[u8],
+    allow_remote: bool,
+) -> Result<MessageBody, CoreError> {
     let message = MessageParser::new()
         .parse(raw)
         .ok_or_else(|| CoreError::protocol("the message could not be parsed"))?;
@@ -45,7 +49,7 @@ pub fn message_body(uid: u32, raw: &[u8], allow_remote: bool) -> Result<MessageB
     })
 }
 
-pub fn attachment(raw: &[u8], index: u32) -> Result<Vec<u8>, CoreError> {
+pub(crate) fn attachment(raw: &[u8], index: u32) -> Result<Vec<u8>, CoreError> {
     let message = MessageParser::new()
         .parse(raw)
         .ok_or_else(|| CoreError::protocol("the message could not be parsed"))?;
@@ -89,9 +93,11 @@ fn attachments(root: MessageRef<'_>) -> Vec<AttachmentInfo> {
 fn info(part: &MessagePart<'_>) -> AttachmentInfo {
     let mime_type = part.content_type().map_or_else(
         || "application/octet-stream".to_owned(),
-        |ct| match ct.subtype() {
-            Some(subtype) => format!("{}/{subtype}", ct.ctype()),
-            None => ct.ctype().to_owned(),
+        |ct| {
+            ct.subtype().map_or_else(
+                || ct.ctype().to_owned(),
+                |subtype| format!("{}/{subtype}", ct.ctype()),
+            )
         },
     );
     AttachmentInfo {
@@ -128,7 +134,11 @@ fn section(part: &MessagePart<'_>) -> Option<String> {
 /// The content of a part fetched alone, from its MIME header and its body as
 /// the server sent them. `None` when it is not the part `expected` describes:
 /// the server and the parser may number a malformed message differently.
-pub fn lone_part(mime_header: &[u8], body: &[u8], expected: &AttachmentInfo) -> Option<Vec<u8>> {
+pub(crate) fn lone_part(
+    mime_header: &[u8],
+    body: &[u8],
+    expected: &AttachmentInfo,
+) -> Option<Vec<u8>> {
     let raw = [mime_header, body].concat();
     let message = MessageParser::new().parse(&raw)?;
     let part = message.root().root_part();

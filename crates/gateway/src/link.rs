@@ -13,19 +13,19 @@ use crate::AppState;
 use crate::db::unix_now;
 use crate::vault::valid_id;
 
-pub const MAX_MESSAGE_BYTES: usize = 4096;
+pub(crate) const MAX_MESSAGE_BYTES: usize = 4096;
 const TTL_SECS: i64 = 120;
 const MAX_MESSAGES: i64 = 4096;
 /// A link takes two messages, one from each device, and both are often behind one address: this
 /// leaves room for ten attempts in the two minutes a message waits.
-pub const MAX_WAITING_PER_CLIENT: i64 = 20;
+pub(crate) const MAX_WAITING_PER_CLIENT: i64 = 20;
 
-pub struct Store {
+pub(crate) struct Store {
     db: AnyPool,
 }
 
 impl Store {
-    pub fn new(db: AnyPool) -> Self {
+    pub(crate) const fn new(db: AnyPool) -> Self {
         Self { db }
     }
 
@@ -70,7 +70,7 @@ fn failed(error: &sqlx::Error) -> Response {
     StatusCode::INTERNAL_SERVER_ERROR.into_response()
 }
 
-pub async fn post(
+pub(crate) async fn post(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
     body: Bytes,
@@ -84,7 +84,7 @@ pub async fn post(
     }
 }
 
-pub async fn get(State(state): State<Arc<AppState>>, Path(id): Path<String>) -> Response {
+pub(crate) async fn get(State(state): State<Arc<AppState>>, Path(id): Path<String>) -> Response {
     if !valid_id(&id) {
         return StatusCode::BAD_REQUEST.into_response();
     }

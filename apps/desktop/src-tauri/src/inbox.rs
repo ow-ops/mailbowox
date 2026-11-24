@@ -20,14 +20,14 @@ const MAX_BACKOFF: Duration = Duration::from_mins(30);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub enum Security {
+pub(crate) enum Security {
     Tls,
     StartTls,
     Plain,
 }
 
 #[derive(Clone, PartialEq, Eq, Deserialize)]
-pub struct Server {
+pub(crate) struct Server {
     pub host: String,
     pub port: u16,
     pub security: Security,
@@ -36,7 +36,7 @@ pub struct Server {
 /// What the app hands over for an account. The password stays in this process's memory.
 #[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Watched {
+pub(crate) struct Watched {
     pub id: String,
     pub imap: Server,
     pub username: String,
@@ -65,7 +65,7 @@ impl Watched {
 }
 
 /// The notification for a message: its sender, then its subject over the start of its text.
-pub fn content(message: &MessageSummary) -> (String, String) {
+pub(crate) fn content(message: &MessageSummary) -> (String, String) {
     let title = message.from.first().map_or_else(String::new, |from| {
         from.name
             .clone()
@@ -82,11 +82,11 @@ pub fn content(message: &MessageSummary) -> (String, String) {
 
 /// One watcher per account, restarted when what the app hands over changes.
 #[derive(Default)]
-pub struct Inboxes(Mutex<HashMap<String, (Watched, JoinHandle<()>)>>);
+pub(crate) struct Inboxes(Mutex<HashMap<String, (Watched, JoinHandle<()>)>>);
 
 impl Inboxes {
     /// Watches exactly `accounts`. IDLE can't be cancelled, so a watcher stops by being aborted.
-    pub fn set<F>(&self, accounts: Vec<Watched>, show: F)
+    pub(crate) fn set<F>(&self, accounts: Vec<Watched>, show: F)
     where
         F: Fn(&str, &MessageSummary) + Clone + Send + Sync + 'static,
     {
@@ -116,7 +116,7 @@ impl Inboxes {
 
 /// Watches until aborted. Only mail that arrives after the first look is shown, so turning
 /// notifications on, or starting the app, announces nothing old.
-pub async fn watch<F>(account: Watched, show: F)
+pub(crate) async fn watch<F>(account: Watched, show: F)
 where
     F: Fn(&MessageSummary) + Send + Sync,
 {

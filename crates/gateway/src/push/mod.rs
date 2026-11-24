@@ -39,7 +39,7 @@ use watcher::{Checkpoint, Seen, watch};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum Platform {
+pub(crate) enum Platform {
     Ios,
     /// Development-signed iOS builds, whose tokens only the APNs sandbox accepts.
     IosSandbox,
@@ -64,7 +64,7 @@ impl Platform {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub enum Security {
+pub(crate) enum Security {
     Tls,
     StartTls,
     Plain,
@@ -72,7 +72,7 @@ pub enum Security {
 
 /// The body of `POST /push/register`, and what is sealed on disk.
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Registration {
+pub(crate) struct Registration {
     pub platform: Platform,
     pub token: String,
     pub email: String,
@@ -117,7 +117,7 @@ const LEASE_SECS: i64 = 60;
 const RENEW_EVERY: Duration = Duration::from_secs(20);
 const CLAIM_BATCH: usize = 500;
 
-pub struct Push {
+pub(crate) struct Push {
     store: Store,
     providers: Providers,
     max_per_device: usize,
@@ -156,7 +156,7 @@ impl Worker {
 impl Push {
     /// With `watch`, this gateway also takes a share of the registrations and watches them.
     /// Without `allow_private`, IMAP servers on internal addresses are refused.
-    pub fn start(
+    pub(crate) fn start(
         config: &PushConfig,
         db: AnyPool,
         watch: bool,
@@ -171,7 +171,7 @@ impl Push {
             store: Store::new(db, &config.secret_key, &config.old_secret_keys),
             providers: Providers::load(config)?,
             max_per_device: config.max_watchers_per_device,
-            allowed: (!allow_private).then_some(is_public as AddrFilter),
+            allowed: (!allow_private).then_some::<AddrFilter>(is_public),
             worker,
         });
         if push.worker.is_some() {
@@ -290,7 +290,7 @@ impl Push {
 
     /// Stops watching and hands the leases back, so other workers take over without waiting
     /// for them to lapse.
-    pub async fn release(&self) {
+    pub(crate) async fn release(&self) {
         let Some(worker) = &self.worker else {
             return;
         };
@@ -322,7 +322,7 @@ fn valid_id(id: &str) -> bool {
     id.len() == 32 && id.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
 }
 
-pub async fn register(
+pub(crate) async fn register(
     State(state): State<Arc<AppState>>,
     Json(registration): Json<Registration>,
 ) -> Response {
@@ -412,7 +412,7 @@ pub async fn register(
 }
 
 /// The name of the error's kind. Its message can carry the server's host.
-fn kind(error: &CoreError) -> &'static str {
+const fn kind(error: &CoreError) -> &'static str {
     match error {
         CoreError::Network { .. } => "network",
         CoreError::Tls { .. } => "tls",
@@ -425,7 +425,7 @@ fn kind(error: &CoreError) -> &'static str {
     }
 }
 
-pub async fn unregister(
+pub(crate) async fn unregister(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
     headers: HeaderMap,

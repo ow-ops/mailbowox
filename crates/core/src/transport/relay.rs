@@ -24,7 +24,7 @@ struct Relay {
 
 static RELAY: RwLock<Option<Relay>> = RwLock::new(None);
 
-pub fn configure_relay(url: &str, token: String) -> Result<(), CoreError> {
+pub(crate) fn configure_relay(url: &str, token: String) -> Result<(), CoreError> {
     let mut url = Url::parse(url).map_err(CoreError::invalid)?;
     let scheme = match url.scheme() {
         "https" => "wss",
@@ -45,9 +45,13 @@ pub fn configure_relay(url: &str, token: String) -> Result<(), CoreError> {
     Ok(())
 }
 
-pub type Pipe = Compat<WebSocket>;
+pub(crate) type Pipe = Compat<WebSocket>;
 
-pub async fn connect(host: &str, port: u16, _allowed: Option<AddrFilter>) -> io::Result<Pipe> {
+pub(crate) async fn connect(
+    host: &str,
+    port: u16,
+    _allowed: Option<AddrFilter>,
+) -> io::Result<Pipe> {
     let (url, protocols) = {
         let relay = RELAY.read().unwrap_or_else(PoisonError::into_inner);
         let Some(relay) = relay.as_ref() else {
@@ -82,13 +86,13 @@ pub async fn connect(host: &str, port: u16, _allowed: Option<AddrFilter>) -> io:
 }
 
 /// Runs `future` for at most `duration`; `None` when it ran out of time.
-pub async fn timeout<T>(duration: Duration, future: impl Future<Output = T>) -> Option<T> {
+pub(crate) async fn timeout<T>(duration: Duration, future: impl Future<Output = T>) -> Option<T> {
     match select(pin!(future), gloo_timers::future::sleep(duration)).await {
         Either::Left((value, _)) => Some(value),
         Either::Right(_) => None,
     }
 }
 
-pub async fn sleep(duration: Duration) {
+pub(crate) async fn sleep(duration: Duration) {
     gloo_timers::future::sleep(duration).await;
 }

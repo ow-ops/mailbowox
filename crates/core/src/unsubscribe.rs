@@ -16,7 +16,7 @@ use crate::{
 
 const BODY: &[u8] = b"List-Unsubscribe=One-Click";
 
-pub async fn one_click(url: &str) -> Result<(), CoreError> {
+pub(crate) async fn one_click(url: &str) -> Result<(), CoreError> {
     let url = Url::parse(url).map_err(CoreError::invalid)?;
     if url.scheme() != "https" {
         return Err(CoreError::invalid(
@@ -44,7 +44,7 @@ pub async fn one_click(url: &str) -> Result<(), CoreError> {
             }
             HttpCoroutineState::Yielded(HttpSendYield::WantsRead) => {
                 let n = stream.read_within(&mut buf, ANSWER_TIMEOUT).await?;
-                arg = Some(&buf[..n]);
+                arg = Some(transport::filled(&buf, n));
             }
             // The list took the request; where it sends a browser next does not matter here.
             HttpCoroutineState::Yielded(HttpSendYield::WantsRedirect { response, .. }) => {

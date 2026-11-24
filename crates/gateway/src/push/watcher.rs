@@ -17,14 +17,14 @@ const MIN_BACKOFF: Duration = Duration::from_secs(5);
 const MAX_BACKOFF: Duration = Duration::from_mins(30);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Delivery {
+pub(super) enum Delivery {
     Sent,
     /// The device token is dead: the app was uninstalled or the token rotated.
     Gone,
     Failed,
 }
 
-pub trait Notify: Sync {
+pub(super) trait Notify: Sync {
     fn notify(
         &self,
         platform: Platform,
@@ -36,7 +36,7 @@ pub trait Notify: Sync {
 
 /// Where an inbox stood when a watcher last looked: mail arrived since if the next UID grew.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Seen {
+pub(super) struct Seen {
     pub uid_validity: u32,
     pub uid_next: u32,
 }
@@ -51,13 +51,13 @@ impl From<SyncState> for Seen {
 }
 
 /// Keeps what a watcher saw, for whichever worker watches the registration next.
-pub trait Checkpoint: Sync {
+pub(super) trait Checkpoint: Sync {
     fn save(&self, seen: Seen) -> impl Future<Output = ()> + Send;
 }
 
 /// Why a watcher gave up; its registration is dropped either way.
 #[derive(Debug, PartialEq, Eq)]
-pub enum Stop {
+pub(super) enum Stop {
     AuthFailed,
     DeviceGone,
 }
@@ -65,7 +65,7 @@ pub enum Stop {
 /// Runs until the server refuses the credentials or the device token is gone, reconnecting
 /// with backoff after any other error. `last` is where the inbox stood for the previous
 /// watcher, and `allowed` the addresses the IMAP server may have, checked on every connection.
-pub async fn watch(
+pub(super) async fn watch(
     registration: &Registration,
     notifier: &impl Notify,
     checkpoint: &impl Checkpoint,
@@ -380,7 +380,7 @@ mod tests {
         // With a connection the wrong password would stop the watcher at once; refused, it only retries.
         let registration = alice("wrong password");
         let watching = watch(&registration, &fake, &fake, Some(|_| false), None);
-        assert!(timeout(Duration::from_secs(2), watching).await.is_err());
+        timeout(Duration::from_secs(2), watching).await.unwrap_err();
     }
 
     #[tokio::test]

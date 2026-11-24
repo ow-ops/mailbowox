@@ -33,3 +33,37 @@ tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread", "sync"] }
 [features]
 # Serves the bundled site instead of the dev server, for a cargo build without the Tauri CLI.
 custom-protocol = ["tauri/custom-protocol"]
+
+# The root workspace's lints; this crate is outside it.
+[lints.rust]
+warnings = "deny"
+unsafe_code = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+unreachable_pub = "deny"
+elided_lifetimes_in_paths = "deny"
+trivial_casts = "deny"
+trivial_numeric_casts = "deny"
+unused_qualifications = "deny"
+unused_import_braces = "deny"
+unused_lifetimes = "deny"
+single_use_lifetimes = "deny"
+meta_variable_misuse = "deny"
+macro_use_extern_crate = "deny"
+unused_macro_rules = "deny"
+non_ascii_idents = "deny"
+missing_abi = "deny"
+ffi_unwind_calls = "deny"
+explicit_outlives_requirements = "deny"
+keyword_idents_2024 = "deny"
+deprecated_in_future = "deny"
+
+[lints.clippy]
+allow_attributes = "deny"
+allow_attributes_without_reason = "deny"
+pedantic = { level = "deny", priority = -1 }
+# Selected stable nursery lints; keep the full nursery group disabled.
+missing_const_for_fn = "deny"
+option_if_let_else = "deny"
+significant_drop_in_scrutinee = "deny"
+needless_collect = "deny"
+redundant_clone = "deny"

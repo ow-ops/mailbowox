@@ -49,7 +49,7 @@ pub enum CoreError {
     Unconfirmed { message: String },
 }
 
-#[allow(
+#[expect(
     clippy::needless_pass_by_value,
     reason = "taken by value so they fit map_err"
 )]
@@ -100,14 +100,13 @@ impl CoreError {
 
 impl From<io::Error> for CoreError {
     fn from(err: io::Error) -> Self {
-        match err
-            .get_ref()
+        err.get_ref()
             .and_then(|inner| inner.downcast_ref::<rustls::Error>())
-        {
-            Some(tls) => Self::tls(tls.into(), tls),
-            None => Self::Network {
-                message: err.to_string(),
-            },
-        }
+            .map_or_else(
+                || Self::Network {
+                    message: err.to_string(),
+                },
+                |tls| Self::tls(tls.into(), tls),
+            )
     }
 }

@@ -1,3 +1,9 @@
+#![expect(
+    clippy::expect_used,
+    clippy::panic,
+    reason = "test failures should stop the test at the failed assertion"
+)]
+
 mod common;
 
 use std::time::Duration;

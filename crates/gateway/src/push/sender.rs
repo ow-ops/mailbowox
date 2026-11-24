@@ -19,13 +19,13 @@ use crate::config::PushConfig;
 const TIMEOUT: Duration = Duration::from_secs(10);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct Ping {
+pub(super) struct Ping {
     pub account: String,
     pub unread: u32,
 }
 
 /// The app finds the account by hashing its own lowercased address the same way.
-pub fn ping(email: &str, unread: u32) -> Ping {
+pub(super) fn ping(email: &str, unread: u32) -> Ping {
     Ping {
         account: hex::encode(Sha256::digest(email.trim().to_lowercase().as_bytes())),
         unread,
@@ -63,9 +63,10 @@ fn apns_payload<'a>(
 
 /// Android gets a data-only message; the app's background task shows the notification.
 fn fcm_message(token: &str, ping: &Ping, preview: Option<&str>) -> Value {
-    let mut data = json!({ "body": json!(ping).to_string() });
+    let mut data = serde_json::Map::new();
+    data.insert("body".to_owned(), json!(json!(ping).to_string()));
     if let Some(preview) = preview {
-        data["m"] = json!(preview);
+        data.insert("m".to_owned(), json!(preview));
     }
     json!({
         "message": {
@@ -86,13 +87,13 @@ impl From<Outcome> for Delivery {
     }
 }
 
-pub struct Providers {
+pub(super) struct Providers {
     apns: Option<Apns>,
     fcm: Option<Fcm>,
 }
 
 impl Providers {
-    pub fn load(config: &PushConfig) -> Result<Self, Box<dyn std::error::Error>> {
+    pub(super) fn load(config: &PushConfig) -> Result<Self, Box<dyn std::error::Error>> {
         let apns = match &config.apns {
             Some(apns) => Some(Apns::new(
                 &std::fs::read(&apns.key_file)?,
@@ -110,7 +111,7 @@ impl Providers {
         Ok(Self { apns, fcm })
     }
 
-    pub fn supports(&self, platform: Platform) -> bool {
+    pub(super) const fn supports(&self, platform: Platform) -> bool {
         match platform {
             Platform::Ios | Platform::IosSandbox => self.apns.is_some(),
             Platform::Android => self.fcm.is_some(),

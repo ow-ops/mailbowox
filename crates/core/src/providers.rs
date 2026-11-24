@@ -5,7 +5,7 @@
 
 use crate::types::{DiscoveredSettings, Security, ServerConfig};
 
-pub struct Provider {
+pub(crate) struct Provider {
     domains: &'static [&'static str],
     imap: &'static str,
     smtp: &'static str,
@@ -57,7 +57,7 @@ const PROVIDERS: &[Provider] = &[
     },
 ];
 
-pub fn find(domain: &str) -> Option<&'static Provider> {
+pub(crate) fn find(domain: &str) -> Option<&'static Provider> {
     PROVIDERS.iter().find(|provider| {
         provider
             .domains
@@ -67,7 +67,7 @@ pub fn find(domain: &str) -> Option<&'static Provider> {
 }
 
 impl Provider {
-    pub fn settings(&self, email: &str, source: &str) -> DiscoveredSettings {
+    pub(crate) fn settings(&self, email: &str, source: &str) -> DiscoveredSettings {
         let tls = |host: &str, port| ServerConfig {
             host: host.to_owned(),
             port,

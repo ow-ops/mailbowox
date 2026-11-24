@@ -20,12 +20,16 @@ use crate::{
 // A server that accepts the connection but never speaks, such as a TLS-only port reached in plain text,
 // would otherwise keep the user waiting forever.
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
-pub const GREETING_TIMEOUT: Duration = Duration::from_secs(15);
+pub(crate) const GREETING_TIMEOUT: Duration = Duration::from_secs(15);
 // Applies to each read and each written chunk, not to a whole exchange, so large messages only fail on a
 // connection that stalls.
-pub const ANSWER_TIMEOUT: Duration = Duration::from_secs(60);
+pub(crate) const ANSWER_TIMEOUT: Duration = Duration::from_secs(60);
 const WRITE_CHUNK: usize = 64 * 1024;
 
+#[expect(
+    clippy::expect_used,
+    reason = "ring supports the default protocol versions"
+)]
 fn client_config() -> Arc<ClientConfig> {
     static CONFIG: OnceLock<Arc<ClientConfig>> = OnceLock::new();
     CONFIG
@@ -45,7 +49,7 @@ fn client_config() -> Arc<ClientConfig> {
 }
 
 /// A pipe that is either still in plaintext or carries a TLS session.
-pub struct SecureStream {
+pub(crate) struct SecureStream {
     state: State,
 }
 
@@ -57,7 +61,7 @@ enum State {
 }
 
 impl SecureStream {
-    pub async fn connect(
+    pub(crate) async fn connect(
         host: &str,
         port: u16,
         tls: bool,
@@ -77,7 +81,7 @@ impl SecureStream {
 
     /// Wraps the pipe in TLS and completes the handshake, for implicit TLS and
     /// STARTTLS alike.
-    pub async fn start_tls(&mut self, host: &str) -> Result<(), CoreError> {
+    pub(crate) async fn start_tls(&mut self, host: &str) -> Result<(), CoreError> {
         within(CONNECT_TIMEOUT, self.handshake(host, client_config())).await
     }
 
@@ -105,7 +109,7 @@ impl SecureStream {
     }
 
     /// Like [`Self::read`], failing as a network error when nothing arrives within `limit`.
-    pub async fn read_within(
+    pub(crate) async fn read_within(
         &mut self,
         buf: &mut [u8],
         limit: Duration,
@@ -115,7 +119,11 @@ impl SecureStream {
 
     /// Like [`Self::read_within`], for protocols where the server never just
     /// hangs up: a closed connection is a network error.
-    pub async fn read_some(&mut self, buf: &mut [u8], limit: Duration) -> Result<usize, CoreError> {
+    pub(crate) async fn read_some(
+        &mut self,
+        buf: &mut [u8],
+        limit: Duration,
+    ) -> Result<usize, CoreError> {
         match self.read_within(buf, limit).await? {
             0 => Err(CoreError::closed()),
             n => Ok(n),
@@ -125,7 +133,7 @@ impl SecureStream {
     /// Reads decrypted bytes; `Ok(0)` means the peer closed cleanly.
     ///
     /// Cancel-safe, which the IDLE timeout relies on.
-    pub async fn read(&mut self, buf: &mut [u8]) -> Result<usize, CoreError> {
+    pub(crate) async fn read(&mut self, buf: &mut [u8]) -> Result<usize, CoreError> {
         let read = match &mut self.state {
             State::Plain(pipe) => pipe.read(buf).await,
             State::Tls(tls) => match tls.read(buf).await {
@@ -140,7 +148,7 @@ impl SecureStream {
         Ok(read?)
     }
 
-    pub async fn write_all(&mut self, bytes: &[u8]) -> Result<(), CoreError> {
+    pub(crate) async fn write_all(&mut self, bytes: &[u8]) -> Result<(), CoreError> {
         for chunk in bytes.chunks(WRITE_CHUNK) {
             within(ANSWER_TIMEOUT, async {
                 match &mut self.state {
@@ -154,7 +162,7 @@ impl SecureStream {
         Ok(())
     }
 
-    pub async fn close(&mut self) -> Result<(), CoreError> {
+    pub(crate) async fn close(&mut self) -> Result<(), CoreError> {
         within(ANSWER_TIMEOUT, async {
             match &mut self.state {
                 State::Plain(pipe) => pipe.shutdown().await?,

@@ -1,4 +1,9 @@
 #![allow(dead_code, reason = "each test binary uses a different subset")]
+#![expect(
+    clippy::expect_used,
+    clippy::panic,
+    reason = "test failures should stop the test at the failed assertion"
+)]
 
 use std::{
     net::{TcpStream, ToSocketAddrs},
@@ -11,15 +16,15 @@ use mailbowox_core::{
     ServerConfig, send_message,
 };
 
-pub const PASSWORD: &str = "mailbowox-dev";
+pub(crate) const PASSWORD: &str = "mailbowox-dev";
 
 /// Where dev/mailbox's Stalwart listens: CI reaches it by its compose service name.
-pub fn host() -> String {
+pub(crate) fn host() -> String {
     std::env::var("MAILBOWOX_TEST_HOST").unwrap_or_else(|_| "127.0.0.1".into())
 }
 
 /// The Stalwart from dev/mailbox, or `None` when it is not running. CI always expects it.
-pub fn local_server() -> Option<()> {
+pub(crate) fn local_server() -> Option<()> {
     let host = host();
     let up = (host.as_str(), 1143)
         .to_socket_addrs()
@@ -37,7 +42,7 @@ pub fn local_server() -> Option<()> {
     None
 }
 
-pub fn account(user: &str) -> AccountConfig {
+pub(crate) fn account(user: &str) -> AccountConfig {
     let email = format!("{user}@mailbowox.test");
     let host = host();
     AccountConfig {
@@ -61,11 +66,11 @@ pub fn account(user: &str) -> AccountConfig {
     }
 }
 
-pub async fn connect(user: &str) -> Arc<MailSession> {
+pub(crate) async fn connect(user: &str) -> Arc<MailSession> {
     MailSession::connect(account(user)).await.expect("connect")
 }
 
-pub async fn uid_validity(session: &MailSession, mailbox: &str) -> u32 {
+pub(crate) async fn uid_validity(session: &MailSession, mailbox: &str) -> u32 {
     session
         .sync(mailbox.to_owned(), None, Vec::new(), 0)
         .await
@@ -74,7 +79,7 @@ pub async fn uid_validity(session: &MailSession, mailbox: &str) -> u32 {
         .uid_validity
 }
 
-pub fn unique(label: &str) -> String {
+pub(crate) fn unique(label: &str) -> String {
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("clock after 1970")
@@ -82,7 +87,7 @@ pub fn unique(label: &str) -> String {
     format!("{label} {nanos}")
 }
 
-pub fn draft(from: &str, to: &str, subject: &str, text: &str) -> Draft {
+pub(crate) fn draft(from: &str, to: &str, subject: &str, text: &str) -> Draft {
     Draft {
         from: Address {
             name: Some(from.to_owned()),
@@ -103,14 +108,14 @@ pub fn draft(from: &str, to: &str, subject: &str, text: &str) -> Draft {
     }
 }
 
-pub async fn bob_sends_alice(subject: &str, text: &str) -> Vec<u8> {
+pub(crate) async fn bob_sends_alice(subject: &str, text: &str) -> Vec<u8> {
     send_message(account("bob"), draft("bob", "alice", subject, text))
         .await
         .expect("bob sends to alice")
 }
 
 /// Syncs `mailbox` from scratch until a message with `subject` shows up.
-pub async fn wait_for_subject(
+pub(crate) async fn wait_for_subject(
     session: &MailSession,
     mailbox: &str,
     subject: &str,

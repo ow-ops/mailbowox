@@ -22,13 +22,13 @@ const RECORD_SIZE: u32 = 4096;
 
 /// base64url, unpadded.
 #[derive(Clone, Serialize, Deserialize)]
-pub struct DeviceKeys {
+pub(crate) struct DeviceKeys {
     pub p256dh: String,
     pub auth: String,
 }
 
 impl DeviceKeys {
-    pub fn valid(&self) -> bool {
+    pub(crate) fn valid(&self) -> bool {
         self.parse().is_some()
     }
 
@@ -42,7 +42,7 @@ impl DeviceKeys {
     }
 }
 
-pub fn seal(keys: &DeviceKeys, message: &MessageSummary) -> Option<String> {
+pub(super) fn seal(keys: &DeviceKeys, message: &MessageSummary) -> Option<String> {
     let (public, auth) = keys.parse()?;
     let sender = message
         .from
@@ -70,6 +70,10 @@ pub fn seal(keys: &DeviceKeys, message: &MessageSummary) -> Option<String> {
 }
 
 /// One `aes128gcm` record (RFC 8188).
+#[expect(
+    clippy::expect_used,
+    reason = "HKDF-SHA256 gives up to 8160 bytes and AES-GCM takes messages up to 64 GB"
+)]
 fn encrypt(
     plain: &[u8],
     device: &PublicKey,
@@ -115,7 +119,7 @@ fn encrypt(
 }
 
 fn truncate(text: &str, max: usize) -> &str {
-    &text[..text.floor_char_boundary(max)]
+    text.get(..text.floor_char_boundary(max)).unwrap_or(text)
 }
 
 #[cfg(test)]

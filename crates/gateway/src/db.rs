@@ -10,21 +10,21 @@ static SQLITE: Migrator = sqlx::migrate!("migrations/sqlite");
 static POSTGRES: Migrator = sqlx::migrate!("migrations/postgres");
 
 /// Connects on first use, so a relay-only gateway never opens the database.
-pub fn pool(url: &str) -> Result<AnyPool, sqlx::Error> {
+pub(crate) fn pool(url: &str) -> Result<AnyPool, sqlx::Error> {
     install_default_drivers();
     AnyPoolOptions::new().connect_lazy(url)
 }
 
-pub fn is_postgres(url: &str) -> bool {
+pub(crate) fn is_postgres(url: &str) -> bool {
     url.starts_with("postgres")
 }
 
-pub async fn migrate(pool: &AnyPool, url: &str) -> Result<(), MigrateError> {
+pub(crate) async fn migrate(pool: &AnyPool, url: &str) -> Result<(), MigrateError> {
     let migrator = if is_postgres(url) { &POSTGRES } else { &SQLITE };
     migrator.run(pool).await
 }
 
-pub fn unix_now() -> i64 {
+pub(crate) fn unix_now() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_or(0, |since| {
@@ -35,7 +35,7 @@ pub fn unix_now() -> i64 {
 /// A fresh database per test: a schema of its own on `TEST_POSTGRES_URL` when set, SQLite
 /// otherwise.
 #[cfg(test)]
-pub async fn test_pool() -> (AnyPool, tempfile::TempDir) {
+pub(crate) async fn test_pool() -> (AnyPool, tempfile::TempDir) {
     let dir = tempfile::tempdir().expect("temp dir");
     let url = match std::env::var("TEST_POSTGRES_URL") {
         Ok(base) => {

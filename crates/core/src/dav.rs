@@ -36,8 +36,8 @@ use crate::{
     types::{AccountConfig, Security},
 };
 
-pub const USER_AGENT: &str = "mailbowox";
-pub const CURRENT_USER_PRIVILEGE_SET: WebdavProperty = WebdavProperty {
+pub(crate) const USER_AGENT: &str = "mailbowox";
+pub(crate) const CURRENT_USER_PRIVILEGE_SET: WebdavProperty = WebdavProperty {
     ns: DAV,
     local: "current-user-privilege-set",
 };
@@ -48,20 +48,20 @@ const SERVICE: DiscoveryDavService = DiscoveryDavService::Carddav;
 /// The child elements of a property, such as the resource types of a
 /// collection.
 #[derive(Debug, Default, Deserialize)]
-#[allow(
+#[expect(
     clippy::zero_sized_map_values,
     reason = "child elements are read as the keys of a map"
 )]
-pub struct Names(BTreeMap<String, ()>);
+pub(crate) struct Names(BTreeMap<String, ()>);
 
 impl Names {
-    pub fn contains(&self, name: &str) -> bool {
+    pub(crate) fn contains(&self, name: &str) -> bool {
         self.0.contains_key(name)
     }
 }
 
 #[derive(Debug, Default, Deserialize)]
-pub struct Privileges {
+pub(crate) struct Privileges {
     #[serde(default)]
     privilege: Vec<Names>,
 }
@@ -77,7 +77,7 @@ impl Privileges {
 }
 
 /// A collection without a privilege set is taken as writable.
-pub fn read_only(privileges: Option<Privileges>) -> bool {
+pub(crate) fn read_only(privileges: Option<Privileges>) -> bool {
     privileges.is_some_and(|privileges| !privileges.can_write())
 }
 
@@ -87,7 +87,7 @@ struct CtagProps {
 }
 
 /// What a sync of one collection found, as hrefs to fetch and to forget.
-pub struct Changes {
+pub(crate) struct Changes {
     pub sync_token: Option<String>,
     pub ctag: Option<String>,
     pub reset: bool,
@@ -95,13 +95,13 @@ pub struct Changes {
     pub removed: Vec<String>,
 }
 
-pub struct Dav {
+pub(crate) struct Dav {
     pub auth: WebdavAuth,
     allow_plain: bool,
 }
 
 impl Dav {
-    pub fn new(config: &AccountConfig) -> Self {
+    pub(crate) fn new(config: &AccountConfig) -> Self {
         let credentials = &config.credentials;
         Self {
             auth: WebdavAuth::Basic(HttpAuthBasic::new(
@@ -116,7 +116,7 @@ impl Dav {
         }
     }
 
-    pub fn url(&self, url: &str) -> Result<Url, CoreError> {
+    pub(crate) fn url(&self, url: &str) -> Result<Url, CoreError> {
         let url = Url::parse(url).map_err(CoreError::invalid)?;
         match url.scheme() {
             "https" => Ok(url),
@@ -127,7 +127,11 @@ impl Dav {
 
     /// The coroutine's own result comes back as is, for callers that tell
     /// its errors apart.
-    pub async fn run<C, T, E>(&self, url: &Url, mut coroutine: C) -> Result<Result<T, E>, CoreError>
+    pub(crate) async fn run<C, T, E>(
+        &self,
+        url: &Url,
+        mut coroutine: C,
+    ) -> Result<Result<T, E>, CoreError>
     where
         C: WebdavCoroutine<Yield = WebdavYield, Return = Result<T, E>>,
     {
@@ -142,7 +146,7 @@ impl Dav {
                 }
                 WebdavCoroutineState::Yielded(WebdavYield::WantsRead) => {
                     let n = stream.read_within(&mut buf, ANSWER_TIMEOUT).await?;
-                    arg = Some(&buf[..n]);
+                    arg = Some(transport::filled(&buf, n));
                 }
             }
         };
@@ -153,7 +157,7 @@ impl Dav {
 
     /// Runs a coroutine built for `url`, rebuilding it for each same-origin
     /// redirect. Credentials never follow a redirect to another origin.
-    pub async fn run_following<C, T>(
+    pub(crate) async fn run_following<C, T>(
         &self,
         mut url: Url,
         build: impl Fn(&Url) -> C,
@@ -177,7 +181,7 @@ impl Dav {
                     }
                     WebdavCoroutineState::Yielded(WebdavRedirectYield::WantsRead) => {
                         let n = stream.read_within(&mut buf, ANSWER_TIMEOUT).await?;
-                        arg = Some(&buf[..n]);
+                        arg = Some(transport::filled(&buf, n));
                     }
                     WebdavCoroutineState::Yielded(WebdavRedirectYield::WantsRedirect {
                         url,
@@ -198,7 +202,10 @@ impl Dav {
         Err(CoreError::protocol("too many redirects"))
     }
 
-    pub async fn discover(&self, config: &AccountConfig) -> Result<Option<String>, CoreError> {
+    pub(crate) async fn discover(
+        &self,
+        config: &AccountConfig,
+    ) -> Result<Option<String>, CoreError> {
         let roots = match config.carddav_url.as_deref() {
             Some(url) => server_roots(self.url(url)?),
             None => context_roots(config).await,
@@ -230,7 +237,7 @@ impl Dav {
 
     /// sync-collection when the collection supports it, else the ctag and an
     /// etag listing diffed against `known` (href to etag).
-    pub async fn sync(
+    pub(crate) async fn sync(
         &self,
         collection: &Url,
         since_token: Option<&str>,
@@ -370,7 +377,7 @@ impl Dav {
     }
 
     /// The resource at `href`, the collection holding it and its id.
-    pub fn locate(&self, href: &str) -> Result<(Url, Url, String), CoreError> {
+    pub(crate) fn locate(&self, href: &str) -> Result<(Url, Url, String), CoreError> {
         let href = self.url(href)?;
         let collection = href.join(".").map_err(CoreError::invalid)?;
         let id = id_from_location(href.path())
@@ -381,11 +388,11 @@ impl Dav {
 
 /// `None` for an href on another origin: the account's credentials only go
 /// to the server the collection is on.
-pub fn absolute(collection: &Url, href: &str) -> Option<String> {
+pub(crate) fn absolute(collection: &Url, href: &str) -> Option<String> {
     same_origin_url(collection, href).map(String::from)
 }
 
-pub fn same_origin_url(base: &Url, href: &str) -> Option<Url> {
+pub(crate) fn same_origin_url(base: &Url, href: &str) -> Option<Url> {
     resolve_href(base, href).filter(|url| url.origin() == base.origin())
 }
 

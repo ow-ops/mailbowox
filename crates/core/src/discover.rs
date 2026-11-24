@@ -30,10 +30,10 @@ use crate::{
 };
 
 // Quad9 refuses DNS-over-HTTPS on HTTP/1.1, which is all io-http speaks.
-pub const DOH_RESOLVER: &str = "https://cloudflare-dns.com/dns-query";
+pub(crate) const DOH_RESOLVER: &str = "https://cloudflare-dns.com/dns-query";
 const STEP_TIMEOUT: Duration = Duration::from_secs(10);
 
-pub async fn discover(email: &str) -> Result<Option<DiscoveredSettings>, CoreError> {
+pub(crate) async fn discover(email: &str) -> Result<Option<DiscoveredSettings>, CoreError> {
     let (local_part, domain) = email
         .rsplit_once('@')
         .ok_or_else(|| CoreError::invalid("not an email address"))?;
@@ -108,14 +108,14 @@ fn exchange(records: &[MxRecord]) -> Option<String> {
 
 /// Registrable domain of the preferred MX, when it is another domain: a
 /// custom domain on Infomaniak has its mail at `mta-gw.infomaniak.ch`.
-pub fn foreign_host(records: &[MxRecord], domain: &str) -> Option<String> {
+pub(crate) fn foreign_host(records: &[MxRecord], domain: &str) -> Option<String> {
     let exchange = exchange(records)?;
     let host = psl::domain_str(&exchange)?.to_ascii_lowercase();
     (!host.eq_ignore_ascii_case(domain)).then_some(host)
 }
 
 /// Drives a discovery coroutine, keeping one connection per origin it talks to.
-pub async fn run<C, T, E>(mut coroutine: C) -> Result<Result<T, E>, CoreError>
+pub(crate) async fn run<C, T, E>(mut coroutine: C) -> Result<Result<T, E>, CoreError>
 where
     C: DiscoveryCoroutine<Yield = DiscoveryYield, Return = Result<T, E>>,
 {
@@ -134,7 +134,7 @@ where
             }
             DiscoveryCoroutineState::Yielded(DiscoveryYield::WantsRead { url }) => {
                 let n = stream_for(&mut streams, &url).await?.read(&mut buf).await?;
-                arg = Some(&buf[..n]);
+                arg = Some(transport::filled(&buf, n));
             }
         }
     };
@@ -162,14 +162,18 @@ async fn stream_for<'a>(
         .ok_or_else(|| CoreError::invalid("URL without a port"))?;
     let origin = format!("{}://{host}:{port}", url.scheme());
 
-    if let Some(index) = streams.iter().position(|(known, _)| *known == origin) {
-        return Ok(&mut streams[index].1);
+    if !streams.iter().any(|(known, _)| *known == origin) {
+        let stream = SecureStream::connect(host, port, tls, None).await?;
+        streams.push((origin.clone(), stream));
     }
-    let stream = SecureStream::connect(host, port, tls, None).await?;
-    Ok(&mut streams.push_mut((origin, stream)).1)
+    streams
+        .iter_mut()
+        .find(|(known, _)| *known == origin)
+        .map(|(_, stream)| stream)
+        .ok_or_else(CoreError::closed)
 }
 
-pub fn from_autoconfig(
+pub(crate) fn from_autoconfig(
     config: &DiscoveryAutoconfig,
     email: &str,
     source: &str,
@@ -227,7 +231,7 @@ fn first_server(
         .find_map(server_config)
 }
 
-pub fn from_srv(report: &DiscoverySrvReport, email: &str) -> Option<DiscoveredSettings> {
+pub(crate) fn from_srv(report: &DiscoverySrvReport, email: &str) -> Option<DiscoveredSettings> {
     let configs = DiscoveryServiceConfig::from_srv(report);
     let pick = |service| {
         let mut server = first_server(&configs, service)?;

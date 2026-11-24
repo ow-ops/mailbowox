@@ -10,14 +10,14 @@ use rusqlite::{Connection, params_from_iter};
 use serde::Serialize;
 use serde_json::{Map, Value as Json, json};
 
-pub struct Databases {
+pub(crate) struct Databases {
     dir: PathBuf,
     open: Mutex<HashMap<String, Connection>>,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Outcome {
+pub(crate) struct Outcome {
     rows: Vec<Map<String, Json>>,
     changes: u64,
     last_insert_row_id: i64,
@@ -55,7 +55,7 @@ fn read(value: ValueRef<'_>) -> Json {
 }
 
 impl Databases {
-    pub fn new(dir: PathBuf) -> Self {
+    pub(crate) fn new(dir: PathBuf) -> Self {
         Self {
             dir,
             open: Mutex::default(),
@@ -63,7 +63,7 @@ impl Databases {
     }
 
     /// Rolls back a transaction a reloaded page left open.
-    pub fn close(&self) {
+    pub(crate) fn close(&self) {
         self.open
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
@@ -89,11 +89,16 @@ impl Databases {
         run(&open[name]).map_err(|error| error.to_string())
     }
 
-    pub fn exec(&self, name: &str, sql: &str) -> Result<(), String> {
+    pub(crate) fn exec(&self, name: &str, sql: &str) -> Result<(), String> {
         self.with(name, |db| db.execute_batch(sql))
     }
 
-    pub fn query(&self, name: &str, sql: &str, params: Vec<Json>) -> Result<Outcome, String> {
+    pub(crate) fn query(
+        &self,
+        name: &str,
+        sql: &str,
+        params: Vec<Json>,
+    ) -> Result<Outcome, String> {
         let params = params
             .into_iter()
             .map(bind)

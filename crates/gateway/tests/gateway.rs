@@ -1,4 +1,10 @@
-#![allow(clippy::unwrap_used)]
+#![expect(
+    clippy::indexing_slicing,
+    clippy::missing_assert_message,
+    clippy::panic,
+    clippy::unwrap_used,
+    reason = "test failures should stop the test at the failed assertion"
+)]
 
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::{Path, PathBuf};

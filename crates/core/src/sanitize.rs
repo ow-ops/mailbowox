@@ -16,21 +16,21 @@ use ammonia::{Builder, UrlRelative};
 use percent_encoding::percent_decode_str;
 use url::Url;
 
-pub struct Sanitized {
+pub(crate) struct Sanitized {
     pub html: String,
     pub has_remote_content: bool,
     pub blocked_remote: u32,
 }
 
 #[cfg(test)]
-pub fn sanitize_html(html: &str, allow_remote: bool) -> Sanitized {
+pub(crate) fn sanitize_html(html: &str, allow_remote: bool) -> Sanitized {
     sanitize_html_with(html, allow_remote, HashMap::new())
 }
 
 /// `inline` maps a Content-ID to the `data:` URL of that part; an image
 /// that names one by `cid:` gets it as its source. Nothing else in the
 /// markup can carry a `data:` URL.
-pub fn sanitize_html_with(
+pub(crate) fn sanitize_html_with(
     html: &str,
     allow_remote: bool,
     inline: HashMap<String, String>,

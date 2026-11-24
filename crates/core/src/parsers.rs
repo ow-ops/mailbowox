@@ -18,7 +18,7 @@ use crate::{
     types::{DiscoveredSettings, MessageSummary},
 };
 
-pub use crate::{
+pub(crate) use crate::{
     body::{attachment, message_body},
     sanitize::sanitize_html,
     vcard::{contact, update_contact},
@@ -26,7 +26,7 @@ pub use crate::{
 
 const MAX_STEPS: usize = 32;
 
-pub fn summary(header: &[u8], text: &[u8]) -> Option<MessageSummary> {
+pub(crate) fn summary(header: &[u8], text: &[u8]) -> Option<MessageSummary> {
     let fields = Vec1::try_from(vec![AString::try_from("SUBJECT").ok()?]).ok()?;
     crate::summary::summary(&[
         MessageDataItem::Uid(NonZeroU32::MIN),
@@ -72,7 +72,7 @@ fn url(path: &str) -> Url {
     Url::parse(path).expect("a constant URL")
 }
 
-pub fn autoconfig(response: &[u8]) -> Option<DiscoveredSettings> {
+pub(crate) fn autoconfig(response: &[u8]) -> Option<DiscoveredSettings> {
     let config = drive(
         DiscoveryIsp::new(url("https://autoconfig.example.org/")),
         response,
@@ -81,13 +81,13 @@ pub fn autoconfig(response: &[u8]) -> Option<DiscoveredSettings> {
     from_autoconfig(&config, "me@example.org", "autoconfig")
 }
 
-pub fn srv(response: &[u8]) -> Option<DiscoveredSettings> {
+pub(crate) fn srv(response: &[u8]) -> Option<DiscoveredSettings> {
     let resolver = url("https://dns.example.org/dns-query");
     let report = drive(DiscoverySrv::new("example.org", resolver), response)?.ok()?;
     from_srv(&report, "me@example.org")
 }
 
-pub fn mx(response: &[u8]) -> Option<String> {
+pub(crate) fn mx(response: &[u8]) -> Option<String> {
     let resolver = url("https://dns.example.org/dns-query");
     let records = drive(DiscoveryDnsMx::new("example.org", resolver), response)?.ok()?;
     foreign_host(&records, "example.org")

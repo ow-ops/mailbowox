@@ -17,13 +17,13 @@ use tracing::error;
 use crate::AppState;
 use crate::db::unix_now;
 
-pub const MAX_BLOB_BYTES: usize = 1 << 20;
+pub(crate) const MAX_BLOB_BYTES: usize = 1 << 20;
 /// Bounds what the vaults can take on disk, at `MAX_BLOB_BYTES` each. Deleted ones count.
 const MAX_VAULTS: i64 = 100_000;
 const REPLACE_BLOB: &str = "UPDATE vault SET blob = $1, version = version + 1
                             WHERE id = $2 AND version = $3 AND deleted_at IS NULL";
 
-pub struct Store {
+pub(crate) struct Store {
     db: AnyPool,
     max_vaults: i64,
 }
@@ -47,7 +47,7 @@ enum Outcome {
 }
 
 impl Store {
-    pub fn new(db: AnyPool) -> Self {
+    pub(crate) const fn new(db: AnyPool) -> Self {
         Self {
             db,
             max_vaults: MAX_VAULTS,
@@ -160,15 +160,16 @@ fn auth_matches(stored: &[u8], auth: &[u8; 32]) -> bool {
     bool::from(stored.ct_eq(auth))
 }
 
+#[expect(clippy::expect_used, reason = "a quoted integer is a header value")]
 fn etag(version: i64) -> HeaderValue {
     HeaderValue::from_str(&format!("\"{version}\"")).expect("a quoted integer is a header value")
 }
 
-pub fn valid_id(id: &str) -> bool {
+pub(crate) fn valid_id(id: &str) -> bool {
     id.len() == 64 && id.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
 }
 
-pub fn bearer(headers: &HeaderMap) -> Option<[u8; 32]> {
+pub(crate) fn bearer(headers: &HeaderMap) -> Option<[u8; 32]> {
     let Authorization(bearer) = headers.typed_get::<Authorization<Bearer>>()?;
     Some(Sha256::digest(bearer.token().as_bytes()).into())
 }
@@ -210,7 +211,7 @@ fn respond(outcome: Result<Outcome, sqlx::Error>) -> Response {
     }
 }
 
-pub async fn get(
+pub(crate) async fn get(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
     headers: HeaderMap,
@@ -224,7 +225,7 @@ pub async fn get(
     respond(state.vault.get(&id, &auth).await)
 }
 
-pub async fn put(
+pub(crate) async fn put(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
     headers: HeaderMap,
@@ -242,7 +243,7 @@ pub async fn put(
     respond(state.vault.put(&id, &auth, if_match, &body).await)
 }
 
-pub async fn delete(
+pub(crate) async fn delete(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
     headers: HeaderMap,
@@ -282,7 +283,7 @@ mod tests {
             .fetch_one(&db)
             .await
             .unwrap();
-        assert_eq!(blob, [] as [u8; 0]);
+        assert!(blob.is_empty(), "{blob:?}");
         assert!(matches!(
             store.put("a", &auth, version, b"new").await.unwrap(),
             Outcome::Gone

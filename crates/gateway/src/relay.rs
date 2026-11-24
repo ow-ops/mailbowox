@@ -25,7 +25,7 @@ const WRITE_TIMEOUT: Duration = Duration::from_secs(60);
 const MAX_MESSAGE_BYTES: usize = 1 << 20;
 
 #[derive(Deserialize)]
-pub struct Params {
+pub(crate) struct Params {
     /// The mail server to connect to.
     host: String,
     /// One of the ports the gateway allows.
@@ -49,7 +49,7 @@ fn offered_token(headers: &HeaderMap) -> Option<String> {
 }
 
 /// Index of the configured token that matches, compared in constant time.
-pub fn match_token(digests: &[[u8; 32]], presented: &str) -> Option<usize> {
+pub(crate) fn match_token(digests: &[[u8; 32]], presented: &str) -> Option<usize> {
     let presented: [u8; 32] = Sha256::digest(presented.as_bytes()).into();
     let mut found = None;
     for (index, digest) in digests.iter().enumerate() {
@@ -60,7 +60,7 @@ pub fn match_token(digests: &[[u8; 32]], presented: &str) -> Option<usize> {
     found
 }
 
-pub async fn handler(
+pub(crate) async fn handler(
     State(state): State<Arc<AppState>>,
     Query(params): Query<Params>,
     headers: HeaderMap,
@@ -74,7 +74,10 @@ pub async fn handler(
     if !state.config.allowed_ports.contains(&params.port) {
         return (StatusCode::FORBIDDEN, "port not allowed").into_response();
     }
-    let Ok(permit) = Arc::clone(&state.permits[token]).try_acquire_owned() else {
+    let Some(permits) = state.permits.get(token) else {
+        return StatusCode::UNAUTHORIZED.into_response();
+    };
+    let Ok(permit) = Arc::clone(permits).try_acquire_owned() else {
         return (StatusCode::TOO_MANY_REQUESTS, "too many connections").into_response();
     };
     let addrs = match resolve(
@@ -107,14 +110,14 @@ pub async fn handler(
 
 /// Browsers hide why a WebSocket upgrade was refused, so the web app posts the code here to learn
 /// whether it is good. The body is plain text, which needs no CORS preflight.
-pub async fn check(State(state): State<Arc<AppState>>, code: String) -> StatusCode {
+pub(crate) async fn check(State(state): State<Arc<AppState>>, code: String) -> StatusCode {
     match match_token(&state.token_digests, &code) {
         Some(_) => StatusCode::NO_CONTENT,
         None => StatusCode::UNAUTHORIZED,
     }
 }
 
-pub async fn resolve(
+pub(crate) async fn resolve(
     host: &str,
     port: u16,
     allow_private: bool,
@@ -135,7 +138,7 @@ pub async fn resolve(
 
 /// Whether the address is globally routable: not loopback, private, link-local, shared (CGNAT),
 /// reserved, documentation or multicast. An IPv4-mapped IPv6 address counts as its IPv4 one.
-pub fn is_public(ip: IpAddr) -> bool {
+pub(crate) fn is_public(ip: IpAddr) -> bool {
     let ip = ip.to_canonical();
     ip_rfc::global(&ip) && !ip.is_multicast()
 }
@@ -167,7 +170,7 @@ async fn pipe(mut ws: WebSocket, mut tcp: TcpStream, idle: Duration) -> (u64, u6
                     break;
                 }
                 Ok(n) => {
-                    let frame = Message::Binary(buf[..n].to_vec().into());
+                    let frame = Message::Binary(buf.get(..n).unwrap_or(&buf).to_vec().into());
                     if !matches!(timeout(WRITE_TIMEOUT, ws.send(frame)).await, Ok(Ok(()))) {
                         break;
                     }

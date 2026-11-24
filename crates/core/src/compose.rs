@@ -5,7 +5,7 @@ use crate::{
     types::{Address, Draft},
 };
 
-pub fn build(draft: &Draft) -> Result<Vec<u8>, CoreError> {
+pub(crate) fn build(draft: &Draft) -> Result<Vec<u8>, CoreError> {
     let domain = draft
         .from
         .email
@@ -51,10 +51,10 @@ pub fn build(draft: &Draft) -> Result<Vec<u8>, CoreError> {
 }
 
 fn mime_address(address: &Address) -> MimeAddress<'_> {
-    match &address.name {
-        Some(name) => (name.as_str(), address.email.as_str()).into(),
-        None => address.email.as_str().into(),
-    }
+    address.name.as_ref().map_or_else(
+        || address.email.as_str().into(),
+        |name| (name.as_str(), address.email.as_str()).into(),
+    )
 }
 
 fn mime_addresses(addresses: &[Address]) -> MimeAddress<'_> {

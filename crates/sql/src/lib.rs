@@ -34,7 +34,7 @@ impl Value {
     }
 
     #[must_use]
-    pub fn as_i64(&self) -> Option<i64> {
+    pub const fn as_i64(&self) -> Option<i64> {
         match self {
             Self::Integer(number) => Some(*number),
             _ => None,
@@ -240,15 +240,15 @@ mod tests {
         }
     }
 
-    fn database() -> Connection {
-        let connection = Connection::open_in_memory().expect("a database");
-        super::prepare(&connection, false).expect("prepared");
-        connection
+    fn database() -> rusqlite::Result<Connection> {
+        let connection = Connection::open_in_memory()?;
+        super::prepare(&connection, false)?;
+        Ok(connection)
     }
 
     #[test]
     fn a_batch_answers_each_statement_in_order() {
-        let mut connection = database();
+        let mut connection = database().unwrap();
         let rows = run_batch(
             &mut connection,
             &[
@@ -268,7 +268,7 @@ mod tests {
                 statement!("SELECT a, b, c FROM t ORDER BY a"),
             ],
         )
-        .expect("answers");
+        .unwrap();
         assert_eq!(rows.len(), 4);
         assert_eq!(
             rows[3],
@@ -285,12 +285,12 @@ mod tests {
 
     #[test]
     fn a_failing_batch_leaves_nothing_behind() {
-        let mut connection = database();
+        let mut connection = database().unwrap();
         run_batch(
             &mut connection,
             &[statement!("CREATE TABLE t (a INTEGER UNIQUE)")],
         )
-        .expect("created");
+        .unwrap();
         let failed = run_batch(
             &mut connection,
             &[
@@ -298,22 +298,24 @@ mod tests {
                 statement!("INSERT INTO t VALUES (1)"),
             ],
         );
-        assert!(failed.is_err());
-        let rows =
-            run_batch(&mut connection, &[statement!("SELECT COUNT(*) FROM t")]).expect("counted");
+        assert_eq!(
+            failed.map_err(|error| error.to_string()),
+            Err("UNIQUE constraint failed: t.a".to_owned())
+        );
+        let rows = run_batch(&mut connection, &[statement!("SELECT COUNT(*) FROM t")]).unwrap();
         assert_eq!(rows[0][0][0], Value::Integer(0));
     }
 
     #[test]
     fn foreign_keys_hold() {
-        let mut connection = database();
-        let rows = run_batch(&mut connection, &[statement!("PRAGMA foreign_keys")]).expect("read");
+        let mut connection = database().unwrap();
+        let rows = run_batch(&mut connection, &[statement!("PRAGMA foreign_keys")]).unwrap();
         assert_eq!(rows[0][0][0], Value::Integer(1));
     }
 
     #[test]
     fn a_request_crosses_the_wire_and_names_only_files() {
-        let mut databases = One(database());
+        let mut databases = One(database().unwrap());
         let request = |database: &str| {
             encode(&Request {
                 id: 9,
@@ -322,14 +324,16 @@ mod tests {
                 remove: false,
             })
         };
-        let response: Response =
-            decode(&answer(&request("mail.sqlite3"), &mut databases)).expect("a response");
+        let response: Response = decode(&answer(&request("mail.sqlite3"), &mut databases)).unwrap();
         assert_eq!(response.id, 9);
         assert_eq!(response.result, Ok(vec![vec![vec![Value::Integer(42)]]]));
 
         let refused: Response =
-            decode(&answer(&request("../mail.sqlite3"), &mut databases)).expect("a response");
-        assert!(refused.result.is_err());
+            decode(&answer(&request("../mail.sqlite3"), &mut databases)).unwrap();
+        assert_eq!(
+            refused.result,
+            Err("\"../mail.sqlite3\" is not a database name".to_owned())
+        );
         assert!(!is_database_name(".."));
         assert!(!is_database_name("a/b"));
         assert!(is_database_name("mail.sqlite3"));

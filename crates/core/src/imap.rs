@@ -50,7 +50,7 @@ use crate::{
 const MAX_MESSAGE: u32 = 64 * 1024 * 1024;
 const DONE_TIMEOUT: Duration = Duration::from_secs(60);
 
-pub struct ImapConn {
+pub(crate) struct ImapConn {
     stream: SecureStream,
     fragmentizer: Fragmentizer,
     buf: Box<[u8]>,
@@ -64,7 +64,7 @@ pub struct ImapConn {
 }
 
 impl ImapConn {
-    pub async fn open(
+    pub(crate) async fn open(
         server: &ServerConfig,
         credentials: &Credentials,
         allowed: Option<AddrFilter>,
@@ -79,7 +79,7 @@ impl ImapConn {
     }
 
     /// Reaches the greeting, through STARTTLS when the server is set up for it, without logging in.
-    pub async fn greet(server: &ServerConfig) -> Result<(), CoreError> {
+    pub(crate) async fn greet(server: &ServerConfig) -> Result<(), CoreError> {
         Self::connect(server, None, None)
             .await?
             .stream
@@ -139,7 +139,7 @@ impl ImapConn {
                         let n = connected(&mut stream)?
                             .read_some(&mut buf, GREETING_TIMEOUT)
                             .await?;
-                        arg = Some(&buf[..n]);
+                        arg = Some(transport::filled(&buf, n));
                     }
                 },
             }
@@ -157,26 +157,26 @@ impl ImapConn {
         })
     }
 
-    pub fn has(&self, capability: &Capability<'_>) -> bool {
+    pub(crate) fn has(&self, capability: &Capability<'_>) -> bool {
         self.capabilities.iter().any(|c| c == capability)
     }
 
-    pub fn imap4rev2(&self) -> bool {
+    pub(crate) fn imap4rev2(&self) -> bool {
         self.capabilities
             .iter()
             .any(|c| c.to_string().eq_ignore_ascii_case("IMAP4rev2"))
     }
 
-    pub fn qresync(&self) -> bool {
+    pub(crate) const fn qresync(&self) -> bool {
         self.qresync
     }
 
     /// The connection can no longer be trusted to answer the next command.
-    pub fn broken(&self) -> bool {
+    pub(crate) const fn broken(&self) -> bool {
         self.in_flight
     }
 
-    pub fn condstore(&self) -> bool {
+    pub(crate) fn condstore(&self) -> bool {
         has_imap_capability!(self.capabilities, CondStore) || self.qresync
     }
 
@@ -197,7 +197,7 @@ impl ImapConn {
     }
 
     /// Runs a command coroutine, leaving its own error for the caller to map.
-    pub async fn run<C, T, E>(&mut self, mut coroutine: C) -> Result<Result<T, E>, CoreError>
+    pub(crate) async fn run<C, T, E>(&mut self, mut coroutine: C) -> Result<Result<T, E>, CoreError>
     where
         C: ImapCoroutine<Yield = ImapYield, Return = Result<T, E>>,
     {
@@ -229,14 +229,14 @@ impl ImapConn {
                 }
                 ImapCoroutineState::Yielded(ImapYield::WantsRead) => {
                     let n = stream.read_some(buf, ANSWER_TIMEOUT).await?;
-                    arg = Some(&buf[..n]);
+                    arg = Some(transport::filled(buf, n));
                 }
             }
         }
     }
 
     /// Runs a command coroutine, reporting its failure as a protocol error.
-    pub async fn exec<C, T, E>(&mut self, coroutine: C) -> Result<T, CoreError>
+    pub(crate) async fn exec<C, T, E>(&mut self, coroutine: C) -> Result<T, CoreError>
     where
         C: ImapCoroutine<Yield = ImapYield, Return = Result<T, E>>,
         E: Display,
@@ -244,7 +244,7 @@ impl ImapConn {
         self.run(coroutine).await?.map_err(CoreError::protocol)
     }
 
-    pub async fn select(
+    pub(crate) async fn select(
         &mut self,
         mailbox: &str,
         parameters: Vec<SelectParameter>,
@@ -265,7 +265,7 @@ impl ImapConn {
         Ok(data)
     }
 
-    pub async fn selected_uid_validity(&mut self, mailbox: &str) -> Result<u32, CoreError> {
+    pub(crate) async fn selected_uid_validity(&mut self, mailbox: &str) -> Result<u32, CoreError> {
         let uid_validity = match &self.selected {
             Some((name, uid_validity)) if name == mailbox => *uid_validity,
             _ => self.select(mailbox, Vec::new()).await?.uid_validity,
@@ -275,7 +275,7 @@ impl ImapConn {
             .ok_or_else(|| CoreError::protocol("the server omitted UIDVALIDITY"))
     }
 
-    pub async fn ensure_selected(
+    pub(crate) async fn ensure_selected(
         &mut self,
         mailbox: &str,
         uid_validity: u32,
@@ -290,7 +290,7 @@ impl ImapConn {
 
     /// Idles on the selected mailbox until the server reports a change or
     /// `duration` runs out; true on a change.
-    pub async fn idle(&mut self, duration: Duration) -> Result<bool, CoreError> {
+    pub(crate) async fn idle(&mut self, duration: Duration) -> Result<bool, CoreError> {
         let done = Arc::new(AtomicBool::new(false));
         let mut idle = ImapIdle::new(done.clone(), ImapIdleOptions::default());
         let deadline = Instant::now() + duration;
@@ -341,7 +341,7 @@ impl ImapConn {
                         if n == 0 {
                             return Err(CoreError::closed());
                         }
-                        arg = Some(&buf[..n]);
+                        arg = Some(transport::filled(buf, n));
                     } else {
                         // Resuming without bytes makes the coroutine send DONE.
                         arg = None;
@@ -352,7 +352,7 @@ impl ImapConn {
         }
     }
 
-    pub async fn logout(mut self) -> Result<(), CoreError> {
+    pub(crate) async fn logout(mut self) -> Result<(), CoreError> {
         self.exec(ImapLogout::new()).await?;
         self.stream.close().await
     }
@@ -380,12 +380,12 @@ fn open_error(err: ImapSessionOpenError) -> CoreError {
     }
 }
 
-pub fn mailbox_name(name: &str) -> Result<Mailbox<'static>, CoreError> {
+pub(crate) fn mailbox_name(name: &str) -> Result<Mailbox<'static>, CoreError> {
     Mailbox::try_from(name.to_owned()).map_err(CoreError::invalid)
 }
 
 /// Packs UIDs into the shortest sequence set; `None` when there are none.
-pub fn uid_set(uids: &[u32]) -> Option<SequenceSet> {
+pub(crate) fn uid_set(uids: &[u32]) -> Option<SequenceSet> {
     let mut sorted: Vec<NonZeroU32> = uids
         .iter()
         .filter_map(|&uid| NonZeroU32::new(uid))
@@ -414,7 +414,7 @@ pub fn uid_set(uids: &[u32]) -> Option<SequenceSet> {
 }
 
 /// `from:*`, or `from:to` when `to` is given.
-pub fn range_set(from: u32, to: Option<u32>) -> Option<SequenceSet> {
+pub(crate) fn range_set(from: u32, to: Option<u32>) -> Option<SequenceSet> {
     let from = SeqOrUid::Value(NonZeroU32::new(from)?);
     let to = match to {
         Some(to) => SeqOrUid::Value(NonZeroU32::new(to)?),

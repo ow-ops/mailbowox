@@ -72,12 +72,16 @@ impl mailbowox_sql::Databases for Databases {
 }
 
 fn respond(bytes: &[u8]) -> Vec<u8> {
-    DATABASES.with_borrow_mut(|databases| match databases.as_mut() {
-        Some(databases) => answer(bytes, databases),
-        None => encode(&Response {
-            id: 0,
-            result: Err("the worker is not serving".to_owned()),
-        }),
+    DATABASES.with_borrow_mut(|databases| {
+        databases.as_mut().map_or_else(
+            || {
+                encode(&Response {
+                    id: 0,
+                    result: Err("the worker is not serving".to_owned()),
+                })
+            },
+            |databases| answer(bytes, databases),
+        )
     })
 }
 

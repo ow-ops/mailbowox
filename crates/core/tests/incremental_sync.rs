@@ -1,3 +1,8 @@
+#![expect(
+    clippy::expect_used,
+    reason = "test failures should stop the test at the failed assertion"
+)]
+
 mod common;
 
 use mailbowox_core::{Flags, KnownMessage, MailSession, MessageSummary, build_message};
