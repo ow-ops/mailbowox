@@ -5,6 +5,7 @@ export const escapeHtml = (text: string) =>
 
 // One paragraph per line and a bare break for an empty one, as the editor writes them.
 export const textToHtml = (text: string) =>
+  text &&
   text
     .split('\n')
     .map((line) => (line ? `<p>${escapeHtml(line)}</p>` : '<br>'))
@@ -12,13 +13,15 @@ export const textToHtml = (text: string) =>
 
 const isHtml = (text: string) => /^\s*</.test(text);
 
-// Signatures written before the editor are plain text.
-export const signatureHtml = (signature = '') => (isHtml(signature) ? signature : textToHtml(signature));
+// Signatures written before the editor are plain text; the editor keeps its own as a whole document.
+export const signatureHtml = (signature = '') =>
+  isHtml(signature) ? signature.replace(/^\s*<html>|<\/html>\s*$/g, '') : textToHtml(signature);
 
 // The editor drops a trailing space, so the "-- " that starts a signature is written with a no-break space;
 // the text part has the plain one mail clients look for.
+// With neither, the editor starts empty: iOS reads a value this short as text, so a lone `<br>` would show.
 export const startHtml = (quoted: string, signature = '') =>
-  `<br>${signature ? `<p>--&nbsp;</p>${signatureHtml(signature)}` : ''}${quoted}`;
+  signature || quoted ? `<br>${signature ? `<p>--&nbsp;</p>${signatureHtml(signature)}` : ''}${quoted}` : '';
 
 // The original keeps its formatting under the attribution line; a reply sets it apart as a quote.
 export function quotedHtml(header: string, body: MessageBody, asQuote: boolean) {
