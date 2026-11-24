@@ -31,6 +31,7 @@ mod providers;
 mod sanitize;
 mod session;
 mod smtp;
+mod store;
 mod summary;
 mod tls;
 mod transport;
@@ -40,6 +41,7 @@ mod vcard;
 
 pub use error::{CoreError, TlsFailure};
 pub use session::MailSession;
+pub use store::{MailStore, SqlRunner};
 pub use transport::AddrFilter;
 pub use types::*;
 

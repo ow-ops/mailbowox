@@ -41,6 +41,8 @@ pub enum CoreError {
     #[error("invalid: {message}")]
     /// The input was rejected: a blank search, a bad URL scheme or address.
     Invalid { message: String },
+    #[error("storage: {message}")]
+    Storage { message: String },
     /// The connection failed after the whole message had gone to the SMTP server and before it answered, so the
     /// server may have accepted it.
     #[error("unconfirmed: {message}")]
@@ -66,6 +68,12 @@ impl CoreError {
 
     pub(crate) fn not_found(err: impl ToString) -> Self {
         Self::NotFound {
+            message: err.to_string(),
+        }
+    }
+
+    pub(crate) fn storage(err: impl ToString) -> Self {
+        Self::Storage {
             message: err.to_string(),
         }
     }

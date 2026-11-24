@@ -421,6 +421,7 @@ fn kind(error: &CoreError) -> &'static str {
         CoreError::NotFound { .. } => "not found",
         CoreError::Invalid { .. } => "invalid",
         CoreError::Unconfirmed { .. } => "unconfirmed",
+        CoreError::Storage { .. } => "storage",
     }
 }
 

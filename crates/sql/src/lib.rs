@@ -24,6 +24,24 @@ pub enum Value {
     Blob(Vec<u8>),
 }
 
+impl Value {
+    #[must_use]
+    pub fn as_str(&self) -> Option<&str> {
+        match self {
+            Self::Text(text) => Some(text),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn as_i64(&self) -> Option<i64> {
+        match self {
+            Self::Integer(number) => Some(*number),
+            _ => None,
+        }
+    }
+}
+
 impl From<&str> for Value {
     fn from(text: &str) -> Self {
         Self::Text(text.to_owned())
@@ -97,6 +115,7 @@ pub fn encode<T: Serialize>(message: &T) -> Vec<u8> {
 }
 
 // The name becomes a file in the databases' directory, and must not lead out of it.
+#[cfg(feature = "engine")]
 fn is_database_name(name: &str) -> bool {
     !name.is_empty() && name != "." && name != ".." && !name.contains(['/', '\\', '\0'])
 }

@@ -41,7 +41,7 @@ pub struct AccountConfig {
     pub carddav_url: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Enum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Enum, serde::Serialize, serde::Deserialize)]
 pub enum MailboxRole {
     Inbox,
     Sent,
@@ -53,7 +53,7 @@ pub enum MailboxRole {
     Flagged,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record, serde::Serialize, serde::Deserialize)]
 pub struct Mailbox {
     pub name: String,
     pub delimiter: Option<String>,
@@ -61,14 +61,16 @@ pub struct Mailbox {
     pub selectable: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record, serde::Serialize, serde::Deserialize)]
 pub struct Address {
     pub name: Option<String>,
     pub email: String,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, uniffi::Record)]
-#[allow(clippy::struct_excessive_bools)]
+#[derive(
+    Debug, Clone, Copy, Default, PartialEq, Eq, uniffi::Record, serde::Serialize, serde::Deserialize,
+)]
+#[expect(clippy::struct_excessive_bools, reason = "IMAP's system flags")]
 pub struct Flags {
     pub seen: bool,
     pub flagged: bool,
@@ -77,7 +79,7 @@ pub struct Flags {
     pub deleted: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record, serde::Serialize, serde::Deserialize)]
 pub struct MessageSummary {
     pub uid: u32,
     pub flags: Flags,
@@ -102,7 +104,9 @@ pub struct MessageSummary {
     pub size: u32,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Record)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, uniffi::Record, serde::Serialize, serde::Deserialize,
+)]
 pub struct SyncState {
     pub uid_validity: u32,
     pub uid_next: u32,
@@ -137,7 +141,7 @@ pub struct SyncResult {
     pub truncated: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record, serde::Serialize, serde::Deserialize)]
 pub struct AttachmentInfo {
     /// The part's position in the parsed message, for `fetch_attachment`.
     pub index: u32,
@@ -152,7 +156,7 @@ pub struct AttachmentInfo {
     pub section: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record, serde::Serialize, serde::Deserialize)]
 pub struct MessageBody {
     pub uid: u32,
     /// Sanitised: no scripts, forms, event handlers or `<style>` blocks, and
@@ -275,4 +279,90 @@ pub struct ContactDraft {
     pub emails: Vec<ContactValue>,
     pub phones: Vec<ContactValue>,
     pub organization: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct MailItem {
+    pub account: String,
+    pub mailbox: String,
+    pub uid_validity: u32,
+    pub summary: MessageSummary,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct StoredMessage {
+    pub account: String,
+    pub mailbox: String,
+    pub uid_validity: u32,
+    pub uid: u32,
+    pub thread: String,
+    pub summary: MessageSummary,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct MessageRef {
+    pub account: String,
+    pub mailbox: String,
+    pub uid_validity: u32,
+    pub uid: u32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Record)]
+pub struct Oldest {
+    pub uid: u32,
+    pub date: i64,
+    pub uid_validity: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct SyncOutcome {
+    pub reset: bool,
+    pub truncated: bool,
+    /// Unread messages new since the last sync; empty on the first sync and on a reset.
+    pub arrived: Vec<MessageSummary>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct MailboxRef {
+    pub account: String,
+    pub mailbox: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct Cursor {
+    pub date: i64,
+    pub account: String,
+    pub uid: u32,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, uniffi::Record)]
+#[expect(clippy::struct_excessive_bools, reason = "each filter is on or off")]
+pub struct ListFilter {
+    pub unread: bool,
+    pub flagged: bool,
+    pub attachments: bool,
+    /// Mail with one of `me` in To or Cc.
+    pub to_me: bool,
+    pub me: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct Conversation {
+    /// The newest message in the viewed mailbox.
+    pub latest: StoredMessage,
+    /// The whole conversation across the account's mailboxes, oldest first, one copy per message.
+    pub messages: Vec<StoredMessage>,
+    /// Its messages in the viewed mailbox, oldest first.
+    pub in_view: Vec<StoredMessage>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, uniffi::Record)]
+pub struct SearchQuery {
+    /// Normalized words, each of which must appear.
+    pub terms: Vec<String>,
+    /// Some terms belong to one field (`from:`, `subject:`), which the app checks.
+    pub fields: bool,
+    pub seen: Option<bool>,
+    pub flagged: bool,
+    pub attachments: bool,
 }
