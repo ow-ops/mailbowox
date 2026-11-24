@@ -1,3 +1,4 @@
+mod batch;
 mod db;
 mod inbox;
 
@@ -14,6 +15,7 @@ use tauri::{AppHandle, Emitter, Manager, State, Url, WebviewWindowBuilder, Windo
 use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_opener::OpenerExt;
 
+use batch::Files;
 use db::{Databases, Outcome};
 use inbox::{Inboxes, Watched, content};
 
@@ -33,6 +35,18 @@ fn db_query(
     params: Vec<Json>,
 ) -> Result<Outcome, String> {
     databases.query(name, sql, params)
+}
+
+#[allow(clippy::needless_pass_by_value)]
+#[tauri::command(async)]
+fn db_batch(
+    files: State<'_, Files>,
+    request: tauri::ipc::Request<'_>,
+) -> Result<tauri::ipc::Response, String> {
+    let tauri::ipc::InvokeBody::Raw(bytes) = request.body() else {
+        return Err("a batch arrives as bytes".to_owned());
+    };
+    Ok(tauri::ipc::Response::new(files.answer(bytes)))
 }
 
 /// The app hands over every account it shows new mail for, each time that list changes.
@@ -147,7 +161,12 @@ fn main() {
         }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
-        .invoke_handler(tauri::generate_handler![db_exec, db_query, watch_inboxes])
+        .invoke_handler(tauri::generate_handler![
+            db_batch,
+            db_exec,
+            db_query,
+            watch_inboxes
+        ])
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
@@ -175,11 +194,9 @@ fn main() {
             // A dev run has a webview store of its own, so it gets databases of its own: the app
             // deletes what belongs to an account its store does not list.
             let data = app.path().app_data_dir()?;
-            app.manage(Databases::new(if cfg!(dev) {
-                data.join("dev")
-            } else {
-                data
-            }));
+            let data = if cfg!(dev) { data.join("dev") } else { data };
+            app.manage(Files::new(data.clone()));
+            app.manage(Databases::new(data));
             // The web build cannot open TCP, so it goes through the gateway's relay on loopback.
             let token = uuid::Uuid::new_v4().simple().to_string();
             let listener =

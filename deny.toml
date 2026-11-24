@@ -81,6 +81,8 @@ skip = [
   { crate = "sha2" },
   { crate = "synstructure" },
   { crate = "untrusted" },
+  # sqlx (gateway) is on hashlink 0.11, rusqlite (the app's store) on 0.12.
+  { crate = "hashlink" },
   # uniffi's toml build dependency is a major behind everything else.
   { crate = "winnow" },
   # Windows-only: the crates that pull these differ on which release they take.

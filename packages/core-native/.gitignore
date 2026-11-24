@@ -5,6 +5,8 @@ android/*
 ios/
 src/*
 !src/index.web.ts
+!src/sql.web.ts
+!src/sql-worker.web.ts
 build/
 *.podspec
 *.xcframework

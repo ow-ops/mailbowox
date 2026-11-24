@@ -1,0 +1,22 @@
+[package]
+name = "mailbowox-sql-worker"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+js-sys = "0.3.107"
+mailbowox-sql = { path = "../sql", features = ["engine"] }
+rsqlite-vfs = "0.2.0"
+rusqlite = { version = "0.43.0", default-features = false, features = ["ffi-sqlite-wasm-rs", "cache"] }
+sqlite-wasm-rs = { version = "0.6.3", default-features = false, features = ["wasm-bindgen"] }
+sqlite-wasm-vfs = { version = "0.3.0", features = ["sahpool"] }
+wasm-bindgen = "0.2.130"
+wasm-bindgen-futures = "0.4.80"
+web-sys = { version = "0.3.107", features = ["MessagePort", "MessageEvent", "console", "WorkerGlobalScope"] }
+
+[lints]
+workspace = true

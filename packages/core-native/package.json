@@ -10,8 +10,9 @@
   "scripts": {
     "ubrn:ios": "ubrn build ios --config ubrn.config.yaml --and-generate",
     "ubrn:android": "ubrn build android --config ubrn.config.yaml --and-generate",
-    "ubrn:web": "ubrn build wasm2 --config ubrn.config.yaml --profile wasm && wasm-opt -Oz --skip-pass=inlining-optimizing --skip-pass=memory-packing src/generated-web/mailbowox_core.wasm -o src/generated-web/mailbowox_core.wasm",
-    "ubrn:clean": "rm -rf cpp android ios src/generated src/generated-web src/index.tsx src/NativeCoreNative.ts build *.podspec"
+    "ubrn:web": "ubrn build wasm2 --config ubrn.config.yaml --profile wasm && wasm-opt -Oz --skip-pass=inlining-optimizing --skip-pass=memory-packing src/generated-web/mailbowox_core.wasm -o src/generated-web/mailbowox_core.wasm && pnpm sql:web",
+    "ubrn:clean": "rm -rf cpp android ios src/generated src/generated-web src/index.tsx src/NativeCoreNative.ts build *.podspec",
+    "sql:web": "cargo build -p mailbowox-sql-worker --target wasm32-unknown-unknown --profile wasm --manifest-path ../../Cargo.toml && wasm-bindgen --target web --out-dir src/generated-web/sql-worker ../../target/wasm32-unknown-unknown/wasm/mailbowox_sql_worker.wasm && wasm-opt -Oz src/generated-web/sql-worker/mailbowox_sql_worker_bg.wasm -o src/generated-web/sql-worker/mailbowox_sql_worker_bg.wasm"
   },
   "dependencies": {
     "@ubjs/core": "0.31.0-7",

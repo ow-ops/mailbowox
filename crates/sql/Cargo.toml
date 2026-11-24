@@ -1,0 +1,21 @@
+[package]
+name = "mailbowox-sql"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+
+[features]
+# Runs batches. Without it, only the wire format: what the web core needs to talk to the worker.
+engine = ["dep:rusqlite"]
+
+[dependencies]
+# The SQLite build is the consumer's choice: bundled natively, sqlite-wasm-rs in the web worker.
+rusqlite = { version = "0.43.0", default-features = false, features = ["cache"], optional = true }
+rmp-serde = "1.3.1"
+serde = { version = "1.0.229", features = ["derive"] }
+
+[dev-dependencies]
+rusqlite = { version = "0.43.0", default-features = false, features = ["bundled", "cache"] }
+
+[lints]
+workspace = true
