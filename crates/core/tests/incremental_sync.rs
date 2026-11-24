@@ -95,18 +95,18 @@ async fn incremental_sync_reports_flag_changes_and_vanished_uids() {
     assert_eq!(delta.vanished, vec![deleted_uid]);
 }
 
-/// Tests here run at once; the others write to Drafts and INBOX, and a
-/// message of theirs landing between these appends would change the newest two.
-const MAILBOX: &str = "Archive";
-
 #[tokio::test]
 async fn more_new_messages_than_the_limit_are_reported_as_truncated() {
     let Some(()) = common::local_server() else {
         return;
     };
     let alice = common::connect("alice").await;
+    // Tests here run at once, and a message of another test's landing between
+    // these appends would change the newest two, so this one gets its own mailbox.
+    let mailbox = common::unique("truncation");
+    alice.create_mailbox(mailbox.clone()).await.expect("create");
     let before = alice
-        .sync(MAILBOX.into(), None, Vec::new(), 1)
+        .sync(mailbox.clone(), None, Vec::new(), 1)
         .await
         .expect("sync");
     let mut appended = Vec::new();
@@ -114,7 +114,7 @@ async fn more_new_messages_than_the_limit_are_reported_as_truncated() {
         let raw = build_message(common::draft("bob", "alice", &common::unique("gap"), "x"))
             .expect("build");
         let uid = alice
-            .append(MAILBOX.into(), raw, Flags::default())
+            .append(mailbox.clone(), raw, Flags::default())
             .await
             .expect("append")
             .expect("UIDPLUS");
@@ -122,12 +122,7 @@ async fn more_new_messages_than_the_limit_are_reported_as_truncated() {
     }
 
     let delta = alice
-        .sync(
-            MAILBOX.into(),
-            Some(before.state),
-            known(&before.changed),
-            2,
-        )
+        .sync(mailbox, Some(before.state), known(&before.changed), 2)
         .await
         .expect("delta sync");
     assert!(delta.truncated);
