@@ -12,13 +12,23 @@ import { setCheckInBackground } from '@/push/poll';
 import { disablePush, enablePush, isPushOn } from '@/push/register';
 import { invoke } from '@/utils/desktop';
 
+// Section lines up only its own rows, so each switch is a ToggleRow here rather than a component around one.
+function useSwitch(initial: boolean, change: (next: boolean) => Promise<void>) {
+  const [on, setOn] = useState(initial);
+  const toggle = useMutation({ mutationFn: change, onSuccess: (_, next) => setOn(next) });
+  return { value: toggle.isPending ? toggle.variables : on, disabled: toggle.isPending, onValueChange: toggle.mutate };
+}
+
 export function NotificationSettings({ account }: { account: Account }) {
   const { t } = useTranslation();
+  const notify = useSwitch(notifiesNewMail(account.id), (next) => setNotifyNewMail(account.id, next));
+  const push = useSwitch(isPushOn(account.id), (next) => (next ? enablePush(account) : disablePush(account)));
+  const poll = useSwitch(notifiesNewMail(account.id), (next) => setCheckInBackground(account.id, next));
   if (Platform.OS === 'web') {
     if (!invoke && !('Notification' in window)) return null;
     return (
       <Section title={t('settings.notifications.title')}>
-        <Toggle on={notifiesNewMail(account.id)} change={(next) => setNotifyNewMail(account.id, next)} />
+        <ToggleRow title={t('settings.notifications.toggle')} {...notify} />
         <ThemedText type="meta">{t(invoke ? 'settings.notifications.desktop' : 'settings.notifications.browser')}</ThemedText>
       </Section>
     );
@@ -27,31 +37,12 @@ export function NotificationSettings({ account }: { account: Account }) {
     <Section title={t('settings.notifications.title')}>
       {!!GATEWAY_URL && (
         <>
-          <Toggle on={isPushOn(account.id)} change={(next) => (next ? enablePush(account) : disablePush(account))} />
+          <ToggleRow title={t('settings.notifications.toggle')} {...push} />
           <ThemedText type="meta">{t('settings.notifications.explanation')}</ThemedText>
         </>
       )}
-      <Toggle
-        title={t('settings.notifications.poll')}
-        on={notifiesNewMail(account.id)}
-        change={(next) => setCheckInBackground(account.id, next)}
-      />
+      <ToggleRow title={t('settings.notifications.poll')} {...poll} />
       <ThemedText type="meta">{t('settings.notifications.pollExplanation')}</ThemedText>
     </Section>
-  );
-}
-
-// The toggle shows the requested state while the change is made, so it does not snap back mid-request.
-function Toggle({ title, on: initial, change }: { title?: string; on: boolean; change: (next: boolean) => Promise<void> }) {
-  const { t } = useTranslation();
-  const [on, setOn] = useState(initial);
-  const toggle = useMutation({ mutationFn: change, onSuccess: (_, next) => setOn(next) });
-  return (
-    <ToggleRow
-      title={title ?? t('settings.notifications.toggle')}
-      value={toggle.isPending ? toggle.variables : on}
-      disabled={toggle.isPending}
-      onValueChange={toggle.mutate}
-    />
   );
 }
