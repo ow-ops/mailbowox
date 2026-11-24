@@ -8,11 +8,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
+import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getAccount, useAccounts } from '@/accounts/store';
 import { AddressField, allRecipients, emptyRecipients } from '@/components/address-field';
 import { Button } from '@/components/button';
+import { FormatBar, RichBody } from '@/components/rich-body';
 import { SenderPicker } from '@/components/sender-picker';
 import { ThemedText, textStyles } from '@/components/themed-text';
 import type { Address, AttachmentInfo, Draft, DraftAttachment, OutgoingAttachment } from '@/core';
@@ -25,7 +27,8 @@ import { explainError } from '@/core/errors';
 import { senders, setLastFrom, type Sender } from '@/mail/from';
 import { messageParams, type MessageRef } from '@/mail/refs';
 import { fetchForwarded } from '@/mail/forward';
-import { resign, sign, type Prefill, type ReplyMode } from '@/mail/reply';
+import { sign, type Prefill, type ReplyMode } from '@/mail/reply';
+import { startHtml, textToHtml } from '@/mail/rich';
 import { handBack, readLocalDraft, removeLocalDraft, takeBack, writeLocalDraft, type LocalDraft } from '@/mail/local-drafts';
 import { saveDraft } from '@/mail/send';
 import { sendWithUndo } from '@/mail/undo-send';
@@ -103,8 +106,18 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
   const quoted = prefill?.text ?? '';
   const signatureOf = (account: string) => accounts.find((a) => a.id === account)?.signature;
   const [text, setText] = useState(saved?.text ?? sign(quoted, signatureOf(sender.account)));
-  // Typing starts above the quoted text and the signature; the user's own moves take over after.
-  const [selection, setSelection] = useState(text && !saved ? { start: 0, end: 0 } : undefined);
+  const quotedRich = prefill?.html ?? '';
+  const [initialHtml] = useState(
+    () => saved?.html ?? (saved ? textToHtml(saved.text) : startHtml(quotedRich, signatureOf(sender.account))),
+  );
+  const [html, setHtml] = useState(initialHtml);
+  const editor = useRef<EnrichedTextInputInstance>(null);
+  // The editor reports its content once it has loaded it, in its own form; changes are measured from there.
+  const pristine = useRef<string>(undefined);
+  // Typing starts above the quoted text and the signature.
+  useEffect(() => {
+    if (!saved && quotedRich) editor.current?.setSelection(0, 0);
+  }, [saved, quotedRich]);
   // A reopened draft's attachments load from the database; until then nothing is written over them.
   const [restored, setRestored] = useState(!saved || !!returned);
   const [attachments, setAttachments] = useState<DraftAttachment[]>(
@@ -123,13 +136,13 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
 
   useEffect(() => {
     if (!touched) return;
-    unsaved.current = { account: sender.account, from: sender.address, to, cc, bcc, subject, text };
+    unsaved.current = { account: sender.account, from: sender.address, to, cc, bcc, subject, text, html };
     const timer = setTimeout(() => {
       if (unsaved.current) writeLocalDraft(slot, unsaved.current);
       unsaved.current = null;
     }, AUTOSAVE_DELAY);
     return () => clearTimeout(timer);
-  }, [slot, touched, sender, to, cc, bcc, subject, text]);
+  }, [slot, touched, sender, to, cc, bcc, subject, text, html]);
 
   // Leaving by a gesture or the browser skips Cancel, so the last keystrokes are written on the way out.
   useEffect(
@@ -199,7 +212,11 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
 
   const pickSender = (picked: Sender) => {
     edit(setSender)(picked);
-    setText(resign(text, quoted, signatureOf(sender.account), signatureOf(picked.account)));
+    // An untouched message takes the new account's signature; one the user has written in stays as it is.
+    if (!saved && html === pristine.current) {
+      pristine.current = undefined;
+      editor.current?.setValue(startHtml(quotedRich, signatureOf(picked.account)));
+    }
     setLastFrom(picked.address.email);
   };
 
@@ -214,6 +231,7 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
     bcc: allRecipients(bcc),
     subject,
     text,
+    html,
     inReplyTo: prefill?.inReplyTo,
     references: prefill?.references ?? [],
     attachments: attachments.flatMap(({ filename, mimeType, data }): OutgoingAttachment[] =>
@@ -229,7 +247,7 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
 
   const send = useMutation({
     mutationFn: () => {
-      const local: LocalDraft = { account: sender.account, from: sender.address, to, cc, bcc, subject, text };
+      const local: LocalDraft = { account: sender.account, from: sender.address, to, cc, bcc, subject, text, html };
       const files = attachments;
       return sendWithUndo(sender.account, draft(), () => {
         handBack(slot, local, files);
@@ -373,24 +391,18 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
               accessibilityLabel={t('compose.subject')}
               style={[styles.subject, { color: theme.heading, borderBottomColor: theme.border }, frameless]}
             />
-            <TextInput
-              value={text}
-              onChangeText={edit(setText)}
-              placeholder={t('compose.body')}
-              placeholderTextColor={theme.muted}
-              selectionColor={theme.primary}
-              accessibilityLabel={t('compose.body')}
+            <RichBody
+              ref={editor}
+              defaultValue={initialHtml}
+              label={t('compose.body')}
               autoFocus={mode === 'reply' || mode === 'replyAll' || !!recipient}
-              selection={selection}
-              onSelectionChange={({ nativeEvent: { selection: at } }) => {
-                if (!selection) return;
-                // Android moves the cursor to the end as the field takes focus, after the start was applied, so the
-                // start is applied again until the field reports it.
-                setSelection(at.start === 0 && at.end === 0 ? undefined : { start: 0, end: 0 });
+              onChange={({ html: nextHtml, text: nextText }) => {
+                if (nextText !== undefined) setText(nextText);
+                if (nextHtml === undefined) return;
+                pristine.current ??= nextHtml;
+                if (nextHtml !== pristine.current) setTouched(true);
+                setHtml(nextHtml);
               }}
-              multiline
-              textAlignVertical="top"
-              style={[styles.body, { color: theme.heading }, frameless]}
             />
             {attachments.length > 0 && (
               <View style={styles.attachments}>
@@ -429,6 +441,7 @@ export function Composer({ sender: initialSender, mode, prefill, original, recip
             styles.bar,
             { backgroundColor: theme.page, borderTopColor: theme.border, paddingBottom: insets.bottom + Spacing.two },
           ]}>
+          <FormatBar editor={editor} />
           <View style={styles.tools}>
             <Button
               label={t('compose.attach')}
@@ -503,12 +516,6 @@ const styles = StyleSheet.create({
     minHeight: TouchTarget,
     paddingHorizontal: Spacing.three,
     borderBottomWidth: Hairline,
-  },
-  body: {
-    ...textStyles.body,
-    flexGrow: 1,
-    minHeight: 240,
-    padding: Spacing.three,
   },
   attachments: {
     flexDirection: 'row',

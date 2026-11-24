@@ -1,4 +1,5 @@
-import { resign, sign } from '@/mail/reply';
+import { sign } from '@/mail/reply';
+import { signatureText, startHtml } from '@/mail/rich';
 
 const quoted = '\n\nOn Monday, Bob wrote:\n> Hi';
 
@@ -16,21 +17,24 @@ describe('sign', () => {
   });
 });
 
-describe('resign', () => {
-  it('swaps the signature for the new account\'s, keeping what was typed', () => {
-    expect(resign(`Sure.${sign(quoted, 'Alice')}`, quoted, 'Alice', 'A. Martin')).toBe(`Sure.${sign(quoted, 'A. Martin')}`);
+describe('startHtml', () => {
+  it('leaves an empty line to type in, above the signature and the quoted text', () => {
+    expect(startHtml('<blockquote><p>Hi</p></blockquote>', '<p><b>Alice</b></p>')).toBe(
+      '<br><p>-- </p><p><b>Alice</b></p><blockquote><p>Hi</p></blockquote>',
+    );
   });
 
-  it('drops the signature when the new account has none', () => {
-    expect(resign(`Sure.${sign('', 'Alice')}`, '', 'Alice')).toBe('Sure.');
+  it('turns a signature written before the editor into paragraphs', () => {
+    expect(startHtml('', 'Alice & co\nAcme')).toBe('<br><p>-- </p><p>Alice &#38; co</p><p>Acme</p>');
+  });
+});
+
+describe('signatureText', () => {
+  it('reads a formatted signature as lines of text', () => {
+    expect(signatureText('<html><p><b>Alice</b> &amp; co</p><p>Acme</p></html>')).toBe('Alice & co\nAcme');
   });
 
-  it('adds one above the quoted text when the first account had none', () => {
-    expect(resign(`Sure.${quoted}`, quoted, undefined, 'Alice')).toBe(`Sure.${sign(quoted, 'Alice')}`);
-  });
-
-  it('leaves a signature the user has edited', () => {
-    const edited = 'Sure.\n\n-- \nAlice (on holiday)';
-    expect(resign(edited, '', 'Alice', 'A. Martin')).toBe(edited);
+  it('keeps a plain signature as it is', () => {
+    expect(signatureText('Alice\nAcme')).toBe('Alice\nAcme');
   });
 });

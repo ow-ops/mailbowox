@@ -18,6 +18,8 @@ export type LocalDraft = {
   bcc: Recipients;
   subject: string;
   text: string;
+  // Missing in drafts kept before the editor.
+  html?: string;
 };
 
 type Returned = { draft: LocalDraft; attachments: DraftAttachment[] };

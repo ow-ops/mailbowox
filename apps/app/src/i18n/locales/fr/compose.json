@@ -44,5 +44,14 @@
     "subject": "Objet : {{subject}}",
     "to": "À : {{list}}"
   },
-  "attachPhotos": "Joindre des photos"
+  "attachPhotos": "Joindre des photos",
+  "format": {
+    "label": "Mise en forme",
+    "bold": "Gras",
+    "italic": "Italique",
+    "underline": "Souligné",
+    "bullets": "Liste à puces",
+    "numbers": "Liste numérotée",
+    "quote": "Citation"
+  }
 }

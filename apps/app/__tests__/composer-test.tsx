@@ -29,6 +29,7 @@ jest.mock('@/mail/forward', () => ({ fetchForwarded: jest.fn() }));
 jest.mock('@/mail/undo-send', () => ({ sendWithUndo: jest.fn() }));
 jest.mock('@/mail/from', () => ({ ...jest.requireActual('@/mail/from'), setLastFrom: jest.fn() }));
 jest.mock('@/mail/store', () => jest.requireActual('../jest/mail-store'));
+jest.mock('react-native-enriched-html', () => jest.requireActual('../jest/enriched-html'));
 jest.mock('@/utils/kv', () => {
   const items = new Map<string, string>();
   return {
@@ -94,6 +95,7 @@ describe('composer', () => {
         to: [{ email: 'bob@example.org' }],
         subject: 'Hello',
         text: 'Count me in.',
+        html: '<p>Count me in.</p>',
       }),
       expect.any(Function),
     );

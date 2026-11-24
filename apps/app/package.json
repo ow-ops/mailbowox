@@ -48,6 +48,7 @@
     "react-dom": "19.3.0",
     "react-i18next": "^18.0.2",
     "react-native": "0.88.1",
+    "react-native-enriched-html": "^1.2.0",
     "react-native-gesture-handler": "~3.3.0",
     "react-native-keyboard-controller": "1.22.7",
     "react-native-qrcode-svg": "^6.3.54",

@@ -1,14 +1,14 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet } from 'react-native';
+import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
 
 import { setSignature, useAccounts, type Account } from '@/accounts/store';
 import { Button } from '@/components/button';
 import { FormScreen } from '@/components/form-screen';
-import { TextField } from '@/components/text-field';
+import { FormatBar, RichBody } from '@/components/rich-body';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { signatureHtml } from '@/mail/rich';
 
 export default function SignatureScreen() {
   const { account: id } = useLocalSearchParams<{ account: string }>();
@@ -18,31 +18,28 @@ export default function SignatureScreen() {
 
 function SignatureForm({ account }: { account: Account }) {
   const { t } = useTranslation();
-  const [text, setText] = useState(account.signature ?? '');
+  const editor = useRef<EnrichedTextInputInstance>(null);
+  const [initial] = useState(() => signatureHtml(account.signature));
+  const [signature, setSignatureHtml] = useState({ html: initial, text: account.signature ?? '' });
 
   const save = () => {
-    setSignature(account.id, text.trim());
+    setSignature(account.id, signature.text.trim() ? signature.html : '');
     router.back();
   };
 
   return (
     <FormScreen>
-      <TextField
-        value={text}
-        onChangeText={setText}
-        placeholder={t('settings.signature.placeholder')}
-        accessibilityLabel={t('settings.signature.title')}
-        multiline
+      <RichBody
+        ref={editor}
+        defaultValue={initial}
+        label={t('settings.signature.placeholder')}
         autoFocus
-        textAlignVertical="top"
-        style={styles.field}
+        minHeight={120}
+        onChange={(change) => setSignatureHtml((current) => ({ ...current, ...change }))}
       />
+      <FormatBar editor={editor} />
       <ThemedText type="meta">{t('settings.signature.hint', { email: account.email })}</ThemedText>
       <Button label={t('settings.signature.save')} onPress={save} />
     </FormScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  field: { minHeight: 120, paddingVertical: Spacing.oneHalf },
-});

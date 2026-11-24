@@ -1,6 +1,7 @@
 import type { Address, AttachmentInfo, MessageBody, MessageSummary } from '@/core';
 
 import { sameAddress } from './address';
+import { quotedHtml, signatureText } from './rich';
 
 export type ReplyMode = 'reply' | 'replyAll' | 'forward';
 
@@ -9,6 +10,8 @@ export type Prefill = {
   cc: Address[];
   subject: string;
   text: string;
+  // The same as `text`, keeping the original's formatting.
+  html: string;
   inReplyTo?: string;
   references: string[];
   // Forwarded from the original; the composer downloads them.
@@ -44,7 +47,15 @@ export function replyPrefill(
   const text = body.text ?? '';
   if (mode === 'forward') {
     const attachments = body.attachments.filter((a) => !a.inline);
-    return { to: [], cc: [], subject, text: `\n\n${header}\n\n${text}`, references: [], attachments };
+    return {
+      to: [],
+      cc: [],
+      subject,
+      text: `\n\n${header}\n\n${text}`,
+      html: quotedHtml(header, body, false),
+      references: [],
+      attachments,
+    };
   }
 
   // `own` is every address of the replying account, so a mail to it and to one of its aliases keeps neither. Your
@@ -63,6 +74,7 @@ export function replyPrefill(
     cc,
     subject,
     text: `\n\n${header}\n${quote(text)}`,
+    html: quotedHtml(header, body, true),
     inReplyTo: messageId,
     references: messageId ? [...original.references, messageId] : original.references,
     attachments: [],
@@ -70,15 +82,7 @@ export function replyPrefill(
 }
 
 // The line "-- " is what mail clients take for the start of a signature.
-const block = (signature: string) => (signature ? `\n\n-- \n${signature}` : '');
+const block = (signature: string) => (signature ? `\n\n-- \n${signatureText(signature)}` : '');
 
 // `quoted` is the text a reply or forward starts with; the signature goes above it, where the typing happens.
 export const sign = (quoted: string, signature = '') => block(signature) + quoted;
-
-// Swaps the signature when the sender moves to another account. If the user has edited the signature or the
-// quoted text, the message stays as it is.
-export function resign(text: string, quoted: string, from = '', to = '') {
-  const end = sign(quoted, from);
-  if (from === to || !text.endsWith(end)) return text;
-  return text.slice(0, text.length - end.length) + sign(quoted, to);
-}

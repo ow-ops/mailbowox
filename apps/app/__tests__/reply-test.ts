@@ -68,6 +68,7 @@ describe('replyPrefill', () => {
     expect(prefill.inReplyTo).toBe('b@example.com');
     expect(prefill.references).toEqual(['a@example.com', 'b@example.com']);
     expect(prefill.text).toBe('\n\nClaire wrote:\n> Body');
+    expect(prefill.html).toBe('<br><p>Claire wrote:</p><blockquote><p>Body</p></blockquote>');
   });
 
   it('replies to everyone except yourself, without repeating an address', () => {
@@ -99,6 +100,7 @@ describe('replyPrefill', () => {
       cc: [],
       subject: 'Fwd: Q4 planning',
       text: '\n\nForwarded\n\nBody',
+      html: '<br><p>Forwarded</p><p>Body</p>',
       references: [],
       attachments: [],
     });
