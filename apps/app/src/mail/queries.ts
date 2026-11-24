@@ -6,9 +6,10 @@ import { useDebounced } from '@/hooks/use-debounced';
 import { usePref } from '@/prefs/store';
 import { isOnline } from '@/utils/network';
 
-import type { Cursor, ListFilter, MailboxRole } from '@/core';
+import type { Cursor, MailboxRole } from '@/core';
 import { queryClient } from '@/utils/query-client';
 
+import { isFiltered, listFilter, useFilters } from './filters';
 import type { Conversation, MailboxGeneration, MailboxRef, MessageRef } from './refs';
 import { isEmptyQuery, parseQuery, rankResults, storeQuery } from './search';
 import { withSession } from './session';
@@ -21,22 +22,21 @@ const fetchOlder = (before: MessageRef, limit: number) =>
 
 const HIDDEN_ROLES: (MailboxRole | undefined)[] = ['trash', 'junk'];
 
-const ALL: ListFilter = { unread: false, flagged: false, attachments: false, toMe: false, me: [] };
-
 export function useConversations(view: MailView) {
-  const boxes = boxesOf(view, useAccounts());
+  const accounts = useAccounts();
+  const boxes = boxesOf(view, accounts);
   const grouped = usePref('conversations');
+  const on = useFilters();
+  const filter = listFilter({ ...on, unread: on.unread || view.kind === 'unread' }, accounts);
   return useInfiniteQuery({
-    queryKey: ['messages', view.kind, boxes, grouped],
+    queryKey: ['messages', view.kind, boxes, grouped, filter],
     initialPageParam: undefined as Cursor | undefined,
     queryFn: async ({ pageParam }) => {
       const store = await mailStore();
-      // Unread lists what is cached: paging the server for it could walk every inbox to its first message.
-      // Offline, the list ends where the cache does.
-      if (view.kind === 'unread' || !isOnline()) {
-        return store.page(boxes, pageParam, PAGE_SIZE, grouped, { ...ALL, unread: view.kind === 'unread' });
-      }
-      return store.loadPage(boxes, pageParam, PAGE_SIZE, grouped, ALL, fetchOlder);
+      // A filtered list shows what is cached: paging the server for a few matches could walk every mailbox to
+      // its first message. Offline, the list ends where the cache does.
+      if (isFiltered(filter) || !isOnline()) return store.page(boxes, pageParam, PAGE_SIZE, grouped, filter);
+      return store.loadPage(boxes, pageParam, PAGE_SIZE, grouped, filter, fetchOlder);
     },
     // A short page is not the end: conversations fold several messages into a row, and the cache may stop
     // above mail the server still has. The list ends with the page that comes back empty.

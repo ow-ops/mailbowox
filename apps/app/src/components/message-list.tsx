@@ -7,6 +7,7 @@ import { StyleSheet, View } from 'react-native';
 import { useAccounts } from '@/accounts/store';
 import { Button } from '@/components/button';
 import { ErrorExplanation } from '@/components/error-explanation';
+import { ListFilters } from '@/components/list-filters';
 import { OfflineBanner } from '@/components/offline-banner';
 import { OutboxBanners } from '@/components/outbox-banners';
 import { MessageRow } from '@/components/message-row';
@@ -18,6 +19,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { sameMessage, type MessageRef, type StoredItem , Conversation } from '@/mail/refs';
 import { explainError } from '@/core/errors';
 import { useConversations, useMailboxes } from '@/mail/queries';
+import { isFiltered, useFilters } from '@/mail/filters';
 import { conversationKey, useSelection } from '@/mail/selection';
 import { retrySync, syncMailbox, useSyncErrors } from '@/mail/sync';
 import { boxesOf, type MailView } from '@/mail/view';
@@ -41,6 +43,7 @@ export function MessageList({ view, selected, onOpen }: Props) {
   const query = useConversations(view);
   const conversations = query.data?.pages.flat() ?? [];
   const selection = useSelection();
+  const filtered = isFiltered(useFilters());
   // The same object while neither changes, so the rows are not all rendered again with the list.
   const extraData = useMemo(() => ({ selected, selection }), [selected, selection]);
   const boxes = boxesOf(view, accounts);
@@ -80,6 +83,7 @@ export function MessageList({ view, selected, onOpen }: Props) {
       ListHeaderComponent={
         <>
           <OfflineBanner />
+          <ListFilters />
           <OutboxBanners accounts={boxes.map((box) => box.account)} />
           {!notSynced && (
             <SyncFailureBanners errors={failing} title={(email) => t('mail.list.syncFailed', { email })} />
@@ -99,7 +103,7 @@ export function MessageList({ view, selected, onOpen }: Props) {
             <QueryState
               pending={query.isPending}
               error={query.error}
-              emptyText={t('mail.list.empty')}
+              emptyText={filtered ? t('mail.filters.empty') : t('mail.list.empty')}
               onRetry={() => void query.refetch()}
             />
           )}

@@ -140,5 +140,13 @@
     "confirm": "Unsubscribe from {{name}}?",
     "done": "Unsubscribed from {{name}}.",
     "failed": "Couldn't unsubscribe"
+  },
+  "filters": {
+    "label": "Show only",
+    "unread": "Unread",
+    "flagged": "Flagged",
+    "toMe": "To me",
+    "attachments": "Attachments",
+    "empty": "Nothing cached matches these filters."
   }
 }

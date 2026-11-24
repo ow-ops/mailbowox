@@ -140,5 +140,13 @@
     "confirm": "Se désabonner de {{name}} ?",
     "done": "Désabonnement de {{name}} effectué.",
     "failed": "Désabonnement impossible"
+  },
+  "filters": {
+    "label": "Afficher seulement",
+    "unread": "Non lus",
+    "flagged": "Suivis",
+    "toMe": "À moi",
+    "attachments": "Pièces jointes",
+    "empty": "Aucun message enregistré ne correspond à ces filtres."
   }
 }
