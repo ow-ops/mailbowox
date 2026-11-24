@@ -10,6 +10,7 @@ crate-type = ["lib", "cdylib", "staticlib"]
 [dependencies]
 ammonia = "4.2.5"
 html5ever = "0.40.1"
+ip_rfc = "0.1.0"
 async-lock = "3.4.1"
 async-trait = "0.1.92"
 base64 = "0.23.1"

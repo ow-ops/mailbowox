@@ -1,6 +1,6 @@
 //! WebSocket-to-TCP pipe. TLS ends in the browser, so the gateway only moves ciphertext.
 
-use std::net::{IpAddr, SocketAddr};
+use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -9,6 +9,7 @@ use axum::extract::{Query, State};
 use axum::http::header::SEC_WEBSOCKET_PROTOCOL;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
+use mailbowox_core::is_public;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use subtle::ConstantTimeEq;
@@ -136,13 +137,6 @@ pub(crate) async fn resolve(
     Ok(addrs)
 }
 
-/// Whether the address is globally routable: not loopback, private, link-local, shared (CGNAT),
-/// reserved, documentation or multicast. An IPv4-mapped IPv6 address counts as its IPv4 one.
-pub(crate) fn is_public(ip: IpAddr) -> bool {
-    let ip = ip.to_canonical();
-    ip_rfc::global(&ip) && !ip.is_multicast()
-}
-
 /// Copies both ways until a side closes or goes idle; returns bytes sent up and down.
 async fn pipe(mut ws: WebSocket, mut tcp: TcpStream, idle: Duration) -> (u64, u64) {
     let (mut up, mut down) = (0, 0);
@@ -184,35 +178,4 @@ async fn pipe(mut ws: WebSocket, mut tcp: TcpStream, idle: Duration) -> (u64, u6
         }
     }
     (up, down)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::is_public;
-
-    #[test]
-    fn only_globally_routable_addresses_are_public() {
-        for internal in [
-            "127.0.0.1",
-            "10.1.2.3",
-            "169.254.169.254",
-            "100.64.0.1",
-            "192.0.0.8",
-            "198.18.0.1",
-            "224.0.0.1",
-            "240.0.0.1",
-            "0.0.0.0",
-            "::1",
-            "fd00::1",
-            "fe80::1",
-            "ff02::1",
-            "::ffff:127.0.0.1",
-            "::ffff:10.0.0.1",
-        ] {
-            assert!(!is_public(internal.parse().unwrap()), "{internal}");
-        }
-        for public in ["1.1.1.1", "2606:4700:4700::1111", "::ffff:1.1.1.1"] {
-            assert!(is_public(public.parse().unwrap()), "{public}");
-        }
-    }
 }

@@ -18,7 +18,7 @@ use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
-use mailbowox_core::{AddrFilter, CoreError, Credentials, MailSession, ServerConfig};
+use mailbowox_core::{AddrFilter, CoreError, Credentials, MailSession, ServerConfig, is_public};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use sqlx::AnyPool;
@@ -29,7 +29,7 @@ use tracing::{error, info, warn};
 use crate::AppState;
 use crate::config::PushConfig;
 use crate::db::unix_now;
-use crate::relay::{is_public, resolve};
+use crate::relay::resolve;
 use crate::vault::bearer;
 
 use preview::DeviceKeys;

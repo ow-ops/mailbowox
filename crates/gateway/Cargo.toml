@@ -17,7 +17,6 @@ headers = "0.4.2"
 hex = "0.4.3"
 hkdf = "0.13.0"
 hmac = "0.13.0"
-ip_rfc = "0.1.0"
 mailbowox-core = { path = "../core" }
 metrics = "0.24.6"
 p256 = { version = "0.14.0", default-features = false, features = ["ecdh"] }

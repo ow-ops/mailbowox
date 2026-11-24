@@ -45,7 +45,7 @@ pub use category::Category;
 pub use error::{CoreError, TlsFailure};
 pub use session::MailSession;
 pub use store::{MailStore, OlderMail, SqlRunner};
-pub use transport::AddrFilter;
+pub use transport::{AddrFilter, is_public};
 pub use types::*;
 
 use imap::ImapConn;

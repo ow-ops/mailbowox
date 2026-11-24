@@ -31,7 +31,8 @@ pub(crate) async fn one_click(url: &str) -> Result<(), CoreError> {
         .ok_or_else(|| CoreError::invalid("URL without a port"))?;
 
     let mut coroutine = Http11Send::new(request(url.clone()));
-    let mut stream = SecureStream::connect(host, port, true, None).await?;
+    // The URL comes from whoever sent the message, so it may not point into the user's own network.
+    let mut stream = SecureStream::connect(host, port, true, Some(transport::is_public)).await?;
     let mut buf = vec![0; transport::READ_CHUNK];
     let mut arg: Option<&[u8]> = None;
     let status = loop {
