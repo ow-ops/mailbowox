@@ -103,6 +103,7 @@ export function MessageRow({
       pathname: '/move',
       params: { ...messageParams(item), thread: inView.length > 1 ? item.thread : undefined },
     });
+  const href = { pathname: '/message', params: messageParams(item) } as const;
   const onAccessibilityAction = ({ nativeEvent }: AccessibilityActionEvent) =>
     ({ ...actions, move })[nativeEvent.actionName as 'toggleSeen' | 'toggleFlagged' | 'archive' | 'remove' | 'move']?.();
 
@@ -228,29 +229,41 @@ export function MessageRow({
       {onOpen || selecting ? (
         row
       ) : (
-        <Link href={{ pathname: '/message', params: messageParams(item) }} asChild>
-          <Link.Trigger>{row}</Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction
-              title={t('mail.actions.reply')}
-              icon="arrowshape.turn.up.left"
-              onPress={() => router.push({ pathname: '/compose', params: { mode: 'reply', ...messageParams(item) } })}
-            />
-            <Link.MenuAction title={leading.label} icon={unread ? 'envelope.open' : 'envelope.badge'} onPress={actions.toggleSeen} />
-            <Link.MenuAction
-              title={flagged ? t('mail.actions.unflag') : t('mail.actions.flag')}
-              icon={flagged ? 'flag.slash' : 'flag'}
-              onPress={actions.toggleFlagged}
-            />
-            <Link.MenuAction title={t('mail.actions.move')} icon="folder" onPress={move} />
-            {actions.archive ? (
-              <Link.MenuAction title={t('mail.actions.archive')} icon="archivebox" onPress={actions.archive} />
-            ) : null}
-            <Link.MenuAction title={t('mail.actions.delete')} icon="trash" destructive onPress={actions.remove} />
-            <Link.MenuAction title={t('mail.select.start')} icon="checkmark.circle" onPress={() => startSelecting(key)} />
-          </Link.Menu>
-        </Link>
+        // expo-router leaves a Link.Preview's trigger out of the iOS accessibility tree (expo/expo#51328), so this
+        // view stands in for the row there; elsewhere the row speaks for itself.
+        <View
+          accessible={Platform.OS === 'ios'}
+          accessibilityRole="link"
+          accessibilityLabel={label}
+          accessibilityState={{ selected }}
+          accessibilityActions={[{ name: 'activate' }, ...accessibilityActions]}
+          onAccessibilityAction={(event) =>
+            event.nativeEvent.actionName === 'activate' ? router.push(href) : onAccessibilityAction(event)
+          }>
+          <Link href={href} asChild>
+            <Link.Trigger>{row}</Link.Trigger>
+            <Link.Preview />
+            <Link.Menu>
+              <Link.MenuAction
+                title={t('mail.actions.reply')}
+                icon="arrowshape.turn.up.left"
+                onPress={() => router.push({ pathname: '/compose', params: { mode: 'reply', ...messageParams(item) } })}
+              />
+              <Link.MenuAction title={leading.label} icon={unread ? 'envelope.open' : 'envelope.badge'} onPress={actions.toggleSeen} />
+              <Link.MenuAction
+                title={flagged ? t('mail.actions.unflag') : t('mail.actions.flag')}
+                icon={flagged ? 'flag.slash' : 'flag'}
+                onPress={actions.toggleFlagged}
+              />
+              <Link.MenuAction title={t('mail.actions.move')} icon="folder" onPress={move} />
+              {actions.archive ? (
+                <Link.MenuAction title={t('mail.actions.archive')} icon="archivebox" onPress={actions.archive} />
+              ) : null}
+              <Link.MenuAction title={t('mail.actions.delete')} icon="trash" destructive onPress={actions.remove} />
+              <Link.MenuAction title={t('mail.select.start')} icon="checkmark.circle" onPress={() => startSelecting(key)} />
+            </Link.Menu>
+          </Link>
+        </View>
       )}
     </SwipeActions>
   );
