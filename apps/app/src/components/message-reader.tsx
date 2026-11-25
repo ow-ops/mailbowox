@@ -1,6 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { router } from 'expo-router';
-import { useHeaderHeight } from 'expo-router/react-navigation';
+import { router, Stack, useIsFocused, useIsPreview } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +11,7 @@ import { AccountMark } from '@/components/account-mark';
 import { Button } from '@/components/button';
 import { ContactAvatar } from '@/components/contact-avatar';
 import { IconButton } from '@/components/icon-button';
-import { MailBody } from '@/components/mail-body';
+import { bodyFitsContent, MailBody } from '@/components/mail-body';
 import { NativeMenu } from '@/components/native-menu';
 import { QueryState } from '@/components/query-state';
 import { ShortcutTooltip } from '@/components/shortcut-tooltip';
@@ -46,33 +45,45 @@ type MessageReaderProps = {
   onClose: () => void;
   // Runs once the message is no longer in its mailbox: archived, moved, deleted, or gone on the server.
   onGone?: () => void;
+  // Shown as its own screen rather than in a split pane.
+  screen?: boolean;
 };
 
-export function MessageReader({ message, onClose, onGone = onClose }: MessageReaderProps) {
+export function MessageReader({ message, onClose, onGone = onClose, screen = false }: MessageReaderProps) {
   const { t } = useTranslation();
   const theme = useTheme();
+  const preview = useIsPreview();
+  // A preview also preloads the route, unfocused; neither copy acts until the message is opened.
+  const open = useIsFocused() && !preview;
   const { data: conversation, isPending, isSuccess } = useConversation(message);
   const gone = isSuccess && !conversation;
   useShortcuts({ u: onClose, Escape: onClose });
 
   useEffect(() => {
-    if (gone) onGone();
-  }, [gone, onGone]);
+    if (gone && open) onGone();
+  }, [gone, open, onGone]);
 
-  if (isPending) return <ActivityIndicator color={theme.muted} style={styles.loading} />;
-  if (!conversation)
-    return (
-      <ThemedText themeColor="muted" style={styles.loading}>
-        {t('mail.reader.gone')}
-      </ThemedText>
-    );
-  return <ConversationReader conversation={conversation} />;
+  return (
+    <View style={[styles.reader, { backgroundColor: theme.page }]}>
+      {isPending ? (
+        <ActivityIndicator color={theme.muted} style={styles.loading} />
+      ) : conversation ? (
+        <ConversationReader conversation={conversation} open={open} preview={preview} screen={screen} />
+      ) : (
+        <ThemedText themeColor="muted" style={styles.loading}>
+          {t('mail.reader.gone')}
+        </ThemedText>
+      )}
+    </View>
+  );
 }
 
 // The newest message starts expanded, the others collapsed; expanding one collapses the rest, as only one
 // body fits beside the headers. Mail arriving while the reader is open, your reply included, joins
 // collapsed.
-function ConversationReader({ conversation }: { conversation: Conversation }) {
+type ConversationReaderProps = { conversation: Conversation; open: boolean; preview: boolean; screen: boolean };
+
+function ConversationReader({ conversation, open, preview, screen }: ConversationReaderProps) {
   const { messages } = conversation;
   const [chosen, setChosen] = useState<MessageRef>(() => messages[messages.length - 1]);
   const [unfolded, setUnfolded] = useState(false);
@@ -86,7 +97,7 @@ function ConversationReader({ conversation }: { conversation: Conversation }) {
   // Opening marks the conversation read once; after that, "Mark as unread" must stick.
   const marked = useRef(false);
   const markRead = () => {
-    if (marked.current) return;
+    if (!open || marked.current) return;
     marked.current = true;
     const unread = messages.filter((m) => !m.summary.flags.seen);
     if (unread.length) setFlag({ items: unread, flag: 'seen', value: true });
@@ -112,6 +123,8 @@ function ConversationReader({ conversation }: { conversation: Conversation }) {
       }
       newer={collapsed(messages.slice(position + 1))}
       onLoaded={markRead}
+      preview={preview}
+      screen={screen}
     />
   );
 }
@@ -172,9 +185,11 @@ type ReaderProps = {
   older: ReactNode[];
   newer: ReactNode[];
   onLoaded: () => void;
+  preview: boolean;
+  screen: boolean;
 };
 
-function Reader({ item, messages, subject, older, newer, onLoaded }: ReaderProps) {
+function Reader({ item, messages, subject, older, newer, onLoaded, preview, screen }: ReaderProps) {
   const { t } = useTranslation();
   const theme = useTheme();
   const remotePref = usePref('remoteContent');
@@ -184,8 +199,6 @@ function Reader({ item, messages, subject, older, newer, onLoaded }: ReaderProps
   const [loaded, setLoaded] = useState(false);
   const allowRemote = loaded || always;
   const body = useBody(item, allowRemote);
-  // iOS draws the navigation bar over the screen; the header scroll is capped, so it cannot take the inset itself.
-  const headerHeight = useHeaderHeight();
 
   useEffect(() => {
     if (body.data) onLoaded();
@@ -193,16 +206,24 @@ function Reader({ item, messages, subject, older, newer, onLoaded }: ReaderProps
 
   const attachments = body.data?.attachments.filter((a) => !a.inline) ?? [];
 
-  return (
-    <View style={[styles.reader, Platform.OS === 'ios' && { paddingTop: headerHeight }]}>
-      <ScrollView style={styles.head} contentContainerStyle={styles.headContent}>
-        <ThemedText type="headline" accessibilityRole="header" style={styles.subject}>
-          {subject || t('mail.row.noSubject')}
-        </ThemedText>
-        {older.length > 0 && <View style={[styles.older, { borderBottomColor: theme.border }]}>{older}</View>}
-        <Header item={item} />
-        {attachments.length > 0 && <Attachments message={item} attachments={attachments} />}
-      </ScrollView>
+  const head = (
+    <>
+      <ThemedText type="headline" accessibilityRole="header" style={styles.subject}>
+        {subject || t('mail.row.noSubject')}
+      </ThemedText>
+      {preview ? (
+        <PreviewHeader item={item} />
+      ) : (
+        <>
+          {older.length > 0 && <View style={[styles.older, { borderBottomColor: theme.border }]}>{older}</View>}
+          <Header item={item} />
+          {attachments.length > 0 && <Attachments message={item} attachments={attachments} />}
+        </>
+      )}
+    </>
+  );
+  const notices = !preview && (
+    <>
       {body.data?.hasRemoteContent && !allowRemote && (
         <View style={styles.remote}>
           <SymbolView
@@ -234,23 +255,64 @@ function Reader({ item, messages, subject, older, newer, onLoaded }: ReaderProps
         </View>
       )}
       {body.data && <Unsubscribe item={item} body={body.data} />}
-      <View style={[styles.body, { borderTopColor: theme.border }]}>
-        {body.data ? (
-          body.data.html ? (
-            <MailBody html={body.data.html} allowRemote={allowRemote} />
-          ) : (
-            <ScrollView contentContainerStyle={styles.text}>
-              <ThemedText selectable>{body.data.text ?? ''}</ThemedText>
-            </ScrollView>
-          )
-        ) : (
-          <View style={styles.loading}>
-            <QueryState pending={body.isPending} error={body.error} onRetry={() => void body.refetch()} />
-          </View>
-        )}
+    </>
+  );
+  const text = <ThemedText selectable>{body.data?.text ?? ''}</ThemedText>;
+  const content = body.data ? (
+    body.data.html ? (
+      <MailBody html={body.data.html} allowRemote={allowRemote} />
+    ) : bodyFitsContent ? (
+      <View style={styles.text}>{text}</View>
+    ) : (
+      <ScrollView contentContainerStyle={styles.text}>{text}</ScrollView>
+    )
+  ) : (
+    <View style={styles.loading}>
+      <QueryState pending={body.isPending} error={body.error} onRetry={() => void body.refetch()} />
+    </View>
+  );
+  const bar = preview ? null : screen && Platform.OS === 'ios' ? (
+    <SystemToolbar item={item} messages={messages} />
+  ) : (
+    <ActionBar item={item} messages={messages} />
+  );
+
+  if (bodyFitsContent)
+    return (
+      <View style={styles.reader}>
+        <ScrollView contentInsetAdjustmentBehavior={preview ? 'never' : 'automatic'}>
+          <View style={styles.headContent}>{head}</View>
+          {notices}
+          <View style={[styles.flowBody, { borderTopColor: theme.border }]}>{content}</View>
+          {newer}
+        </ScrollView>
+        {bar}
       </View>
+    );
+  return (
+    <View style={styles.reader}>
+      <ScrollView style={styles.head} contentContainerStyle={styles.headContent}>
+        {head}
+      </ScrollView>
+      {notices}
+      <View style={[styles.body, { borderTopColor: theme.border }]}>{content}</View>
       {newer.length > 0 && <ScrollView style={styles.newer}>{newer}</ScrollView>}
-      <ActionBar item={item} messages={messages} />
+      {bar}
+    </View>
+  );
+}
+
+function PreviewHeader({ item }: { item: StoredItem }) {
+  const { t } = useTranslation();
+  const sender = item.summary.from[0];
+  const name = sender ? addressName(sender) : t('mail.row.nobody');
+  return (
+    <View style={[styles.header, styles.sender]}>
+      <ContactAvatar name={name} email={sender?.email} size={28} />
+      <ThemedText type="name" numberOfLines={1} style={styles.grow}>
+        {name}
+      </ThemedText>
+      <ThemedText type="meta">{listTime(item.summary.date)}</ThemedText>
     </View>
   );
 }
@@ -294,25 +356,88 @@ function Unsubscribe({ item, body }: { item: StoredItem; body: MessageBody }) {
 // Below this width, Reply all, Forward, Flag and Mark as unread move into the More menu.
 const FULL_BAR = 560;
 
+function useBarActions(item: StoredItem, messages: StoredItem[]) {
+  const { t } = useTranslation();
+  const actions = useMessageActions(single(item));
+  const { flags } = item.summary;
+  return {
+    actions,
+    flags,
+    reply: (mode: ReplyMode) =>
+      router.push({
+        pathname: '/compose',
+        params: { mode, ...messageParams(item) },
+      }),
+    move: () =>
+      router.push({
+        pathname: '/move',
+        params: messageParams(item),
+      }),
+    print: () =>
+      void printConversation(t, messages).catch((error: unknown) =>
+        showError(t('mail.print.failed'), explainError(error).summary),
+      ),
+    flagLabel: flags.flagged ? t('mail.actions.unflag') : t('mail.actions.flag'),
+    seenLabel: flags.seen ? t('mail.actions.markUnread') : t('mail.actions.markRead'),
+  };
+}
+
+function SystemToolbar({ item, messages }: { item: StoredItem; messages: StoredItem[] }) {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const { actions, flags, reply, move, print, flagLabel, seenLabel } = useBarActions(item, messages);
+  return (
+    <Stack.Toolbar>
+      <Stack.Toolbar.Button
+        icon="archivebox"
+        tintColor={theme.primary}
+        accessibilityLabel={t('mail.actions.archive')}
+        disabled={!actions.archive}
+        onPress={() => actions.archive?.()}
+      />
+      <Stack.Toolbar.Button icon="trash" tintColor={theme.primary} accessibilityLabel={t('mail.actions.delete')} onPress={actions.remove} />
+      <Stack.Toolbar.Button icon="folder" tintColor={theme.primary} accessibilityLabel={t('mail.actions.move')} onPress={move} />
+      <Stack.Toolbar.Menu icon="ellipsis" tintColor={theme.primary} accessibilityLabel={t('mail.actions.more')}>
+        <Stack.Toolbar.Menu inline>
+          <Stack.Toolbar.MenuAction icon="arrowshape.turn.up.left.2" onPress={() => reply('replyAll')}>
+            {t('mail.actions.replyAll')}
+          </Stack.Toolbar.MenuAction>
+          <Stack.Toolbar.MenuAction icon="arrowshape.turn.up.right" onPress={() => reply('forward')}>
+            {t('mail.actions.forward')}
+          </Stack.Toolbar.MenuAction>
+        </Stack.Toolbar.Menu>
+        <Stack.Toolbar.Menu inline>
+          <Stack.Toolbar.MenuAction icon={flags.flagged ? 'flag.slash' : 'flag'} onPress={actions.toggleFlagged}>
+            {flagLabel}
+          </Stack.Toolbar.MenuAction>
+          <Stack.Toolbar.MenuAction icon={flags.seen ? 'envelope.badge' : 'envelope.open'} onPress={actions.toggleSeen}>
+            {seenLabel}
+          </Stack.Toolbar.MenuAction>
+        </Stack.Toolbar.Menu>
+        <Stack.Toolbar.Menu inline>
+          <Stack.Toolbar.MenuAction icon="printer" onPress={print}>
+            {t('mail.print.action')}
+          </Stack.Toolbar.MenuAction>
+        </Stack.Toolbar.Menu>
+      </Stack.Toolbar.Menu>
+      <Stack.Toolbar.Spacer />
+      <Stack.Toolbar.Button
+        variant="prominent"
+        tintColor={theme.primary}
+        style={{ color: theme.onPrimary }}
+        onPress={() => reply('reply')}>
+        {t('mail.actions.reply')}
+      </Stack.Toolbar.Button>
+    </Stack.Toolbar>
+  );
+}
+
 function ActionBar({ item, messages }: { item: StoredItem; messages: StoredItem[] }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const [width, setWidth] = useState(0);
-  const actions = useMessageActions(single(item));
-  const { flags } = item.summary;
+  const { actions, flags, reply, move, print, flagLabel, seenLabel } = useBarActions(item, messages);
   const full = width >= FULL_BAR;
-
-  const reply = (mode: ReplyMode) =>
-    router.push({
-      pathname: '/compose',
-      params: { mode, ...messageParams(item) },
-    });
-  const print = () =>
-    void printConversation(t, messages).catch((error: unknown) =>
-      showError(t('mail.print.failed'), explainError(error).summary),
-    );
-  const flagLabel = flags.flagged ? t('mail.actions.unflag') : t('mail.actions.flag');
-  const seenLabel = flags.seen ? t('mail.actions.markUnread') : t('mail.actions.markRead');
   useShortcuts({
     e: actions.archive,
     '#': actions.remove,
@@ -347,12 +472,7 @@ function ActionBar({ item, messages }: { item: StoredItem; messages: StoredItem[
         <IconButton
           icon={{ ios: 'folder', android: 'drive_file_move', web: 'drive_file_move' }}
           label={t('mail.actions.move')}
-          onPress={() =>
-            router.push({
-              pathname: '/move',
-              params: messageParams(item),
-            })
-          }
+          onPress={move}
         />
       </ShortcutTooltip>
       {full ? (
@@ -613,6 +733,7 @@ const styles = StyleSheet.create({
   reader: { flex: 1 },
   loading: { padding: Spacing.five, alignItems: 'center', textAlign: 'center' },
   head: { flexGrow: 0, maxHeight: '45%' },
+  flowBody: { borderTopWidth: Hairline },
   headContent: { paddingTop: Spacing.three, paddingBottom: Spacing.three, gap: Spacing.two },
   header: { paddingHorizontal: Spacing.three, gap: Spacing.two },
   subject: { paddingHorizontal: Spacing.three },

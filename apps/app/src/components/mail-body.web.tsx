@@ -4,6 +4,9 @@ import { Colors } from '@/constants/theme';
 import { useScheme } from '@/hooks/use-theme';
 import { bodyDocument, bodyScheme } from '@/mail/body-document';
 
+// A sandboxed frame cannot report its height, so it scrolls on its own.
+export const bodyFitsContent = false;
+
 // No allow-scripts and no allow-same-origin: the frame cannot run code or reach the app. Popups are
 // allowed only so links, which the document targets at a new tab, can open outside the sandbox.
 export function MailBody({ html, allowRemote }: { html: string; allowRemote: boolean }) {
