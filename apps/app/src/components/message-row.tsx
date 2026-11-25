@@ -6,6 +6,7 @@ import { Platform, Pressable, StyleSheet, View, type AccessibilityActionEvent } 
 import { accountLabel } from '@/accounts/colors';
 import type { Account } from '@/accounts/store';
 import { AccountMark } from '@/components/account-mark';
+import { ContactAvatar } from '@/components/contact-avatar';
 import type { SwipeAction } from '@/components/swipe-action';
 import { SwipeActions } from '@/components/swipe-actions';
 import { ThemedText } from '@/components/themed-text';
@@ -71,6 +72,7 @@ export function MessageRow({
   const people =
     (byRecipient ? summary.to.map(addressName).join(', ') : senders(messages, self, t('mail.row.me'))) ||
     t('mail.row.nobody');
+  const person = (byRecipient ? summary.to : summary.from)[0];
   const subject = summary.subject || t('mail.row.noSubject');
   const time = listTime(summary.date);
   const blocked = (useBlockedCount(item).data ?? 0) > 0;
@@ -157,6 +159,9 @@ export function MessageRow({
           {selecting && <Check checked={checked} />}
           <View style={styles.gutter}>
             {unread && <View style={[styles.dot, { backgroundColor: theme.primary }]} />}
+          </View>
+          <View style={styles.avatar}>
+            <ContactAvatar name={person ? addressName(person) : people} email={person?.email} />
           </View>
           <View style={styles.text}>
             <View style={styles.line}>
@@ -312,6 +317,9 @@ const styles = StyleSheet.create({
     width: Spacing.five - Spacing.half,
     alignItems: 'center',
     paddingTop: 6,
+  },
+  avatar: {
+    marginRight: Spacing.oneHalf,
   },
   dot: {
     width: 10,
