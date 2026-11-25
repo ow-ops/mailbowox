@@ -22,3 +22,5 @@ packages/core-native/android/*
 packages/core-native/build
 packages/core-native/src/*
 !packages/core-native/src/index.web.ts
+!packages/core-native/src/sql.web.ts
+!packages/core-native/src/sql-worker.web.ts
