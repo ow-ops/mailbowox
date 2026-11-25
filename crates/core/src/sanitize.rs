@@ -1,5 +1,5 @@
-//! HTML cleaning for the reader. Messages render in a sandbox without
-//! JavaScript, but the markup is cleaned anyway: no scripts, forms, event
+//! HTML cleaning for the reader. Messages render where their own scripts
+//! cannot run, but the markup is cleaned anyway: no scripts, forms, event
 //! handlers or URL-loading styles, and no remote resources unless the user
 //! asked (remote images track opens).
 
@@ -39,6 +39,8 @@ pub(crate) fn sanitize_html_with(
     let seen = remote.clone();
 
     let html = Builder::default()
+        // Its text would otherwise show above the message.
+        .add_clean_content_tags(["title"])
         .add_generic_attributes(["style", "background", "bgcolor", "align", "valign"])
         .add_tag_attributes("img", ["srcset"])
         .add_url_schemes(["cid"])
@@ -187,6 +189,15 @@ mod tests {
     #[test]
     fn scripts_and_their_content_are_removed() {
         let out = sanitize_html("<p>hi</p><script>alert(1)</script>", false);
+        assert_eq!(out.html, "<p>hi</p>");
+    }
+
+    #[test]
+    fn the_title_and_its_text_are_removed() {
+        let out = sanitize_html(
+            r#"<html><head><title>Hi <a style="color:inherit">x.test</a></title></head><body><p>hi</p></body></html>"#,
+            false,
+        );
         assert_eq!(out.html, "<p>hi</p>");
     }
 
