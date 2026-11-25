@@ -205,6 +205,7 @@ jobs:
           cat > "${HOME}/.gradle/gradle.properties" <<'EOF'
           org.gradle.caching=true
           org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g
+          kotlin.compiler.execution.strategy=in-process
           EOF
 
       # Fails the step before the job timeout, which would skip the cache saves.
