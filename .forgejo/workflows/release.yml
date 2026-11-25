@@ -358,6 +358,39 @@ jobs:
         if: ${{ always() }}
         run: rm -f "${RUNNER_TEMP}/release.p12"
 
+  # GitHub has the Windows, macOS and ARM runners; its bundles join the release the apk job publishes.
+  desktop:
+    name: Dispatch the desktop build
+    needs: checks
+    if: ${{ forgejo.event_name == 'push' && secrets.GH_DISPATCH_TOKEN != '' }}
+    runs-on: docker
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve release
+        uses: https://git.ow-ops.eu/ow-ops/kit/.forgejo/actions/resolve-release@main
+        with:
+          prefix: MAILBOWOX
+          app-json: apps/app/app.json
+
+      - name: Dispatch
+        env:
+          GH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+          SHA: ${{ forgejo.sha }}
+        run: |-
+          body="$(node -p 'JSON.stringify({ref: "main", inputs: {sha: process.env.SHA, tag: process.env.TAG, version: process.env.MAILBOWOX_VERSION}})')"
+          curl -fsS --retry 5 --retry-all-errors -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -d "${body}" \
+            https://api.github.com/repos/ow-ops/mailbowox/actions/workflows/desktop.yml/dispatches
+
   ios:
     name: Build and upload to TestFlight
     needs: checks
