@@ -106,6 +106,14 @@
       "headline": "Scan this code",
       "intro": "On the new device, open mailbowox, choose Join from another device and scan this code.",
       "qrLabel": "Linking code for a new device",
+      "method": "How to link",
+      "methods": {
+        "show": "Show a code",
+        "scan": "Scan a code"
+      },
+      "scanHeadline": "Scan the new device’s code",
+      "scanIntro": "On the new device, open mailbowox, choose Join from another device, then Show a code.",
+      "scanHint": "Point the camera at the code on the new device.",
       "waiting": "Waiting for the new device. The code changes every two minutes.",
       "compareHeadline": "Compare the codes",
       "compare": "Accept only if the new device shows the same number.",
@@ -118,10 +126,11 @@
     "join": {
       "title": "Join",
       "headline": "Bring your accounts over",
-      "intro": "Scan the code from a device that already syncs, or unlock the vault with your passphrase.",
+      "intro": "Scan or show a code with a device that already syncs, or unlock the vault with your passphrase.",
       "method": "How to join",
       "methods": {
         "scan": "Scan a code",
+        "show": "Show a code",
         "passphrase": "Passphrase"
       },
       "scanHint": "On your other device, open Settings, Devices, Link a new device.",
@@ -133,11 +142,15 @@
       "compare": "Check that your other device shows this number, then accept there.",
       "waiting": "Waiting for your other device…",
       "scanAgain": "Scan again",
+      "showCode": "Show code",
+      "showHint": "On your other device, open Settings, Devices, Link a new device, then Scan a code. The code changes every two minutes.",
+      "qrLabel": "Linking code for your other device",
       "unlock": "Unlock"
     },
     "errors": {
       "unreachable": "Couldn’t reach the sync server at {{gateway}}. Check the address and your connection.",
       "gateway": "The sync server answered with an error ({{status}}).",
+      "otherGateway": "That code is for another sync server ({{gateway}}). Enter this device’s sync server on the new device.",
       "decrypt": "This vault couldn’t be decrypted. Check the passphrase, or link again from your other device.",
       "newerVersion": "This vault was saved by a newer version of mailbowox. Update the app to keep syncing.",
       "unreadable": "The vault on the sync server isn’t in a format mailbowox understands.",

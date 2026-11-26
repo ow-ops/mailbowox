@@ -106,6 +106,14 @@
       "headline": "Scannez ce code",
       "intro": "Sur le nouvel appareil, ouvrez mailbowox, choisissez Rejoindre depuis un autre appareil et scannez ce code.",
       "qrLabel": "Code d’association pour un nouvel appareil",
+      "method": "Méthode",
+      "methods": {
+        "show": "Afficher un code",
+        "scan": "Scanner un code"
+      },
+      "scanHeadline": "Scannez le code du nouvel appareil",
+      "scanIntro": "Sur le nouvel appareil, ouvrez mailbowox, choisissez Rejoindre depuis un autre appareil, puis Afficher un code.",
+      "scanHint": "Pointez l’appareil photo vers le code du nouvel appareil.",
       "waiting": "En attente du nouvel appareil. Le code change toutes les deux minutes.",
       "compareHeadline": "Comparez les codes",
       "compare": "N’acceptez que si le nouvel appareil affiche le même nombre.",
@@ -118,10 +126,11 @@
     "join": {
       "title": "Rejoindre",
       "headline": "Récupérez vos comptes",
-      "intro": "Scannez le code d’un appareil déjà synchronisé, ou ouvrez le coffre avec votre phrase secrète.",
+      "intro": "Scannez ou affichez un code avec un appareil déjà synchronisé, ou ouvrez le coffre avec votre phrase secrète.",
       "method": "Méthode",
       "methods": {
         "scan": "Scanner un code",
+        "show": "Afficher un code",
         "passphrase": "Phrase secrète"
       },
       "scanHint": "Sur votre autre appareil, ouvrez Réglages, Appareils, Associer un nouvel appareil.",
@@ -133,11 +142,15 @@
       "compare": "Vérifiez que votre autre appareil affiche ce nombre, puis acceptez sur celui-ci.",
       "waiting": "En attente de votre autre appareil…",
       "scanAgain": "Scanner à nouveau",
+      "showCode": "Afficher le code",
+      "showHint": "Sur votre autre appareil, ouvrez Réglages, Appareils, Associer un nouvel appareil, puis Scanner un code. Le code change toutes les deux minutes.",
+      "qrLabel": "Code d’association pour votre autre appareil",
       "unlock": "Déverrouiller"
     },
     "errors": {
       "unreachable": "Impossible de joindre le serveur de synchronisation {{gateway}}. Vérifiez l’adresse et votre connexion.",
       "gateway": "Le serveur de synchronisation a répondu par une erreur ({{status}}).",
+      "otherGateway": "Ce code est pour un autre serveur de synchronisation ({{gateway}}). Saisissez sur le nouvel appareil le serveur de celui-ci.",
       "decrypt": "Ce coffre n’a pas pu être déchiffré. Vérifiez la phrase secrète, ou associez à nouveau depuis votre autre appareil.",
       "newerVersion": "Ce coffre a été enregistré par une version plus récente de mailbowox. Mettez l’application à jour pour continuer à synchroniser.",
       "unreadable": "Le coffre sur le serveur de synchronisation n’est pas dans un format que mailbowox comprend.",

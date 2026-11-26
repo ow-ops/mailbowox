@@ -1,5 +1,4 @@
 import { useMutation } from '@tanstack/react-query';
-import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,19 +8,21 @@ import { getAccounts } from '@/accounts/store';
 import { Button } from '@/components/button';
 import { FormScreen } from '@/components/form-screen';
 import { LinkCode } from '@/components/link-code';
+import { LinkQr } from '@/components/link-qr';
+import { LinkScanner } from '@/components/link-scanner';
 import { SegmentedControl } from '@/components/segmented-control';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isEmail } from '@/mail/address';
 import { handlesError } from '@/utils/query-client';
-import { decodeOffer, type LinkOffer, type LinkSession } from '@/vault/crypto';
+import { type LinkOffer, type LinkSession } from '@/vault/crypto';
 import { validGateway } from '@/vault/form';
-import { answerOffer, receiveVaultKey } from '@/vault/link';
+import { answerOffer, receiveVaultKey, startOffer, waitForJoiner, type Offer } from '@/vault/link';
 import { joinWithKey, normalizeGateway, unlockWithPassphrase } from '@/vault/sync';
 
-type Method = 'scan' | 'passphrase';
+type Method = 'scan' | 'show' | 'passphrase';
 
 // A device that had no account yet goes straight to its mail.
 const leave = (firstRun: boolean) => (firstRun ? router.dismissTo('/mail') : router.back());
@@ -39,14 +40,16 @@ export default function JoinDeviceScreen() {
       </View>
       <SegmentedControl
         label={t('settings.devices.join.method')}
-        options={(['scan', 'passphrase'] as const).map((value) => ({
+        options={(['scan', 'show', 'passphrase'] as const).map((value) => ({
           value,
           label: t(`settings.devices.join.methods.${value}`),
         }))}
         value={method}
         onChange={setMethod}
       />
-      {method === 'scan' ? <ScanJoin firstRun={firstRun} /> : <PassphraseJoin firstRun={firstRun} />}
+      {method === 'scan' && <ScanJoin firstRun={firstRun} />}
+      {method === 'show' && <ShowJoin firstRun={firstRun} />}
+      {method === 'passphrase' && <PassphraseJoin firstRun={firstRun} />}
     </FormScreen>
   );
 }
@@ -54,9 +57,7 @@ export default function JoinDeviceScreen() {
 function ScanJoin({ firstRun }: { firstRun: boolean }) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const [permission, requestPermission] = useCameraPermissions();
   const [offer, setOffer] = useState<LinkOffer | null>(null);
-  const [foreign, setForeign] = useState(false);
   const [session, setSession] = useState<LinkSession | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,15 +76,6 @@ function ScanJoin({ firstRun }: { firstRun: boolean }) {
     join().catch((cause: Error) => !controller.signal.aborted && setError(cause.message));
     return () => controller.abort();
   }, [offer, firstRun]);
-
-  const scanned = ({ data }: BarcodeScanningResult) => {
-    const offer = decodeOffer(data);
-    // The code names the gateway the vault key comes from: anything but a web address is not an offer.
-    const decoded = offer && validGateway(offer.gateway) ? offer : null;
-    setForeign(!decoded);
-    // The scanner keeps reporting the same code until the camera unmounts.
-    if (decoded) setOffer((current) => current ?? decoded);
-  };
 
   const scanAgain = () => {
     setOffer(null);
@@ -122,32 +114,96 @@ function ScanJoin({ firstRun }: { firstRun: boolean }) {
     );
   }
 
-  if (!permission) return null;
+  return <LinkScanner hint={t('settings.devices.join.scanHint')} onOffer={setOffer} />;
+}
 
-  if (!permission.granted) {
+function ShowJoin({ firstRun }: { firstRun: boolean }) {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const [gateway, setGateway] = useState('');
+  const [offer, setOffer] = useState<Offer | null>(null);
+  const [session, setSession] = useState<LinkSession | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!offer) return;
+    const controller = new AbortController();
+    const join = async () => {
+      const answer = await waitForJoiner(offer, controller.signal);
+      if (controller.signal.aborted) return;
+      if (!answer) return setOffer(startOffer(offer.offer.gateway));
+      setSession(answer);
+      const key = await receiveVaultKey(offer.offer, answer, controller.signal);
+      if (controller.signal.aborted) return;
+      await joinWithKey(offer.offer.gateway, key);
+      leave(firstRun);
+    };
+    join().catch((cause: Error) => !controller.signal.aborted && setError(cause.message));
+    return () => controller.abort();
+  }, [offer, firstRun]);
+
+  const reset = () => {
+    setOffer(null);
+    setSession(null);
+    setError(null);
+  };
+
+  if (error) {
     return (
       <View style={styles.group}>
-        <ThemedText>{t('settings.devices.join.cameraNeeded')}</ThemedText>
-        {permission.canAskAgain ? (
-          <Button label={t('settings.devices.join.allowCamera')} onPress={requestPermission} />
-        ) : (
-          <ThemedText type="meta">{t('settings.devices.join.cameraBlocked')}</ThemedText>
-        )}
+        <ThemedText themeColor="danger" accessibilityLiveRegion="assertive">
+          {error}
+        </ThemedText>
+        <Button label={t('common.retry')} onPress={reset} />
       </View>
     );
   }
 
+  if (session) {
+    return (
+      <View style={styles.group}>
+        <ThemedText>{t('settings.devices.join.compare')}</ThemedText>
+        <LinkCode code={session.code} />
+        <View style={styles.waiting} accessibilityLiveRegion="polite">
+          <ActivityIndicator color={theme.muted} />
+          <ThemedText type="meta">{t('settings.devices.join.waiting')}</ThemedText>
+        </View>
+        <Button label={t('common.cancel')} variant="outline" onPress={reset} />
+      </View>
+    );
+  }
+
+  if (offer) {
+    return (
+      <View style={styles.group}>
+        <LinkQr offer={offer.offer} label={t('settings.devices.join.qrLabel')} />
+        <View style={styles.waiting} accessibilityLiveRegion="polite">
+          <ActivityIndicator color={theme.muted} />
+          <ThemedText type="meta">{t('settings.devices.join.showHint')}</ThemedText>
+        </View>
+        <Button label={t('common.cancel')} variant="outline" onPress={reset} />
+      </View>
+    );
+  }
+
+  const ready = validGateway(gateway);
+  const show = () => ready && setOffer(startOffer(normalizeGateway(gateway)));
+
   return (
     <View style={styles.group}>
-      <CameraView
-        style={[styles.camera, { backgroundColor: theme.surface }]}
-        facing="back"
-        barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-        onBarcodeScanned={scanned}
+      <TextField
+        value={gateway}
+        onChangeText={setGateway}
+        onSubmitEditing={show}
+        placeholder={t('settings.devices.gatewayPlaceholder')}
+        accessibilityLabel={t('settings.devices.gateway')}
+        autoCapitalize="none"
+        autoCorrect={false}
+        keyboardType="url"
+        textContentType="URL"
+        returnKeyType="go"
       />
-      <ThemedText type="meta" themeColor={foreign ? 'danger' : undefined} accessibilityLiveRegion="polite">
-        {foreign ? t('settings.devices.join.foreignCode') : t('settings.devices.join.scanHint')}
-      </ThemedText>
+      <Button label={t('settings.devices.join.showCode')} onPress={show} disabled={!ready} />
     </View>
   );
 }
@@ -226,13 +282,6 @@ const styles = StyleSheet.create({
   },
   group: {
     gap: Spacing.three,
-  },
-  camera: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: Radius.lg,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
   },
   waiting: {
     flexDirection: 'row',
