@@ -220,14 +220,15 @@ jobs:
         run: |
           auth=(-H "Authorization: token ${TOKEN}")
           for _ in $(seq 240); do
-            id="$(curl -fsS "${auth[@]}" "${FORGEJO_API}/releases/tags/${TAG}" | jq -r .id)"
-            [ -n "${id}" ] && break
+            code="$(curl -sS "${auth[@]}" -o release.json -w '%{http_code}' "${FORGEJO_API}/releases/tags/${TAG}")"
+            [ "${code}" = 404 ] || break
             sleep 15
           done
-          if [ -z "${id:-}" ]; then
-            echo "::error::Release ${TAG} never appeared on Forgejo."
+          if [ "${code}" != 200 ]; then
+            echo "::error::Looking up release ${TAG} on Forgejo returned HTTP ${code}."
             exit 1
           fi
+          id="$(jq -r .id release.json)"
           while IFS= read -r -d '' file; do
             name="$(basename "${file}")"
             curl -fsS --retry 3 "${auth[@]}" -o /dev/null \
