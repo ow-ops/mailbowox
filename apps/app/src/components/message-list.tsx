@@ -81,6 +81,8 @@ export function MessageList({ view, selected, onOpen }: Props) {
       )}
       extraData={extraData}
       contentInsetAdjustmentBehavior="automatic"
+      // A filter swaps the data; keeping a row in place scrolled the list off the top.
+      maintainVisibleContentPosition={{ disabled: true }}
       style={{ backgroundColor: theme.page }}
       ListHeaderComponent={
         <>
