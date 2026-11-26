@@ -45,7 +45,7 @@ jobs:
 
   gateway-changes:
     if: (forgejo.event_name == 'push' && forgejo.ref_type == 'branch') || inputs.image == 'gateway'
-    runs-on: docker
+    runs-on: light
     outputs:
       publish: ${{ steps.paths.outputs.publish }}
     steps:
