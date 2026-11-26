@@ -15,9 +15,9 @@
     "sql:web": "cargo build -p mailbowox-sql-worker --target wasm32-unknown-unknown --profile wasm --manifest-path ../../Cargo.toml && wasm-bindgen --target web --out-dir src/generated-web/sql-worker ../../target/wasm32-unknown-unknown/wasm/mailbowox_sql_worker.wasm && wasm-opt -Oz src/generated-web/sql-worker/mailbowox_sql_worker_bg.wasm -o src/generated-web/sql-worker/mailbowox_sql_worker_bg.wasm"
   },
   "dependencies": {
-    "@ubjs/core": "0.31.0-7",
-    "@ubjs/wasm": "0.31.0-7",
-    "uniffi-bindgen-react-native": "0.31.0-7"
+    "@ubjs/core": "0.31.0-8",
+    "@ubjs/wasm": "0.31.0-8",
+    "uniffi-bindgen-react-native": "0.31.0-8"
   },
   "peerDependencies": {
     "react": "*",

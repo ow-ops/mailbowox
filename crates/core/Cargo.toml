@@ -16,13 +16,13 @@ async-trait = "0.1.92"
 base64 = "0.23.1"
 calcard = { version = "0.3.14", default-features = false }
 futures-util = { version = "0.3.34", default-features = false, features = ["alloc"] }
-io-http = { version = "0.8.0", default-features = false }
-io-imap = { version = "0.11.2", default-features = false }
-io-pim-discovery = { version = "0.14.0", default-features = false, features = ["autoconfig", "rfc6186", "rfc6764"] }
+io-http = { version = "0.9.0", default-features = false, features = ["client"] }
+io-imap = { version = "0.12.0", default-features = false, features = ["client"] }
+io-pim-discovery = { version = "0.15.0", default-features = false, features = ["autoconfig", "rfc6186", "rfc6764"] }
 psl = "2.1.258"
-io-sasl = { version = "0.2.0", default-features = false }
-io-smtp = { version = "0.9.0", default-features = false }
-io-webdav = { version = "0.11.0", default-features = false }
+io-sasl = { version = "0.3.0", default-features = false, features = ["client"] }
+io-smtp = { version = "0.10.0", default-features = false, features = ["client"] }
+io-webdav = { version = "0.14.0", default-features = false, features = ["client"] }
 mailbowox-sql = { path = "../sql" }
 mail-builder = { version = "2.0.1", default-features = false }
 mail-parser = { version = "1.0.1", features = ["full_encoding"] }
