@@ -30,6 +30,7 @@ env:
   RUST_TOOLCHAIN: 1.100.0
   TAURI_CLI: '@tauri-apps/cli@2.12.6'
   FORGEJO_API: https://git.ow-ops.eu/api/v1/repos/ow-ops/mailbowox
+  FORGEJO_PACKAGES: https://git.ow-ops.eu/api/packages/ow-ops
 
 jobs:
   web:
@@ -41,6 +42,7 @@ jobs:
     env:
       EXPO_NO_TELEMETRY: 1
       EXPO_PUBLIC_SENTRY_DSN: ${{ vars.SENTRY_DSN }}
+      MAILBOWOX_CHANNEL: ${{ startsWith(inputs.tag, 'nightly-') && 'nightly' || 'stable' }}
     steps:
       # The push mirror from Forgejo can trail the dispatch.
       - name: Wait for the commit to reach GitHub
@@ -162,16 +164,23 @@ jobs:
         with:
           node-version: 24
 
-      # Bundlers want x.y.z, so a nightly's build count stays out of the bundle version.
+      # Bundlers want semver, so a nightly's build count becomes the prerelease.
+      # Nightlies get their own identity to install alongside stable.
       # The web app is already built, so the bundle skips beforeBuildCommand.
       - name: Bundle
         working-directory: apps/desktop
         env:
           VERSION: ${{ inputs.version }}
+          TAG: ${{ inputs.tag }}
         run: |
           version="$(cut -d. -f1-3 <<< "${VERSION}")"
+          identity=''
+          if [[ "${TAG}" == nightly-* ]]; then
+            version="${version}-${VERSION##*.}"
+            identity=',"productName":"mailbowox Nightly","mainBinaryName":"mailbowox-nightly","identifier":"eu.owops.mailbowox.nightly"'
+          fi
           pnpm dlx "${TAURI_CLI}" build \
-            --config "{\"version\":\"${version}\",\"build\":{\"beforeBuildCommand\":\"\"}}"
+            --config "{\"version\":\"${version}\",\"build\":{\"beforeBuildCommand\":\"\"}${identity}}"
 
       - name: Upload the bundles
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -211,16 +220,43 @@ jobs:
         run: |
           auth=(-H "Authorization: token ${TOKEN}")
           for _ in $(seq 240); do
-            id="$(curl -fsS "${auth[@]}" "${FORGEJO_API}/releases/tags/${TAG}" | jq -r .id)" && break
+            id="$(curl -fsS "${auth[@]}" "${FORGEJO_API}/releases/tags/${TAG}" | jq -r .id)"
+            [ -n "${id}" ] && break
             sleep 15
           done
           if [ -z "${id:-}" ]; then
             echo "::error::Release ${TAG} never appeared on Forgejo."
             exit 1
           fi
-          for file in bundles/*; do
+          while IFS= read -r -d '' file; do
+            name="$(basename "${file}")"
             curl -fsS --retry 3 "${auth[@]}" -o /dev/null \
               -F "attachment=@${file}" \
-              "${FORGEJO_API}/releases/${id}/assets?name=$(basename "${file}")"
-            echo "Uploaded $(basename "${file}")"
+              "${FORGEJO_API}/releases/${id}/assets?name=$(jq -rn --arg name "${name}" '$name | @uri')"
+            echo "Uploaded ${name}"
+          done < <(find bundles -type f -print0)
+
+      # Forgejo's .repo file sets gpgcheck, so the rpm is signed on upload.
+      - name: Publish to the deb and rpm repos
+        env:
+          TAG: ${{ inputs.tag }}
+          PACKAGES_USER: ${{ secrets.PACKAGES_USER }}
+          PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+        run: |
+          channel=stable
+          [[ "${TAG}" != nightly-* ]] || channel=nightly
+          upload() {
+            code="$(curl -sS --retry 3 -o /dev/null -w '%{http_code}' \
+              --user "${PACKAGES_USER}:${PACKAGES_TOKEN}" --upload-file "$1" "$2")"
+            # 409 means this exact version is already published.
+            case "${code}" in
+              201 | 409) echo "Published $(basename "$1") (${code})" ;;
+              *) echo "::error::Publishing $(basename "$1") failed with HTTP ${code}."; exit 1 ;;
+            esac
+          }
+          for deb in bundles/deb/*.deb; do
+            upload "${deb}" "${FORGEJO_PACKAGES}/debian/pool/${channel}/main/upload"
+          done
+          for rpm in bundles/rpm/*.rpm; do
+            upload "${rpm}" "${FORGEJO_PACKAGES}/rpm/${channel}/upload?sign=true"
           done

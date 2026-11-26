@@ -35,6 +35,23 @@ Install [Obtainium](https://obtainium.imranr.dev), then tap **Add to Obtainium**
 
 <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium%3A%2F%2Fapp%2F%7B%22id%22%3A%22eu.owops.mailbowox.nightly%22%2C%22url%22%3A%22https%3A%2F%2Fgit.ow-ops.eu%2Fow-ops%2Fmailbowox%22%2C%22author%22%3A%22ow-ops%22%2C%22name%22%3A%22mailbowox%20Nightly%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22about%5C%22%3A%5C%22A%20mail%20and%20contacts%20client%20(nightly)%5C%22%2C%5C%22apkFilterRegEx%5C%22%3A%5C%22android-universal%5C%5C%5C%5C.apk%24%5C%22%2C%5C%22includePrereleases%5C%22%3Atrue%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5ENightly%20build%20%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%7D%22%2C%22overrideSource%22%3A%22Codeberg%22%7D"><img alt="Add to Obtainium" src="https://img.shields.io/badge/Add_to_Obtainium-6750A3?style=for-the-badge"></a>
 
+Desktop: download it from the [releases](https://git.ow-ops.eu/ow-ops/mailbowox/releases), or on Linux install it from the Forgejo package repos. Use `nightly` instead of `stable` for nightly builds; the package is then `mailbowox-nightly`.
+
+Debian, Ubuntu:
+
+```sh
+sudo curl https://git.ow-ops.eu/api/packages/ow-ops/debian/repository.key -o /etc/apt/keyrings/forgejo-ow-ops.asc
+echo "deb [signed-by=/etc/apt/keyrings/forgejo-ow-ops.asc] https://git.ow-ops.eu/api/packages/ow-ops/debian stable main" | sudo tee /etc/apt/sources.list.d/mailbowox.list
+sudo apt update && sudo apt install mailbowox
+```
+
+Fedora, RHEL, openSUSE:
+
+```sh
+sudo dnf config-manager addrepo --from-repofile=https://git.ow-ops.eu/api/packages/ow-ops/rpm/stable.repo
+sudo dnf install mailbowox
+```
+
 ## Privacy
 
 - The mobile app connects directly to your provider over TLS. The web app connects over TLS through a relay that forwards encrypted traffic.
