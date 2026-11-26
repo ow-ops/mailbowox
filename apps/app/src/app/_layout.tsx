@@ -141,6 +141,8 @@ function RootStack() {
         <Stack.Screen name="shortcuts" options={{ ...sheet, title: t('mail.shortcuts.title') }} />
         <Stack.Screen name="sync-setup" options={{ title: t('settings.devices.setup.title') }} />
         <Stack.Screen name="link-device" options={{ title: t('settings.devices.link.title') }} />
+        <Stack.Screen name="share-accounts" options={{ title: t('settings.devices.share.title') }} />
+        <Stack.Screen name="backup-accounts" options={{ title: t('settings.devices.backup.title') }} />
         <Stack.Screen name="account" />
         <Stack.Screen name="identity" options={{ title: t('settings.identity.title') }} />
         <Stack.Screen name="signature" options={{ title: t('settings.signature.title') }} />

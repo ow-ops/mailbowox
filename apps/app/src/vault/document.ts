@@ -11,7 +11,7 @@ const VERSION = 1;
 const server = v.looseObject({ host: v.string(), port: v.number(), security: v.picklist(['tls', 'startTls', 'plain']) });
 const address = v.looseObject({ name: v.optional(v.string()), email: v.string() });
 
-const account = v.looseObject({
+export const accountSchema = v.looseObject({
   email: v.string(),
   displayName: v.string(),
   imap: server,
@@ -24,7 +24,7 @@ const account = v.looseObject({
 });
 
 const schema = v.looseObject({
-  accounts: v.record(v.string(), v.looseObject({ updatedAt: v.number(), account: v.nullable(account) })),
+  accounts: v.record(v.string(), v.looseObject({ updatedAt: v.number(), account: v.nullable(accountSchema) })),
   prefs: v.looseObject({ updatedAt: v.number(), value: prefsSchema }),
 });
 

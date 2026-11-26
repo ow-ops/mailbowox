@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
+import { decodeSharePart, type SharePart } from '@/accounts/share';
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
@@ -10,7 +11,13 @@ import { useTheme } from '@/hooks/use-theme';
 import { decodeOffer, type LinkOffer } from '@/vault/crypto';
 import { validGateway } from '@/vault/form';
 
-export function LinkScanner({ hint, onOffer }: { hint: string; onOffer: (offer: LinkOffer) => void }) {
+type Props = {
+  hint: string;
+  onOffer: (offer: LinkOffer) => void;
+  onShare?: (part: SharePart) => void;
+};
+
+export function LinkScanner({ hint, onOffer, onShare }: Props) {
   const { t } = useTranslation();
   const theme = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
@@ -20,6 +27,11 @@ export function LinkScanner({ hint, onOffer }: { hint: string; onOffer: (offer: 
 
   const scanned = ({ data }: BarcodeScanningResult) => {
     if (found.current) return;
+    const part = onShare && decodeSharePart(data);
+    if (part) {
+      setForeign(false);
+      return onShare(part);
+    }
     const offer = decodeOffer(data);
     // The code names the gateway the vault key comes from: anything but a web address is not an offer.
     const decoded = offer && validGateway(offer.gateway) ? offer : null;

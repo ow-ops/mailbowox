@@ -37,6 +37,9 @@ export async function passphraseLocation(passphrase: string, email: string) {
   return locate(await argon2idAsync(passphrase.normalize('NFC'), salt, ARGON), 'passphrase');
 }
 
+export const backupKey = (password: string, salt: Uint8Array) =>
+  argon2idAsync(password.normalize('NFC'), salt, ARGON);
+
 export function seal(key: Uint8Array, plaintext: Uint8Array) {
   const header = Uint8Array.of(FORMAT);
   const nonce = getRandomBytes(NONCE_BYTES);

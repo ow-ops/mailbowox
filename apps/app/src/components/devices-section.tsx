@@ -29,6 +29,8 @@ export function DevicesSection() {
           onPress={() => router.push('/sync-setup')}
         />
         <Row title={t('settings.devices.joinDevice')} chevron onPress={() => router.push('/join-device')} />
+        <Row title={t('settings.devices.shareAccounts')} chevron onPress={() => router.push('/share-accounts')} />
+        <Row title={t('settings.devices.backupAccounts')} chevron onPress={() => router.push('/backup-accounts')} />
         <ThemedText type="meta">{t('settings.devices.offHint')}</ThemedText>
       </Section>
     );
@@ -38,6 +40,8 @@ export function DevicesSection() {
     <Section title={t('settings.devices.title')}>
       <Row title={t('settings.devices.sync')} detail={status} chevron onPress={() => router.push('/sync')} />
       <Row title={t('settings.devices.linkDevice')} chevron onPress={() => router.push('/link-device')} />
+      <Row title={t('settings.devices.shareAccounts')} chevron onPress={() => router.push('/share-accounts')} />
+      <Row title={t('settings.devices.backupAccounts')} chevron onPress={() => router.push('/backup-accounts')} />
       {error && (
         <ThemedText themeColor="danger" accessibilityLiveRegion="polite">
           {error}

@@ -2,11 +2,10 @@ import { StyleSheet, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { encodeOffer, type LinkOffer } from '@/vault/crypto';
 
 const QR_SIZE = 240;
 
-export function LinkQr({ offer, label }: { offer: LinkOffer; label: string }) {
+export function LinkQr({ value, label }: { value: string; label: string }) {
   return (
     <View
       accessible
@@ -14,7 +13,7 @@ export function LinkQr({ offer, label }: { offer: LinkOffer; label: string }) {
       accessibilityLabel={label}
       style={[styles.code, { backgroundColor: Colors.light.page }]}>
       <QRCode
-        value={encodeOffer(offer)}
+        value={value}
         size={QR_SIZE}
         color={Colors.light.heading}
         backgroundColor={Colors.light.page}

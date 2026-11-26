@@ -79,6 +79,8 @@
     "notSynced": "Not synced yet",
     "syncNow": "Sync now",
     "linkDevice": "Link a new device",
+    "shareAccounts": "Share accounts",
+    "backupAccounts": "Back up accounts",
     "turnOff": "Turn off sync",
     "turnOffConfirm": "Turn off sync on this device? Your accounts stay here, and other devices keep syncing.",
     "delete": "Delete synced data",
@@ -123,17 +125,52 @@
       "done": "The new device now has your accounts and keeps them in sync.",
       "close": "Done"
     },
+    "share": {
+      "title": "Share accounts",
+      "headline": "Scan with your other device",
+      "intro": "On the other device, open mailbowox, choose Join from another device and scan this code. It adds the accounts it doesn’t have yet.",
+      "qrLabel": "Code with your accounts",
+      "count": "Code {{index}} of {{total}}",
+      "warning": "This code holds your passwords. Show it only to your own devices.",
+      "passwords": "Include passwords",
+      "noPasswords": "The other device asks for each password.",
+      "next": "Next code",
+      "previous": "Previous code"
+    },
+    "backup": {
+      "title": "Back up accounts",
+      "headline": "Back up your accounts",
+      "intro": "Saves your accounts and their passwords in a file encrypted with a password. To restore it, choose Join from another device, then Backup file.",
+      "password": "Backup password",
+      "passwordHint": "Nobody can recover this password. Without it the file can’t be opened.",
+      "save": "Save backup",
+      "restoreIntro": "Choose a backup file saved by mailbowox. It adds the accounts this device doesn’t have yet.",
+      "choose": "Choose file",
+      "restore": "Restore",
+      "other": "Choose another file",
+      "errors": {
+        "notBackup": "This isn’t a mailbowox backup file.",
+        "password": "Wrong password for this backup."
+      }
+    },
     "join": {
       "title": "Join",
       "headline": "Bring your accounts over",
-      "intro": "Scan or show a code with a device that already syncs, or unlock the vault with your passphrase.",
+      "intro": "Scan or show a code with your other device, unlock the vault with your passphrase, or restore a backup file.",
       "method": "How to join",
       "methods": {
         "scan": "Scan a code",
         "show": "Show a code",
-        "passphrase": "Passphrase"
+        "passphrase": "Passphrase",
+        "file": "Backup file"
       },
-      "scanHint": "On your other device, open Settings, Devices, Link a new device.",
+      "scanHint": "On your other device, open Settings, Devices, then Link a new device or Share accounts.",
+      "scanned": "Scanned {{count}} of {{total}}. Show the next code.",
+      "adding": "Adding your accounts…",
+      "passwords": "These accounts came without their passwords. Enter each one to add them.",
+      "passwordFor": "Password for {{email}}",
+      "signInFailed": "Couldn’t sign in to {{email}}.",
+      "addAccounts": "Add accounts",
       "foreignCode": "That isn’t a mailbowox linking code.",
       "cameraNeeded": "mailbowox needs the camera to scan the code on your other device.",
       "allowCamera": "Allow camera",

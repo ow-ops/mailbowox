@@ -14,7 +14,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { handlesError } from '@/utils/query-client';
-import { type LinkOffer, type LinkSession } from '@/vault/crypto';
+import { encodeOffer, type LinkOffer, type LinkSession } from '@/vault/crypto';
 import { loadVaultKey } from '@/vault/key';
 import { answerOffer, sendVaultKey, startOffer, waitForJoiner, type Offer } from '@/vault/link';
 import { normalizeGateway, useVault } from '@/vault/sync';
@@ -145,7 +145,7 @@ function LinkDevice({ gateway }: { gateway: string }) {
       />
       {method === 'show' ? (
         <>
-          <LinkQr offer={offer.offer} label={t('settings.devices.link.qrLabel')} />
+          <LinkQr value={encodeOffer(offer.offer)} label={t('settings.devices.link.qrLabel')} />
           <View style={styles.waiting} accessibilityLiveRegion="polite">
             <ActivityIndicator color={theme.muted} />
             <ThemedText type="meta">{t('settings.devices.link.waiting')}</ThemedText>

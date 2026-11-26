@@ -79,6 +79,8 @@
     "notSynced": "Pas encore synchronisé",
     "syncNow": "Synchroniser",
     "linkDevice": "Associer un nouvel appareil",
+    "shareAccounts": "Partager les comptes",
+    "backupAccounts": "Sauvegarder les comptes",
     "turnOff": "Désactiver la synchronisation",
     "turnOffConfirm": "Désactiver la synchronisation sur cet appareil ? Vos comptes restent ici, et les autres appareils continuent de se synchroniser.",
     "delete": "Supprimer les données synchronisées",
@@ -123,17 +125,52 @@
       "done": "Le nouvel appareil a maintenant vos comptes et les garde synchronisés.",
       "close": "Terminé"
     },
+    "share": {
+      "title": "Partager les comptes",
+      "headline": "Scannez avec votre autre appareil",
+      "intro": "Sur l’autre appareil, ouvrez mailbowox, choisissez Rejoindre depuis un autre appareil et scannez ce code. Il ajoute les comptes qui n’y sont pas encore.",
+      "qrLabel": "Code contenant vos comptes",
+      "count": "Code {{index}} sur {{total}}",
+      "warning": "Ce code contient vos mots de passe. Ne le montrez qu’à vos propres appareils.",
+      "passwords": "Inclure les mots de passe",
+      "noPasswords": "L’autre appareil demandera chaque mot de passe.",
+      "next": "Code suivant",
+      "previous": "Code précédent"
+    },
+    "backup": {
+      "title": "Sauvegarder les comptes",
+      "headline": "Sauvegardez vos comptes",
+      "intro": "Enregistre vos comptes et leurs mots de passe dans un fichier chiffré par un mot de passe. Pour le restaurer, choisissez Rejoindre depuis un autre appareil, puis Fichier de sauvegarde.",
+      "password": "Mot de passe de la sauvegarde",
+      "passwordHint": "Personne ne peut récupérer ce mot de passe. Sans lui, le fichier ne peut pas être ouvert.",
+      "save": "Enregistrer la sauvegarde",
+      "restoreIntro": "Choisissez un fichier de sauvegarde mailbowox. Il ajoute les comptes qui ne sont pas encore sur cet appareil.",
+      "choose": "Choisir un fichier",
+      "restore": "Restaurer",
+      "other": "Choisir un autre fichier",
+      "errors": {
+        "notBackup": "Ce n’est pas un fichier de sauvegarde mailbowox.",
+        "password": "Mot de passe incorrect pour cette sauvegarde."
+      }
+    },
     "join": {
       "title": "Rejoindre",
       "headline": "Récupérez vos comptes",
-      "intro": "Scannez ou affichez un code avec un appareil déjà synchronisé, ou ouvrez le coffre avec votre phrase secrète.",
+      "intro": "Scannez ou affichez un code avec votre autre appareil, ouvrez le coffre avec votre phrase secrète, ou restaurez un fichier de sauvegarde.",
       "method": "Méthode",
       "methods": {
         "scan": "Scanner un code",
         "show": "Afficher un code",
-        "passphrase": "Phrase secrète"
+        "passphrase": "Phrase secrète",
+        "file": "Fichier de sauvegarde"
       },
-      "scanHint": "Sur votre autre appareil, ouvrez Réglages, Appareils, Associer un nouvel appareil.",
+      "scanHint": "Sur votre autre appareil, ouvrez Réglages, Appareils, puis Associer un nouvel appareil ou Partager les comptes.",
+      "scanned": "{{count}} code(s) scanné(s) sur {{total}}. Affichez le code suivant.",
+      "adding": "Ajout de vos comptes…",
+      "passwords": "Ces comptes sont arrivés sans leurs mots de passe. Saisissez-les pour les ajouter.",
+      "passwordFor": "Mot de passe de {{email}}",
+      "signInFailed": "Connexion impossible à {{email}}.",
+      "addAccounts": "Ajouter les comptes",
       "foreignCode": "Ce n’est pas un code d’association mailbowox.",
       "cameraNeeded": "mailbowox a besoin de l’appareil photo pour scanner le code de votre autre appareil.",
       "allowCamera": "Autoriser l’appareil photo",
