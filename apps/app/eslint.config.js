@@ -7,4 +7,20 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*'],
   },
+  {
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'react-native',
+              importNames: ['LayoutAnimation'],
+              message: "Crashes iOS alongside Reanimated's layout animations; use Reanimated's entering, exiting and layout props.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);
