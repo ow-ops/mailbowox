@@ -164,6 +164,7 @@ function wrapStore(store: native.MailStoreLike): MailStore {
     saveMailboxes: (account, mailboxes) => store.saveMailboxes(account, mailboxes.map(toMailbox)),
     mailboxes: async (account) => (await store.mailboxes(account)).map(fromMailbox),
     unreadCounts: (account) => store.unreadCounts(account),
+    count: (boxes, filter) => store.count(boxes, toFilter(filter)),
     page: async (boxes, before, limit, grouped, filter) =>
       (await store.page(boxes, before && { ...before, date: BigInt(before.date) }, limit, grouped, toFilter(filter))).map(
         fromConversation,

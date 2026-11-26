@@ -158,6 +158,7 @@
   },
   "categories": {
     "label": "Catégorie",
+    "unread": "{{name}}, {{count}} non lus",
     "primary": "Principal",
     "transactions": "Transactions",
     "updates": "Actualités",

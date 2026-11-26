@@ -98,6 +98,7 @@ export interface MailStore {
   saveMailboxes(account: string, mailboxes: Mailbox[]): Promise<void>;
   mailboxes(account: string): Promise<Mailbox[]>;
   unreadCounts(account: string): Promise<Map<string, number>>;
+  count(boxes: MailboxRef[], filter: ListFilter): Promise<number>;
   page(boxes: MailboxRef[], before: Cursor | undefined, limit: number, grouped: boolean, filter: ListFilter): Promise<Conversation[]>;
   loadPage(
     boxes: MailboxRef[],

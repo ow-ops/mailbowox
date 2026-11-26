@@ -9,7 +9,16 @@ import { isOnline } from '@/utils/network';
 import type { Cursor, MailboxRole } from '@/core';
 import { queryClient } from '@/utils/query-client';
 
-import { hasCategories, isFiltered, listFilter, shownBoxes, useCategoryChoice, useFilters, useHiddenAccounts } from './filters';
+import {
+  CATEGORY_CHOICES,
+  hasCategories,
+  isFiltered,
+  listFilter,
+  shownBoxes,
+  useCategoryChoice,
+  useFilters,
+  useHiddenAccounts,
+} from './filters';
 import type { Conversation, MailboxGeneration, MailboxRef, MessageRef } from './refs';
 import { isEmptyQuery, parseQuery, rankResults, storeQuery } from './search';
 import { withSession } from './session';
@@ -48,6 +57,26 @@ export function useConversations(view: MailView) {
       const item = last.at(-1)?.latest;
       return item && { date: item.summary.date, account: item.account, uid: item.uid };
     },
+  });
+}
+
+// Unread mail in each category of these inboxes, whatever the other filters keep.
+export function useCategoryUnread(boxes: MailboxRef[]) {
+  return useQueries({
+    queries: CATEGORY_CHOICES.map((choice) => ({
+      queryKey: ['messages', 'unread', boxes, choice],
+      queryFn: async () =>
+        (await mailStore()).count(boxes, {
+          unread: true,
+          flagged: false,
+          attachments: false,
+          toMe: false,
+          ccMe: false,
+          me: [],
+          category: choice === 'all' ? undefined : choice,
+        }),
+    })),
+    combine: (results) => new Map(CATEGORY_CHOICES.map((choice, i) => [choice, results[i].data ?? 0])),
   });
 }
 

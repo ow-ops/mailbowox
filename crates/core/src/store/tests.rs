@@ -1401,3 +1401,50 @@ async fn categories_follow_the_rules_until_you_write_to_or_move_a_sender() {
     );
     assert_eq!(in_category(&store, Category::Updates).await, [5, 2, 1]);
 }
+
+#[tokio::test]
+async fn counts_what_a_filter_keeps_across_mailboxes() {
+    let store = store().await;
+    let inbox = vec![
+        from(summary(1, 100), "news@shop.example", Category::Promotions),
+        seen(from(
+            summary(2, 200),
+            "news@shop.example",
+            Category::Promotions,
+        )),
+        from(summary(3, 300), "friend@example.com", Category::Primary),
+    ];
+    store
+        .apply_sync(
+            "c",
+            "INBOX",
+            &sync(state(1, 10), true, inbox, vec![], false),
+        )
+        .await
+        .unwrap();
+    let other = vec![from(
+        summary(1, 150),
+        "deals@shop.example",
+        Category::Promotions,
+    )];
+    store
+        .apply_sync(
+            "d",
+            "INBOX",
+            &sync(state(1, 10), true, other, vec![], false),
+        )
+        .await
+        .unwrap();
+    let boxes = vec![boxed("c", "INBOX"), boxed("d", "INBOX")];
+    let unread = |category| ListFilter {
+        unread: true,
+        category,
+        ..ListFilter::default()
+    };
+
+    let count = |filter| store.count(boxes.clone(), filter);
+    assert_eq!(count(unread(Some(Category::Promotions))).await.unwrap(), 2);
+    assert_eq!(count(unread(Some(Category::Primary))).await.unwrap(), 1);
+    assert_eq!(count(unread(Some(Category::Updates))).await.unwrap(), 0);
+    assert_eq!(count(unread(None)).await.unwrap(), 3);
+}

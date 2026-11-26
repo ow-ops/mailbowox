@@ -2,7 +2,7 @@ use mailbowox_sql::{Statement, Value, statement};
 
 use super::{
     MailStore,
-    messages::{COLUMNS, MESSAGE, json, listed, message_key, stored},
+    messages::{COLUMNS, MESSAGE, json, listed, message_key, stored, uint},
     threads::conversation,
 };
 use crate::{
@@ -203,6 +203,22 @@ impl MailStore {
         } else {
             Ok(latest.into_iter().map(single).collect())
         }
+    }
+
+    /// How many messages of these mailboxes the filter keeps.
+    pub async fn count(
+        &self,
+        boxes: Vec<MailboxRef>,
+        filter: ListFilter,
+    ) -> Result<u32, CoreError> {
+        let (condition, params) = shown(&boxes, "messages", &filter)?;
+        let rows = self
+            .rows(Statement {
+                sql: format!("SELECT COUNT(*) FROM messages WHERE {condition}"),
+                params,
+            })
+            .await?;
+        rows.first().map_or(Ok(0), |row| uint(row, 0))
     }
 
     pub async fn message(&self, message: MessageRef) -> Result<Option<StoredMessage>, CoreError> {

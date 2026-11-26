@@ -158,6 +158,7 @@
   },
   "categories": {
     "label": "Category",
+    "unread": "{{name}}, {{count}} unread",
     "primary": "Primary",
     "transactions": "Transactions",
     "updates": "Updates",

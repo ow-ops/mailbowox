@@ -85,7 +85,7 @@ export function ListFilters({ view, categories }: { view: MailView; categories: 
   return (
     <View style={styles.bar}>
       <View style={styles.row}>
-        {categories ? <CategoryBar /> : <View style={styles.grow}>{summary}</View>}
+        {categories ? <CategoryBar view={view} /> : <View style={styles.grow}>{summary}</View>}
         {menu}
       </View>
       {categories && summary}
