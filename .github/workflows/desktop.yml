@@ -211,8 +211,7 @@ jobs:
           path: bundles
           merge-multiple: true
 
-      # The Android job publishes the release with override, which recreates it,
-      # so the bundles go up only once it exists.
+      # Forgejo's release job creates the release before dispatching this.
       - name: Upload to the release
         env:
           TAG: ${{ inputs.tag }}

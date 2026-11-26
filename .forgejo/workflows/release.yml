@@ -79,10 +79,69 @@ jobs:
     with:
       publish: ${{ (forgejo.event_name == 'push' && forgejo.ref_type == 'branch') || inputs.image == 'web' }}
 
+  # Created before the builds so Android and desktop each add their files, whichever finishes first.
+  release:
+    name: Create the release
+    if: forgejo.event_name == 'push'
+    needs: checks
+    runs-on: docker
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve release
+        uses: https://git.ow-ops.eu/ow-ops/kit/.forgejo/actions/resolve-release@main
+        with:
+          prefix: MAILBOWOX
+          app-json: apps/app/app.json
+
+      - name: Generate release notes
+        if: ${{ forgejo.ref_type == 'tag' }}
+        run: |-
+          asset="git-cliff-${GIT_CLIFF_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+          base="https://github.com/orhun/git-cliff/releases/download/v${GIT_CLIFF_VERSION}"
+          curl -fsSL -O "${base}/${asset}"
+          curl -fsSL -O "${base}/${asset}.sha512"
+          sha512sum -c "${asset}.sha512"
+          tar -xzf "${asset}" -C "${RUNNER_TEMP}"
+          "${RUNNER_TEMP}/git-cliff-${GIT_CLIFF_VERSION}/git-cliff" --config cliff.toml --latest --strip all > "${RUNNER_TEMP}/notes.md"
+
+      - name: Create the release
+        env:
+          TOKEN: ${{ secrets.FORGE_TOKEN }}
+          API: ${{ forgejo.server_url }}/api/v1/repos/${{ forgejo.repository }}
+          SHA: ${{ forgejo.sha }}
+        run: |-
+          auth=(-H "Authorization: token ${TOKEN}")
+          code="$(curl -sS "${auth[@]}" -o /dev/null -w '%{http_code}' "${API}/releases/tags/${TAG}")"
+          case "${code}" in
+            200) echo "Release ${TAG} exists"; exit 0 ;;
+            404) ;;
+            *) echo "::error::Looking up release ${TAG} returned HTTP ${code}."; exit 1 ;;
+          esac
+          body="$(node -e '
+            const fs = require("fs");
+            const { TAG, SHA, MAILBOWOX_CHANNEL, RUNNER_TEMP } = process.env;
+            const nightly = MAILBOWOX_CHANNEL === "nightly";
+            const notes = `${RUNNER_TEMP}/notes.md`;
+            console.log(JSON.stringify({
+              tag_name: TAG,
+              target_commitish: SHA,
+              name: nightly ? `Nightly build ${TAG.replace("nightly-", "")}` : TAG,
+              body: nightly ? `Nightly build from main at ${SHA}` : fs.existsSync(notes) ? fs.readFileSync(notes, "utf8") : "",
+              prerelease: nightly,
+            }));
+          ')"
+          curl -fsS "${auth[@]}" -o /dev/null -H "Content-Type: application/json" -d "${body}" "${API}/releases"
+
   android:
     name: Build and publish the ${{ matrix.artifact }}
     if: forgejo.event_name == 'push'
-    needs: checks
+    needs: [checks, release]
     runs-on: docker
     timeout-minutes: 90
     strategy:
@@ -253,52 +312,33 @@ jobs:
       - name: Stage release assets
         if: ${{ matrix.artifact == 'apk' }}
         working-directory: ${{ github.workspace }}
-        env:
-          GIT_SHA: ${{ forgejo.sha }}
         run: |-
           cp dist/channel/obtainium.json dist/release/
           if [ "${MAILBOWOX_CHANNEL}" = stable ]; then
-            echo "RELEASE_TITLE=${TAG}"
             echo "PRERELEASE=false"
             echo "CHANNEL=latest"
             echo "CHANNEL_TITLE=Latest stable"
           else
-            echo "RELEASE_TITLE=Nightly build ${TAG#nightly-}"
-            echo "RELEASE_NOTES=Nightly build from main at ${GIT_SHA}"
             echo "PRERELEASE=true"
             echo "CHANNEL=nightly"
             echo "CHANNEL_TITLE=Nightly channel"
           fi >> "${GITHUB_ENV}"
 
-      - name: Generate release notes
-        if: ${{ matrix.artifact == 'apk' && forgejo.ref_type == 'tag' }}
-        working-directory: ${{ github.workspace }}
-        run: |-
-          asset="git-cliff-${GIT_CLIFF_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
-          base="https://github.com/orhun/git-cliff/releases/download/v${GIT_CLIFF_VERSION}"
-          curl -fsSL -O "${base}/${asset}"
-          curl -fsSL -O "${base}/${asset}.sha512"
-          sha512sum -c "${asset}.sha512"
-          tar -xzf "${asset}" -C "${RUNNER_TEMP}"
-          delimiter="EOF_$(openssl rand -hex 16)"
-          {
-            echo "RELEASE_NOTES<<${delimiter}"
-            "${RUNNER_TEMP}/git-cliff-${GIT_CLIFF_VERSION}/git-cliff" --config cliff.toml --latest --strip all
-            echo "${delimiter}"
-          } >> "${GITHUB_ENV}"
-
-      - name: Publish release
+      # The release job created it, and the desktop bundles go up to it too.
+      - name: Upload to the release
         if: ${{ matrix.artifact == 'apk' }}
-        uses: https://code.forgejo.org/actions/forgejo-release@98265452477dafb3f0f27ba9c462c90b18cb44fd # v2.13.4
-        with:
-          direction: upload
-          token: ${{ secrets.FORGE_TOKEN }}
-          tag: ${{ env.TAG }}
-          title: ${{ env.RELEASE_TITLE }}
-          release-notes: ${{ env.RELEASE_NOTES }}
-          prerelease: ${{ env.PRERELEASE }}
-          release-dir: dist/release
-          override: true
+        working-directory: ${{ github.workspace }}
+        env:
+          TOKEN: ${{ secrets.FORGE_TOKEN }}
+          API: ${{ forgejo.server_url }}/api/v1/repos/${{ forgejo.repository }}
+        run: |-
+          auth=(-H "Authorization: token ${TOKEN}")
+          id="$(curl -fsS "${auth[@]}" "${API}/releases/tags/${TAG}" | node -p 'JSON.parse(require("fs").readFileSync(0)).id')"
+          for file in dist/release/*; do
+            curl -fsS --retry 3 "${auth[@]}" -o /dev/null \
+              -F "attachment=@${file}" \
+              "${API}/releases/${id}/assets?name=$(basename "${file}")"
+          done
 
       # Obtainium reads its config from the channel release.
       - name: Publish the channel release
@@ -361,7 +401,7 @@ jobs:
   # GitHub has the Windows, macOS and ARM runners; its bundles join the release the apk job publishes.
   desktop:
     name: Dispatch the desktop build
-    needs: checks
+    needs: release
     if: ${{ forgejo.event_name == 'push' && secrets.GH_DISPATCH_TOKEN != '' }}
     runs-on: docker
     timeout-minutes: 10
