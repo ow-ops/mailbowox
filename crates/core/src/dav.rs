@@ -93,6 +93,8 @@ pub(crate) struct Changes {
     pub reset: bool,
     pub changed: Vec<String>,
     pub removed: Vec<String>,
+    /// Listed but unreadable: neither changed nor removed.
+    pub kept: Vec<String>,
 }
 
 pub(crate) struct Dav {
@@ -272,6 +274,11 @@ impl Dav {
                 .iter()
                 .filter_map(|href| absolute(collection, href))
                 .collect(),
+            kept: delta
+                .unreadable
+                .iter()
+                .filter_map(|entry| absolute(collection, &entry.href))
+                .collect(),
         })
     }
 
@@ -303,6 +310,7 @@ impl Dav {
                 .await??;
             delta.changed.extend(next.changed);
             delta.vanished.extend(next.vanished);
+            delta.unreadable.extend(next.unreadable);
             delta.sync_token = next.sync_token;
             delta.truncated = next.truncated;
         }
@@ -338,6 +346,7 @@ impl Dav {
                 reset: false,
                 changed: Vec::new(),
                 removed: Vec::new(),
+                kept: Vec::new(),
             });
         }
 
@@ -362,6 +371,12 @@ impl Dav {
             }
             present.insert(href);
         }
+        let kept: Vec<String> = listing
+            .unreadable
+            .iter()
+            .filter_map(|entry| absolute(collection, &entry.href))
+            .collect();
+        present.extend(kept.iter().cloned());
 
         Ok(Changes {
             sync_token: None,
@@ -373,6 +388,7 @@ impl Dav {
                 .filter(|href| !present.contains(**href))
                 .map(|href| (*href).to_owned())
                 .collect(),
+            kept,
         })
     }
 

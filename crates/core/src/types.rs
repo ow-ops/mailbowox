@@ -273,6 +273,8 @@ pub struct ContactSyncResult {
     pub changed: Vec<Contact>,
     /// Hrefs of the deleted contacts.
     pub removed: Vec<String>,
+    /// Hrefs the server listed but could not serve; their cached cards stay.
+    pub kept: Vec<String>,
 }
 
 /// The fields an update rewrites; the card's other properties, its photo

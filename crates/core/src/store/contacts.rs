@@ -156,9 +156,10 @@ impl MailStore {
         let mut statements = Vec::new();
         if result.reset {
             statements.push(statement!(
-                "DELETE FROM contacts WHERE account = ? AND book = ?",
+                "DELETE FROM contacts WHERE account = ? AND book = ? AND href NOT IN (SELECT value FROM json_each(?))",
                 account,
-                book
+                book,
+                json(&result.kept)?
             ));
         }
         for href in &result.removed {
@@ -389,6 +390,7 @@ mod tests {
             reset,
             changed,
             removed: removed.iter().map(|href| (*href).to_owned()).collect(),
+            kept: Vec::new(),
         }
     }
 
@@ -482,6 +484,24 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(names(&store, &[]).await, ["New"]);
+    }
+
+    #[tokio::test]
+    async fn a_reset_keeps_the_cards_the_server_could_not_serve() {
+        let store = super::super::tests::store().await;
+        store
+            .save_address_books("a", &[book("/p/", "P")])
+            .await
+            .unwrap();
+        let both = vec![contact("/1", "Ada"), contact("/2", "Grace")];
+        store
+            .apply_contact_sync("a", "/p/", &synced(true, both, &[], None))
+            .await
+            .unwrap();
+        let mut again = synced(true, vec![contact("/3", "New")], &[], None);
+        again.kept = vec!["/2".to_owned()];
+        store.apply_contact_sync("a", "/p/", &again).await.unwrap();
+        assert_eq!(names(&store, &[]).await, ["Grace", "New"]);
     }
 
     #[tokio::test]

@@ -129,6 +129,7 @@ pub(crate) async fn sync(
         reset: found.reset,
         changed: fetch(&dav, &address_book, &found.changed).await?,
         removed: found.removed,
+        kept: found.kept,
     })
 }
 
