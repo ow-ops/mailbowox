@@ -27,22 +27,7 @@ jest.mock('@/accounts/store', () => ({
   getAccounts: () => [],
   subscribeAccounts: () => () => undefined,
 }));
-// Argon2 at its real cost takes seconds in a test; what matters here is that the same passphrase finds the same slot.
-jest.mock('@/vault/crypto', () => {
-  const actual = jest.requireActual('@/vault/crypto');
-  const { sha256 } = jest.requireActual('@noble/hashes/sha2.js');
-  const { hkdf } = jest.requireActual('@noble/hashes/hkdf.js');
-  const { bytesToHex } = jest.requireActual('@noble/hashes/utils.js');
-  const text = (value: string) => new TextEncoder().encode(value);
-  const part = (key: Uint8Array, info: string): Uint8Array => hkdf(sha256, key, undefined, text(info), 32);
-  return {
-    ...actual,
-    passphraseLocation: async (passphrase: string, email: string) => {
-      const key = sha256(text(`${passphrase}\n${email}`));
-      return { id: bytesToHex(part(key, 'id')), auth: bytesToHex(part(key, 'auth')), enc: part(key, 'enc') };
-    },
-  };
-});
+jest.mock('@/core', () => jest.requireActual('../jest/core'));
 jest.mock('@/vault/gateway', () => ({
   readBlob: async (_: string, { id }: { id: string }) => (mockDeleted.has(id) ? 'deleted' : (mockBlobs.get(id) ?? null)),
   writeBlob: async (_: string, { id }: { id: string }, version: number, data: Uint8Array) => {

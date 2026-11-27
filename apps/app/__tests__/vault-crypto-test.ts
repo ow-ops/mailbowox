@@ -15,6 +15,7 @@ import {
   vaultLocation,
 } from '@/vault/crypto';
 
+jest.mock('@/core', () => jest.requireActual('../jest/core'));
 jest.mock('expo-crypto', () => ({
   getRandomBytes: (n: number) => crypto.getRandomValues(new Uint8Array(n)),
 }));
@@ -78,7 +79,7 @@ describe('passphrase', () => {
 
     const otherUser = await passphraseLocation('correct horse battery', 'bob@example.com');
     expect(otherUser.id).not.toBe(slot.id);
-  }, 60_000);
+  });
 });
 
 describe('device linking', () => {

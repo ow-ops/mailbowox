@@ -1,6 +1,7 @@
 import { openBackup, sealBackup } from '@/accounts/backup';
 import type { SyncedAccount } from '@/accounts/store';
 
+jest.mock('@/core', () => jest.requireActual('../jest/core'));
 jest.mock('expo-crypto', () => ({
   getRandomBytes: (n: number) => crypto.getRandomValues(new Uint8Array(n)),
 }));

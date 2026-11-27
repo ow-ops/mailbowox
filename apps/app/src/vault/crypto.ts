@@ -1,16 +1,14 @@
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { x25519 } from '@noble/curves/ed25519.js';
-import { argon2idAsync } from '@noble/hashes/argon2.js';
 import { hkdf } from '@noble/hashes/hkdf.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, concatBytes, hexToBytes, utf8ToBytes } from '@noble/hashes/utils.js';
 import { getRandomBytes } from 'expo-crypto';
 
+import { core } from '@/core';
+
 const FORMAT = 1;
 const NONCE_BYTES = 24;
-
-// OWASP's argon2id baseline (19 MiB, 2 passes): pure JS on a phone already takes a few seconds.
-const ARGON = { t: 2, m: 19 * 1024, p: 1, dkLen: 32, asyncTick: 50 };
 
 export type KeyPair = ReturnType<typeof x25519.keygen>;
 
@@ -34,11 +32,8 @@ export const vaultLocation = (key: Uint8Array) => locate(key, 'vault');
 // The email salts it, so two people with the same passphrase never share a slot.
 export async function passphraseLocation(passphrase: string, email: string) {
   const salt = sha256(utf8ToBytes(`mailbowox passphrase ${email.trim().toLowerCase()}`));
-  return locate(await argon2idAsync(passphrase.normalize('NFC'), salt, ARGON), 'passphrase');
+  return locate(await core.passwordKey(passphrase, salt), 'passphrase');
 }
-
-export const backupKey = (password: string, salt: Uint8Array) =>
-  argon2idAsync(password.normalize('NFC'), salt, ARGON);
 
 export function seal(key: Uint8Array, plaintext: Uint8Array) {
   const header = Uint8Array.of(FORMAT);

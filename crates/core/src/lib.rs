@@ -23,6 +23,7 @@ mod dav;
 mod discover;
 mod error;
 mod imap;
+mod kdf;
 #[cfg(test)]
 mod parsers;
 mod probe;
@@ -43,6 +44,7 @@ mod vcard;
 
 pub use category::Category;
 pub use error::{CoreError, TlsFailure};
+pub use kdf::password_key;
 pub use session::MailSession;
 pub use store::{MailStore, OlderMail, SqlRunner};
 pub use transport::{AddrFilter, is_public};

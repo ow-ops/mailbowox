@@ -153,6 +153,7 @@ export interface Core {
   buildMessage(draft: Draft): Promise<ArrayBuffer>;
   configureRelay(url: string, token: string): void;
   htmlToText(html: string): string;
+  passwordKey(password: string, salt: Uint8Array): Promise<Uint8Array>;
   discoverContacts(config: AccountConfig): Promise<string | undefined>;
   createContact(config: AccountConfig, addressBook: string, draft: ContactDraft): Promise<Contact>;
   updateContact(config: AccountConfig, contact: Contact, draft: ContactDraft): Promise<Contact>;

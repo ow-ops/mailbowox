@@ -3,8 +3,9 @@ import { getRandomBytes } from 'expo-crypto';
 import * as v from 'valibot';
 
 import type { SyncedAccount } from '@/accounts/store';
+import { core } from '@/core';
 import { t } from '@/i18n';
-import { backupKey, open, seal } from '@/vault/crypto';
+import { open, seal } from '@/vault/crypto';
 import { accountSchema } from '@/vault/document';
 
 const SALT_BYTES = 16;
@@ -23,7 +24,7 @@ function parse<S extends v.GenericSchema>(schema: S, text: string): v.InferOutpu
 
 export async function sealBackup(accounts: SyncedAccount[], password: string) {
   const salt = getRandomBytes(SALT_BYTES);
-  const data = seal(await backupKey(password, salt), utf8ToBytes(JSON.stringify({ accounts })));
+  const data = seal(await core.passwordKey(password, salt), utf8ToBytes(JSON.stringify({ accounts })));
   return JSON.stringify({ mailbowox: 'backup', salt: bytesToHex(salt), data: bytesToHex(data) });
 }
 
@@ -32,7 +33,7 @@ export async function openBackup(text: string, password: string): Promise<Synced
   if (!file) throw new Error(t('settings.devices.backup.errors.notBackup'));
   let plaintext: Uint8Array;
   try {
-    plaintext = open(await backupKey(password, hexToBytes(file.salt)), hexToBytes(file.data));
+    plaintext = open(await core.passwordKey(password, hexToBytes(file.salt)), hexToBytes(file.data));
   } catch {
     throw new Error(t('settings.devices.backup.errors.password'));
   }

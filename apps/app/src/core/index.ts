@@ -239,6 +239,7 @@ export const core = explainErrors<Core>({
   buildMessage: async (draft) => native.buildMessage(draft),
   configureRelay: (url, token) => native.configureRelay(url, token),
   htmlToText: (html) => native.htmlToText(html),
+  passwordKey: async (password, salt) => new Uint8Array(await native.passwordKey(password, salt.slice().buffer)),
   discoverContacts: (config) => native.discoverContacts(toConfig(config)),
   createContact: (config, addressBook, draft) => native.createContact(toConfig(config), addressBook, draft),
   updateContact: (config, contact, draft) => native.updateContact(toConfig(config), contact, draft),
