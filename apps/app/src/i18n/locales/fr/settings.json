@@ -238,11 +238,121 @@
     "saved": "Relais enregistré",
     "invalid": "Saisissez l’adresse du relais, en commençant par https:// ou http://.",
     "unreachable": "Rien n’a répondu à {{url}}. Vérifiez l’adresse et que le relais fonctionne.",
-    "refused": "Le relais n’a pas accepté ce code d’accès. Vérifiez-le auprès de la personne qui gère le relais."
+    "refused": "Le relais n’a pas accepté ce code d’accès. Vérifiez-le auprès de la personne qui gère le relais.",
+    "notSet": "Non défini",
+    "missing": "Le courrier ne peut pas se charger dans ce navigateur sans relais."
   },
   "about": {
     "title": "À propos",
     "version": "Version",
     "privacy": "mailbowox communique directement avec vos serveurs mail. Aucun de nos serveurs ne lit votre courrier, et l’app ne collecte aucune statistique."
+  },
+  "appearance": {
+    "title": "Apparence",
+    "system": "Système",
+    "light": "Clair",
+    "dark": "Sombre",
+    "themes": "Thèmes",
+    "mode": "Mode"
+  },
+  "themes": {
+    "title": "Thèmes",
+    "browse": "Parcourir les thèmes",
+    "new": "Nouveau thème",
+    "import": "Importer un fichier .sowocial.css",
+    "importFailed": "Impossible d’importer le thème",
+    "imported": "Thème importé",
+    "lightTheme": "Thème clair",
+    "darkTheme": "Thème sombre",
+    "default": "Par défaut",
+    "noneLight": "Seulement le thème par défaut pour l’instant. Parcourez les thèmes pour en ajouter un clair.",
+    "noneDark": "Seulement le thème par défaut pour l’instant. Parcourez les thèmes pour en ajouter un sombre.",
+    "pickFailed": "Impossible de lire le fichier de thème",
+    "errors": {
+      "size": "Le fichier dépasse 1 Mo.",
+      "header": "Ce n’est pas un fichier de thème : il n’a pas d’en-tête @sowocial-theme ni @sowocial-tweak.",
+      "empty": "Le fichier ne définit aucune couleur utilisée par cette application."
+    }
+  },
+  "tweaks": {
+    "title": "Ajustements",
+    "hint": "Les ajustements modifient quelques couleurs du thème utilisé.",
+    "removeLabel": "Retirer {{name}}",
+    "removeConfirm": "Retirer {{name}} ?",
+    "useLabel": "Utiliser {{name}}"
+  },
+  "catalog": {
+    "all": "Tous",
+    "light": "Clairs",
+    "dark": "Sombres",
+    "tweaks": "Ajustements",
+    "tweak": "Ajustement",
+    "files_one": "{{count}} fichier",
+    "files_other": "{{count}} fichiers",
+    "installed": "Installé",
+    "install": "Installer",
+    "installFailed": "Installation impossible"
+  },
+  "themeLink": {
+    "title": "Thème",
+    "tweakTitle": "Ajustement",
+    "broken": "Ce lien de thème est invalide.",
+    "shared": "Thème partagé",
+    "kindTheme": "Thème {{kind}}",
+    "light": "clair",
+    "dark": "sombre",
+    "by": "par {{author}}",
+    "install": "Installer"
+  },
+  "themeEditor": {
+    "defaultName": "Mon thème",
+    "editTitle": "Modifier le thème",
+    "newTitle": "Nouveau thème",
+    "about": "À propos",
+    "name": "Nom",
+    "author": "Auteur",
+    "optional": "Facultatif",
+    "colors": "Couleurs",
+    "saveAndUse": "Enregistrer et utiliser",
+    "invalidColors": "Corrigez les couleurs invalides : {{colors}}.",
+    "shareLink": "Partager le lien",
+    "export": "Exporter en .sowocial.css",
+    "delete": "Supprimer le thème",
+    "deleteConfirm": "Supprimer {{name}} ?",
+    "colorLabel": "Couleur : {{label}}",
+    "colorHint": "Une couleur hexadécimale, comme #6b4fb8",
+    "preview": "Aperçu du thème",
+    "previewSender": "Alice",
+    "previewSubject": "J’essaie un nouveau thème",
+    "previewSnippet": "Les couleurs prennent forme.",
+    "previewSend": "Envoyer",
+    "previewDelete": "Supprimer",
+    "lowContrast": "Contraste faible",
+    "lowContrastHint": "Ces paires sont sous le contraste recommandé et peuvent être difficiles à lire.",
+    "contrastPair": "{{foreground}} sur {{background}} : {{ratio}}:1 (minimum {{min}}:1)",
+    "tokens": {
+      "page": "Arrière-plan de la page",
+      "field": "Champs de saisie",
+      "surface": "Surfaces",
+      "accentSoft": "Éléments sélectionnés",
+      "onAccentSoft": "Texte des éléments sélectionnés",
+      "border": "Bordures",
+      "outline": "Contours",
+      "text": "Texte",
+      "heading": "Titres et expéditeurs",
+      "muted": "Texte secondaire",
+      "primary": "Accent",
+      "onPrimary": "Texte sur l’accent",
+      "danger": "Danger",
+      "scrim": "Voile derrière les panneaux"
+    }
+  },
+  "accountTheme": {
+    "title": "Thème de {{label}}",
+    "row": "Thème",
+    "same": "Comme l’application",
+    "own": "Le sien",
+    "hint": "Donnez à ce compte ses propres couleurs, utilisées quand l’une de ses boîtes est ouverte.",
+    "note": "{{label}} a son propre thème. Les changements ci-dessous s’appliquent à vos autres comptes."
   }
 }

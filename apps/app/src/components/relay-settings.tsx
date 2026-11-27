@@ -1,16 +1,16 @@
 import { useMutation } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
-import { Section } from '@/components/settings';
+import { Row, Section } from '@/components/settings';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { usePref } from '@/prefs/store';
 import { HOSTED_RELAY_URL, isRelayUrl, relayReachable, relayRefusesCode, saveRelay } from '@/utils/relay';
-import { showToast } from '@/utils/toast';
 
 type Props = { submitLabel: string; variant: 'primary' | 'outline'; onSaved: () => void };
 
@@ -94,13 +94,26 @@ export function RelayForm({ submitLabel, variant, onSaved }: Props) {
 
 export function RelaySettings() {
   const { t } = useTranslation();
+  const relayUrl = usePref('relayUrl');
   return (
-    <Section title={t('settings.relay.title')}>
-      <ThemedText type="meta">{t('settings.relay.hint')}</ThemedText>
-      <RelayForm
-        submitLabel={t('settings.relay.save')}
-        variant="outline"
-        onSaved={() => showToast(t('settings.relay.saved'))} />
+    <Section
+      title={t('settings.relay.title')}
+      footer={
+        <View style={styles.field}>
+          {!relayUrl && (
+            <ThemedText type="meta" themeColor="danger">
+              {t('settings.relay.missing')}
+            </ThemedText>
+          )}
+          <ThemedText type="meta">{t('settings.relay.hint')}</ThemedText>
+        </View>
+      }>
+      <Row
+        title={t('settings.relay.url')}
+        value={relayUrl ? relayUrl.replace(/^https?:\/\//, '') : t('settings.relay.notSet')}
+        chevron
+        onPress={() => router.push('/relay')}
+      />
     </Section>
   );
 }

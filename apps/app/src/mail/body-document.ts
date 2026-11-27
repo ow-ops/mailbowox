@@ -1,5 +1,5 @@
-import { Colors } from '@/constants/theme';
 import type { Scheme } from '@/hooks/use-theme';
+import type { Palette } from '@/theme/store';
 
 const REFRESH = /<meta[^>]*http-equiv\s*=\s*["']?refresh[^>]*>/gi;
 
@@ -12,8 +12,7 @@ export function bodyScheme(html: string, appScheme: Scheme): Scheme {
 }
 
 // The CSP is a second fence behind the core's sanitiser: no scripts, frames or remote loads unless allowed.
-export function bodyDocument(html: string, allowRemote: boolean, scheme: Scheme) {
-  const palette = Colors[scheme];
+export function bodyDocument(html: string, allowRemote: boolean, scheme: Scheme, palette: Palette) {
   const images = allowRemote ? 'data: cid: https: http:' : 'data: cid:';
   const policy = `default-src 'none'; style-src 'unsafe-inline'; img-src ${images}; font-src data:`;
   return `<!doctype html>

@@ -1,10 +1,10 @@
 import { Host, Picker, Text } from '@expo/ui/swift-ui';
 import { accessibilityLabel, pickerStyle, tag, tint } from '@expo/ui/swift-ui/modifiers';
 
-import type { SegmentedControlProps } from '@/components/segmented-control';
+import type { MenuPickerProps } from '@/components/menu-picker';
 import { useTheme } from '@/hooks/use-theme';
 
-export function MenuPicker<T extends string>({ label, options, value, onChange }: SegmentedControlProps<T>) {
+export function MenuPicker<T extends string>({ label, options, value, onChange }: MenuPickerProps<T>) {
   const theme = useTheme();
   return (
     <Host matchContents>

@@ -21,32 +21,34 @@ export function DevicesSection() {
 
   if (!gateway) {
     return (
-      <Section title={t('settings.devices.title')}>
+      <Section title={t('settings.devices.title')} footer={t('settings.devices.offHint')}>
         <Row
           title={t('settings.devices.sync')}
-          detail={t('settings.devices.off')}
+          value={t('settings.devices.off')}
           chevron
           onPress={() => router.push('/sync-setup')}
         />
         <Row title={t('settings.devices.joinDevice')} chevron onPress={() => router.push('/join-device')} />
         <Row title={t('settings.devices.shareAccounts')} chevron onPress={() => router.push('/share-accounts')} />
         <Row title={t('settings.devices.backupAccounts')} chevron onPress={() => router.push('/backup-accounts')} />
-        <ThemedText type="meta">{t('settings.devices.offHint')}</ThemedText>
       </Section>
     );
   }
 
   return (
-    <Section title={t('settings.devices.title')}>
-      <Row title={t('settings.devices.sync')} detail={status} chevron onPress={() => router.push('/sync')} />
+    <Section
+      title={t('settings.devices.title')}
+      footer={
+        error && (
+          <ThemedText type="meta" themeColor="danger" accessibilityLiveRegion="polite">
+            {error}
+          </ThemedText>
+        )
+      }>
+      <Row title={t('settings.devices.sync')} value={status} chevron onPress={() => router.push('/sync')} />
       <Row title={t('settings.devices.linkDevice')} chevron onPress={() => router.push('/link-device')} />
       <Row title={t('settings.devices.shareAccounts')} chevron onPress={() => router.push('/share-accounts')} />
       <Row title={t('settings.devices.backupAccounts')} chevron onPress={() => router.push('/backup-accounts')} />
-      {error && (
-        <ThemedText themeColor="danger" accessibilityLiveRegion="polite">
-          {error}
-        </ThemedText>
-      )}
     </Section>
   );
 }

@@ -24,6 +24,16 @@ export function useMailView(): MailView {
   return accounts.length > 1 ? { kind: 'unified' } : { kind: 'mailbox', account: accounts[0].id, mailbox: INBOX };
 }
 
+// The account whose mail is shown, for its own theme: none in the views that mix accounts, or before sign-in.
+export function useShownAccount(): Account | undefined {
+  const accounts = useAccounts();
+  const chosen = useStore(viewStore, (state) => state.view);
+  if (chosen && stillValid(chosen, accounts)) {
+    return chosen.kind === 'mailbox' ? accounts.find((a) => a.id === chosen.account) : undefined;
+  }
+  return accounts.length === 1 ? accounts[0] : undefined;
+}
+
 export const boxesOf = (view: MailView, accounts: Account[]): MailboxRef[] =>
   view.kind === 'mailbox' ? [view] : accounts.map((a) => ({ account: a.id, mailbox: INBOX }));
 

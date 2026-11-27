@@ -21,5 +21,8 @@
   },
   "time": {
     "dayMonth": "MMM d"
-  }
+  },
+  "edit": "Edit",
+  "remove": "Remove",
+  "delete": "Delete"
 }

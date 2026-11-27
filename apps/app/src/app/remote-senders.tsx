@@ -2,7 +2,6 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { Row, Section, SettingsScreen } from '@/components/settings';
-import { ThemedText } from '@/components/themed-text';
 import { setPref, usePref } from '@/prefs/store';
 
 export default function RemoteSendersScreen() {
@@ -17,8 +16,7 @@ export default function RemoteSendersScreen() {
 
   return (
     <SettingsScreen title={t('settings.privacy.remoteSenders')}>
-      <Section>
-        <ThemedText type="meta">{t('settings.privacy.remoteSendersHint')}</ThemedText>
+      <Section footer={t('settings.privacy.remoteSendersHint')}>
         {senders.map((email) => (
           <Row key={email} title={email} detail={t('settings.privacy.stopLoading')} onPress={() => remove(email)} />
         ))}

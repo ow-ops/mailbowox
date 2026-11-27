@@ -26,7 +26,7 @@ jest.mock('@/core', () => ({
 jest.mock('@/accounts/store', () => ({
   addAccount: jest.fn(),
   hasAccount: jest.fn(() => false),
-  useAccounts: () => [{ id: 'a' }],
+  useAccounts: () => [{ id: 'a', email: 'a@example.com' }],
 }));
 jest.mock('@/utils/relay', () => ({ ...jest.requireActual('@/utils/relay'), savedRelayRefusesCode: jest.fn() }));
 jest.mock('@/accounts/use-account-color', () => ({ pinAccountColor: jest.fn() }));

@@ -48,8 +48,8 @@ export const AccountColors = {
 // Embedded by the expo-font config plugin. iOS resolves fonts by PostScript name,
 // Android by file name; web loads the same files with useFonts under the file names.
 export const Fonts = Platform.select({
-  ios: { display: 'BricolageGrotesque-Bold', heading: 'BricolageGrotesque-SemiBold' },
-  default: { display: 'BricolageGrotesque_700Bold', heading: 'BricolageGrotesque_600SemiBold' },
+  ios: { display: 'BricolageGrotesque-Bold', heading: 'BricolageGrotesque-SemiBold', mono: 'Menlo' },
+  default: { display: 'BricolageGrotesque_700Bold', heading: 'BricolageGrotesque_600SemiBold', mono: 'monospace' },
 });
 
 export const Spacing = {
@@ -68,6 +68,9 @@ export const Radius = { sm: 6, md: 12, lg: 16 } as const;
 export const Hairline = StyleSheet.hairlineWidth;
 
 export const BorderWidth = { hairline: Hairline, input: 1 } as const;
+
+// Edges a color swatch on any page, light or dark.
+export const SwatchEdge = 'rgba(127, 127, 127, 0.4)';
 
 export const Shadow = {
   raised: '0 2px 8px rgba(0, 0, 0, 0.2)',

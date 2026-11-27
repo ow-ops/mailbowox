@@ -1,5 +1,6 @@
 import { forgetAccount, sweepRemovedAccounts } from '@/accounts/forget';
 import type { Account } from '@/accounts/store';
+import { clearAccountTheme } from '@/theme/store';
 
 const mockAccounts: { id: string }[] = [];
 let mockReadable = true;
@@ -37,6 +38,7 @@ jest.mock('@/utils/query-client', () => ({
 }));
 jest.mock('@/mail/session', () => ({ closeSession: async () => undefined }));
 jest.mock('@/push/register', () => ({ dropPush: async () => undefined }));
+jest.mock('@/theme/store', () => ({ clearAccountTheme: jest.fn() }));
 
 beforeEach(() => {
   mockAccounts.splice(0, mockAccounts.length, { id: 'kept' }, { id: 'gone' });
@@ -46,9 +48,10 @@ beforeEach(() => {
 
 describe('forgetAccount', () => {
   it('takes the account off the list before deleting its data, so a sync under way stops writing', async () => {
-    await forgetAccount({ id: 'gone' } as Account);
+    await forgetAccount({ id: 'gone', email: 'gone@example.com' } as Account);
 
     expect(mockDeleted).toEqual(['mail:gone:unlisted']);
+    expect(clearAccountTheme).toHaveBeenCalledWith('gone@example.com');
   });
 });
 

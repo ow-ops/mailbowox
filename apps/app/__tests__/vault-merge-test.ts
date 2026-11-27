@@ -73,4 +73,18 @@ describe('mergeDocuments', () => {
     expect(mergeDocuments(doc({}, 2), doc({}, 0)).document.prefs.value.remoteContent).toBe('never');
     expect(mergeDocuments(doc({}, 0), doc({}, 2)).changed).toBe(false);
   });
+
+  it('takes the newer themes, and keeps them when the other side has none', () => {
+    const themes = (updatedAt: number, appearance: 'light' | 'dark') => ({
+      updatedAt,
+      value: { appearance, themes: [], tweaks: [], selected: { light: null, dark: null }, byAccount: {} },
+    });
+    const local = { ...doc({}), themes: themes(2, 'dark') };
+    expect(mergeDocuments(local, { ...doc({}), themes: themes(1, 'light') })).toMatchObject({
+      document: { themes: { value: { appearance: 'dark' } } },
+      changed: true,
+    });
+    expect(mergeDocuments(local, doc({})).document.themes?.value.appearance).toBe('dark');
+    expect(mergeDocuments(doc({}), local)).toMatchObject({ document: { themes: { updatedAt: 2 } }, changed: false });
+  });
 });

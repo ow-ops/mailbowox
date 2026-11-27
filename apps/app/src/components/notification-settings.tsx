@@ -5,7 +5,6 @@ import { Platform } from 'react-native';
 
 import type { Account } from '@/accounts/store';
 import { Section, ToggleRow } from '@/components/settings';
-import { ThemedText } from '@/components/themed-text';
 import { notifiesNewMail, setNotifyNewMail } from '@/mail/new-mail';
 import { GATEWAY_URL } from '@/push/config';
 import { setCheckInBackground } from '@/push/poll';
@@ -27,22 +26,19 @@ export function NotificationSettings({ account }: { account: Account }) {
   if (Platform.OS === 'web') {
     if (!invoke && !('Notification' in window)) return null;
     return (
-      <Section title={t('settings.notifications.title')}>
+      <Section
+        title={t('settings.notifications.title')}
+        footer={t(invoke ? 'settings.notifications.desktop' : 'settings.notifications.browser')}>
         <ToggleRow title={t('settings.notifications.toggle')} {...notify} />
-        <ThemedText type="meta">{t(invoke ? 'settings.notifications.desktop' : 'settings.notifications.browser')}</ThemedText>
       </Section>
     );
   }
   return (
     <Section title={t('settings.notifications.title')}>
       {!!GATEWAY_URL && (
-        <>
-          <ToggleRow title={t('settings.notifications.toggle')} {...push} />
-          <ThemedText type="meta">{t('settings.notifications.explanation')}</ThemedText>
-        </>
+        <ToggleRow title={t('settings.notifications.toggle')} detail={t('settings.notifications.explanation')} {...push} />
       )}
-      <ToggleRow title={t('settings.notifications.poll')} {...poll} />
-      <ThemedText type="meta">{t('settings.notifications.pollExplanation')}</ThemedText>
+      <ToggleRow title={t('settings.notifications.poll')} detail={t('settings.notifications.pollExplanation')} {...poll} />
     </Section>
   );
 }

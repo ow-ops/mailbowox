@@ -9,7 +9,7 @@ import { useFindContacts } from '@/contacts/actions';
 import { AccountSwatch } from '@/components/account-mark';
 import { NotificationSettings } from '@/components/notification-settings';
 import { Row, Section, SettingsScreen } from '@/components/settings';
-import { ThemedText } from '@/components/themed-text';
+import { useThemeState } from '@/hooks/use-theme';
 import { core, type ServerConfig } from '@/core';
 import { explainError } from '@/core/errors';
 import { signatureHtml } from '@/mail/rich';
@@ -30,6 +30,7 @@ function AccountSettings({ account }: { account: Account }) {
   const findContacts = useFindContacts([account]);
   const hue = useAccountHues()[account.email.toLowerCase()];
   const several = useAccounts().length > 1;
+  const ownTheme = !!useThemeState().byAccount[account.email.toLowerCase()];
 
   const server = ({ host, port, security }: ServerConfig) =>
     t('settings.account.server', { host, port, security: t(`accounts.servers.security.${security}`) });
@@ -46,11 +47,11 @@ function AccountSettings({ account }: { account: Account }) {
       <Section>
         <Row
           title={t('settings.account.name')}
-          detail={account.displayName || t('settings.accountName.none')}
+          value={account.displayName || t('settings.accountName.none')}
           chevron
           onPress={() => router.push({ pathname: '/account-name', params: { account: account.id } })}
         />
-        <Row title={t('settings.account.email')} detail={account.email} />
+        <Row title={t('settings.account.email')} value={account.email} />
       </Section>
 
       <Section title={t('settings.account.servers')}>
@@ -70,8 +71,9 @@ function AccountSettings({ account }: { account: Account }) {
       </Section>
 
       {several && (
-        <Section title={t('settings.account.color')}>
-          <ThemedText type="meta">{t('settings.account.colorHint', { label: accountLabel(account) })}</ThemedText>
+        <Section
+          title={t('settings.account.color')}
+          footer={t('settings.account.colorHint', { label: accountLabel(account) })}>
           {ACCOUNT_HUES.map((option) => (
             <Row
               key={option}
@@ -84,8 +86,16 @@ function AccountSettings({ account }: { account: Account }) {
         </Section>
       )}
 
-      <Section title={t('settings.account.identities')}>
-        <ThemedText type="meta">{t('settings.account.identitiesHint')}</ThemedText>
+      <Section>
+        <Row
+          title={t('settings.accountTheme.row')}
+          value={ownTheme ? t('settings.accountTheme.own') : t('settings.accountTheme.same')}
+          chevron
+          onPress={() => router.push({ pathname: '/account-theme', params: { id: account.id } })}
+        />
+      </Section>
+
+      <Section title={t('settings.account.identities')} footer={t('settings.account.identitiesHint')}>
         {(account.identities ?? []).map((identity) => (
           <Row
             key={identity.email}

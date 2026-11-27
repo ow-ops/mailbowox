@@ -5,17 +5,17 @@ import { ContactFormScreen } from '@/components/contact-form';
 import { renderWithQueries } from '../jest/render';
 
 jest.mock('@mailbowox/core-native', () => ({}));
-jest.mock('expo-router', () => require('../jest/expo-router'));
+jest.mock('expo-router', () => jest.requireActual('../jest/expo-router'));
 jest.mock('@/contacts/actions', () => ({ useSaveContact: jest.fn() }));
 jest.mock('@/contacts/queries', () => ({ useAddressBooks: jest.fn() }));
-// The native picker exposes nothing to query; the web one offers the same choice as radio buttons.
+// The native and web pickers expose nothing to query here; the segmented control offers the same choice as radio buttons.
 jest.mock('@/components/menu-picker', () => ({
   MenuPicker: jest.requireActual('../src/components/segmented-control.tsx').SegmentedControl,
 }));
 
-const { router } = require('expo-router');
-const { useSaveContact } = require('@/contacts/actions');
-const { useAddressBooks } = require('@/contacts/queries');
+const { router } = jest.requireMock<typeof import('../jest/expo-router')>('expo-router');
+const { useSaveContact } = jest.requireMock<{ useSaveContact: jest.Mock }>('@/contacts/actions');
+const { useAddressBooks } = jest.requireMock<{ useAddressBooks: jest.Mock }>('@/contacts/queries');
 
 const personal = { account: 'a', href: '/personal/', name: 'Personal', readOnly: false };
 const shared = { account: 'a', href: '/shared/', name: 'Shared', readOnly: false };

@@ -7,6 +7,7 @@ import { getAccounts, restoreAccount, subscribeAccounts, syncedAccount } from '@
 import { t } from '@/i18n';
 import { closeSession } from '@/mail/session';
 import { getSyncedPrefs, restorePrefs, subscribePrefs } from '@/prefs/store';
+import { getSyncedThemes, restoreThemes, themeStore } from '@/theme/store';
 import { writeItem } from '@/utils/kv';
 import { readJson } from '@/utils/stored';
 import { applyRelay } from '@/utils/relay';
@@ -61,7 +62,7 @@ async function localDocument(): Promise<VaultDocument> {
     if ((await getPassword(account.id)) === null) continue;
     accounts[account.email.toLowerCase()] = { updatedAt: account.updatedAt ?? 0, account: await syncedAccount(account) };
   }
-  return { accounts, prefs: getSyncedPrefs() };
+  return { accounts, prefs: getSyncedPrefs(), themes: getSyncedThemes() };
 }
 
 async function applyDocument(document: VaultDocument) {
@@ -79,6 +80,9 @@ async function applyDocument(document: VaultDocument) {
   if (document.prefs.updatedAt > getSyncedPrefs().updatedAt) {
     restorePrefs(document.prefs.value, document.prefs.updatedAt);
     applyRelay();
+  }
+  if (document.themes && document.themes.updatedAt > getSyncedThemes().updatedAt) {
+    restoreThemes(document.themes.value, document.themes.updatedAt);
   }
 }
 
@@ -159,9 +163,11 @@ export function watchVault() {
   syncInBackground();
   const unsubscribeAccounts = subscribeAccounts(syncInBackground);
   const unsubscribePrefs = subscribePrefs(syncInBackground);
+  const unsubscribeThemes = themeStore.subscribe(syncInBackground);
   return () => {
     unsubscribeAccounts();
     unsubscribePrefs();
+    unsubscribeThemes();
   };
 }
 

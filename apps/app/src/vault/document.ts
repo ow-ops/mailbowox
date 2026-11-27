@@ -3,6 +3,7 @@ import * as v from 'valibot';
 import type { SyncedAccount } from '@/accounts/store';
 import { t } from '@/i18n';
 import { prefsSchema, type Prefs } from '@/prefs/store';
+import { themeStateSchema, type ThemeState } from '@/theme/store';
 
 // Bumped when a change to the document would be misread by an older app, which then refuses it.
 const VERSION = 1;
@@ -26,6 +27,8 @@ export const accountSchema = v.looseObject({
 const schema = v.looseObject({
   accounts: v.record(v.string(), v.looseObject({ updatedAt: v.number(), account: v.nullable(accountSchema) })),
   prefs: v.looseObject({ updatedAt: v.number(), value: prefsSchema }),
+  // Absent from vaults written before themes synced.
+  themes: v.optional(v.looseObject({ updatedAt: v.number(), value: themeStateSchema })),
 });
 
 // A removed account stays as an entry with no account, so the removal outlives older copies on other devices.
@@ -34,9 +37,10 @@ type AccountEntry = { updatedAt: number; account: SyncedAccount | null };
 export type VaultDocument = {
   accounts: Record<string, AccountEntry>;
   prefs: { updatedAt: number; value: Prefs };
+  themes?: { updatedAt: number; value: ThemeState };
 };
 
-// Newest change wins, per account and for the prefs as a whole; a tie keeps the remote copy.
+// Newest change wins, per account and for the prefs and the themes as a whole; a tie keeps the remote copy.
 export function mergeDocuments(local: VaultDocument, remote: VaultDocument) {
   const accounts = { ...remote.accounts };
   let changed = false;
@@ -46,9 +50,15 @@ export function mergeDocuments(local: VaultDocument, remote: VaultDocument) {
     changed = true;
   }
   const localPrefs = local.prefs.updatedAt > remote.prefs.updatedAt;
+  const localThemes = (local.themes?.updatedAt ?? 0) > (remote.themes?.updatedAt ?? 0);
   return {
-    document: { ...remote, accounts, prefs: localPrefs ? local.prefs : remote.prefs },
-    changed: changed || localPrefs,
+    document: {
+      ...remote,
+      accounts,
+      prefs: localPrefs ? local.prefs : remote.prefs,
+      themes: localThemes ? local.themes : remote.themes,
+    },
+    changed: changed || localPrefs || localThemes,
   };
 }
 

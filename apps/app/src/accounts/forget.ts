@@ -4,6 +4,7 @@ import { invalidateContacts, invalidateMail } from '@/utils/query-client';
 import { closeSession } from '@/mail/session';
 import { mailStore } from '@/mail/store';
 import { dropPush } from '@/push/register';
+import { clearAccountTheme } from '@/theme/store';
 
 import { accountExists, accountsReadable, removeAccount, type Account } from './store';
 
@@ -16,6 +17,7 @@ export async function forgetAccount(account: Account) {
   await closeSession(account.id);
   await (await mailStore()).deleteAccount(account.id);
   await removeAccountDrafts(account.id);
+  clearAccountTheme(account.email.toLowerCase());
   invalidateMail();
   invalidateContacts();
 }

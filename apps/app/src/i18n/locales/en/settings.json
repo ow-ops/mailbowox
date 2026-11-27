@@ -238,11 +238,121 @@
     "saved": "Relay saved",
     "invalid": "Enter the relay address, starting with https:// or http://.",
     "unreachable": "Nothing answered at {{url}}. Check the address, and that the relay is running.",
-    "refused": "The relay didn't accept this access code. Check it with whoever runs the relay."
+    "refused": "The relay didn't accept this access code. Check it with whoever runs the relay.",
+    "notSet": "Not set",
+    "missing": "Mail can't load in this browser until a relay is set."
   },
   "about": {
     "title": "About",
     "version": "Version",
     "privacy": "mailbowox talks to your mail servers directly. No server of ours reads your mail, and the app collects no analytics."
+  },
+  "appearance": {
+    "title": "Appearance",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark",
+    "themes": "Themes",
+    "mode": "Mode"
+  },
+  "themes": {
+    "title": "Themes",
+    "browse": "Browse themes",
+    "new": "New theme",
+    "import": "Import a .sowocial.css file",
+    "importFailed": "Could not import the theme",
+    "imported": "Theme imported",
+    "lightTheme": "Light theme",
+    "darkTheme": "Dark theme",
+    "default": "Default",
+    "noneLight": "Only the default so far. Browse themes to add a light one.",
+    "noneDark": "Only the default so far. Browse themes to add a dark one.",
+    "pickFailed": "Couldn't read the theme file",
+    "errors": {
+      "size": "The file is larger than 1 MB.",
+      "header": "This is not a theme file: it has no @sowocial-theme or @sowocial-tweak header.",
+      "empty": "The file sets no colours this app uses."
+    }
+  },
+  "tweaks": {
+    "title": "Tweaks",
+    "hint": "Tweaks change a few colours on top of the theme in use.",
+    "removeLabel": "Remove {{name}}",
+    "removeConfirm": "Remove {{name}}?",
+    "useLabel": "Use {{name}}"
+  },
+  "catalog": {
+    "all": "All",
+    "light": "Light",
+    "dark": "Dark",
+    "tweaks": "Tweaks",
+    "tweak": "Tweak",
+    "files_one": "{{count}} file",
+    "files_other": "{{count}} files",
+    "installed": "Installed",
+    "install": "Install",
+    "installFailed": "Could not install"
+  },
+  "themeLink": {
+    "title": "Theme",
+    "tweakTitle": "Tweak",
+    "broken": "This theme link is broken.",
+    "shared": "Shared theme",
+    "kindTheme": "{{kind}} theme",
+    "light": "Light",
+    "dark": "Dark",
+    "by": "by {{author}}",
+    "install": "Install"
+  },
+  "themeEditor": {
+    "defaultName": "My theme",
+    "editTitle": "Edit theme",
+    "newTitle": "New theme",
+    "about": "About",
+    "name": "Name",
+    "author": "Author",
+    "optional": "Optional",
+    "colors": "Colours",
+    "saveAndUse": "Save and use",
+    "invalidColors": "Fix the colours that are not valid: {{colors}}.",
+    "shareLink": "Share link",
+    "export": "Export .sowocial.css",
+    "delete": "Delete theme",
+    "deleteConfirm": "Delete {{name}}?",
+    "colorLabel": "{{label}} colour",
+    "colorHint": "A hex colour such as #6b4fb8",
+    "preview": "Theme preview",
+    "previewSender": "Alice",
+    "previewSubject": "Trying a new theme",
+    "previewSnippet": "The colours are coming along nicely.",
+    "previewSend": "Send",
+    "previewDelete": "Delete",
+    "lowContrast": "Low contrast",
+    "lowContrastHint": "These pairs are below their recommended contrast, which can be hard to read.",
+    "contrastPair": "{{foreground}} on {{background}}: {{ratio}}:1 (needs {{min}}:1)",
+    "tokens": {
+      "page": "Page background",
+      "field": "Text fields",
+      "surface": "Surfaces",
+      "accentSoft": "Selected items",
+      "onAccentSoft": "Text on selected items",
+      "border": "Borders",
+      "outline": "Outlines",
+      "text": "Text",
+      "heading": "Headings and senders",
+      "muted": "Secondary text",
+      "primary": "Accent",
+      "onPrimary": "Text on accent",
+      "danger": "Danger",
+      "scrim": "Dimming behind sheets"
+    }
+  },
+  "accountTheme": {
+    "title": "Theme for {{label}}",
+    "row": "Theme",
+    "same": "Same as the app",
+    "own": "Its own",
+    "hint": "Give this account its own colours, used while one of its mailboxes is open.",
+    "note": "{{label}} has its own theme. Changes below show on your other accounts."
   }
 }

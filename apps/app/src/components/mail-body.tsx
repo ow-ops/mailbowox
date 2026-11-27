@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 import { WebView, type WebViewMessageEvent, type WebViewNavigation } from 'react-native-webview';
 
-import { Colors } from '@/constants/theme';
-import { useScheme } from '@/hooks/use-theme';
+import { usePalette, useScheme } from '@/hooks/use-theme';
 import { bodyDocument, bodyScheme } from '@/mail/body-document';
 
 // The reader scrolls the body with its headers.
@@ -51,6 +50,7 @@ true;`;
 
 export function MailBody({ html, allowRemote }: { html: string; allowRemote: boolean }) {
   const scheme = bodyScheme(html, useScheme());
+  const palette = usePalette(scheme);
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(INITIAL_HEIGHT);
 
@@ -62,18 +62,18 @@ export function MailBody({ html, allowRemote }: { html: string; allowRemote: boo
   return (
     <View
       onLayout={(event) => setWidth(Math.round(event.nativeEvent.layout.width))}
-      style={{ height, backgroundColor: Colors[scheme].page }}>
+      style={{ height, backgroundColor: palette.page }}>
       {width > 0 && (
         <WebView
           key={width}
-          source={{ html: bodyDocument(html, allowRemote, scheme) }}
+          source={{ html: bodyDocument(html, allowRemote, scheme, palette) }}
           originWhitelist={['*']}
           injectedJavaScript={fitAndMeasure(width)}
           onMessage={onMessage}
           onShouldStartLoadWithRequest={onNavigate}
           setSupportMultipleWindows={false}
           scrollEnabled={false}
-          style={[styles.body, { backgroundColor: Colors[scheme].page }]}
+          style={[styles.body, { backgroundColor: palette.page }]}
         />
       )}
     </View>

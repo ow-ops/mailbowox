@@ -29,7 +29,7 @@ describe('bodyScheme', () => {
 
 describe('bodyDocument', () => {
   it('declares the palette it renders with', () => {
-    const page = bodyDocument('<p>hi</p>', false, 'dark');
+    const page = bodyDocument('<p>hi</p>', false, 'dark', Colors.dark);
     expect(page).toContain('color-scheme: dark');
     expect(page).toContain(`background: ${Colors.dark.page}`);
     expect(page).toContain(`a { color: ${Colors.dark.primary}; }`);

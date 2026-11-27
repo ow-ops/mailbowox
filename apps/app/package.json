@@ -15,6 +15,7 @@
     "@sentry/react-native": "~8.28.1",
     "@shopify/flash-list": "2.3.2",
     "@tanstack/react-query": "^5.108.4",
+    "colord": "^2.14.1",
     "date-fns": "^4.4.0",
     "expo": "~58.0.26",
     "expo-application": "~58.1.2",
@@ -42,8 +43,10 @@
     "expo-symbols": "~58.0.5",
     "expo-system-ui": "~58.0.7",
     "expo-task-manager": "~58.0.14",
+    "fflate": "^0.8.3",
     "i18next": "^27.2.9",
     "idb-keyval": "^6.3.0",
+    "p-limit": "^7.3.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-i18next": "^18.0.3",
@@ -87,7 +90,9 @@
   "private": true,
   "expo": {
     "install": {
-      "exclude": ["react-native-reanimated"]
+      "exclude": [
+        "react-native-reanimated"
+      ]
     }
   },
   "jest": {
@@ -96,7 +101,7 @@
         "displayName": "native",
         "preset": "jest-expo",
         "transformIgnorePatterns": [
-          "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|sonner-native|@noble))",
+          "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|sonner-native|@noble|p-limit|yocto-queue))",
           "/node_modules/react-native-reanimated/plugin/",
           "/node_modules/@react-native/babel-preset/"
         ],
@@ -113,7 +118,7 @@
         "displayName": "web",
         "preset": "jest-expo/web",
         "transformIgnorePatterns": [
-          "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|sonner-native|@noble))",
+          "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|sonner-native|@noble|p-limit|yocto-queue))",
           "/node_modules/react-native-reanimated/plugin/",
           "/node_modules/@react-native/babel-preset/"
         ],

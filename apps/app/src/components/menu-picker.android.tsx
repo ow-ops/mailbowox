@@ -2,10 +2,10 @@ import { DropdownMenu, DropdownMenuItem, Host, RNHostView, Text } from '@expo/ui
 import { useState } from 'react';
 
 import { Button } from '@/components/button';
-import type { SegmentedControlProps } from '@/components/segmented-control';
+import type { MenuPickerProps } from '@/components/menu-picker';
 import { useScheme, useTheme } from '@/hooks/use-theme';
 
-export function MenuPicker<T extends string>({ label, options, value, onChange }: SegmentedControlProps<T>) {
+export function MenuPicker<T extends string>({ label, options, value, onChange }: MenuPickerProps<T>) {
   const theme = useTheme();
   const scheme = useScheme();
   const [expanded, setExpanded] = useState(false);

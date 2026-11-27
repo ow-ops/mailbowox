@@ -31,6 +31,7 @@ import { AppToaster } from '@/components/toaster';
 import { WebDialog } from '@/components/web-dialog';
 import { sweepRemovedAccounts } from '@/accounts/forget';
 import { useStackOptions } from '@/hooks/use-stack-options';
+import { useCatalogThemeSync } from '@/hooks/use-theme-catalog';
 import { useScheme, useTheme } from '@/hooks/use-theme';
 import { queryClient } from '@/utils/query-client';
 import { usePushSync } from '@/push/use-push-sync';
@@ -112,6 +113,7 @@ function RootStack() {
   const signedIn = useAccounts().length > 0;
   usePushTaps(fontsLoaded && signedIn);
   usePushSync(fontsLoaded && signedIn);
+  useCatalogThemeSync();
 
   useEffect(() => {
     coreStarted.then(() => setCoreLoaded(true), setCoreError);
@@ -148,6 +150,12 @@ function RootStack() {
         <Stack.Screen name="signature" options={{ title: t('settings.signature.title') }} />
         <Stack.Screen name="account-name" options={{ title: t('settings.account.name') }} />
         <Stack.Screen name="remote-senders" />
+        <Stack.Screen name="relay" />
+        <Stack.Screen name="themes" />
+        <Stack.Screen name="theme-catalog" />
+        <Stack.Screen name="theme-editor" />
+        <Stack.Screen name="theme" />
+        <Stack.Screen name="account-theme" />
         <Stack.Screen name="sync" />
       </Stack.Protected>
     </Stack>
