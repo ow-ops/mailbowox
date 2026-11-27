@@ -115,6 +115,14 @@
           "photosPermission": "mailbowox attaches the photos you pick to your message.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraProguardRules": "-keep class * extends androidx.room.RoomDatabase { <init>(); }"
+          }
+        }
       ]
     ],
     "experiments": {
