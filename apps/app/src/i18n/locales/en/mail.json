@@ -105,7 +105,8 @@
     "unreadIn_one": "unread in {{mailbox}}",
     "unreadIn_other": "unread in {{mailbox}}",
     "openFailed": "Couldn't open the attachment",
-    "share": "Share"
+    "share": "Share",
+    "close": "Close"
   },
   "select": {
     "start": "Select",

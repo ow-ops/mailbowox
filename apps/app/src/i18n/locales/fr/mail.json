@@ -105,7 +105,8 @@
     "unreadIn_one": "non lu dans {{mailbox}}",
     "unreadIn_other": "non lus dans {{mailbox}}",
     "openFailed": "Impossible d'ouvrir la pièce jointe",
-    "share": "Partager"
+    "share": "Partager",
+    "close": "Fermer"
   },
   "select": {
     "start": "Sélectionner",

@@ -134,7 +134,10 @@ function RootStack() {
       <Stack.Protected guard={signedIn} redirectTo="/add-account">
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="message" options={{ title: '' }} />
-        <Stack.Screen name="attachment" options={{ title: '' }} />
+        <Stack.Screen
+          name="attachment"
+          options={{ presentation: 'transparentModal', headerShown: false, animation: 'fade' }}
+        />
         <Stack.Screen name="compose" options={{ presentation: 'modal' }} />
         <Stack.Screen name="mailboxes" options={{ ...sheet, title: t('mail.mailboxes.title') }} />
         <Stack.Screen name="move" options={{ ...sheet, title: t('mail.move.title') }} />

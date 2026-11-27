@@ -72,6 +72,9 @@ export const BorderWidth = { hairline: Hairline, input: 1 } as const;
 // Edges a color swatch on any page, light or dark.
 export const SwatchEdge = 'rgba(127, 127, 127, 0.4)';
 
+// Controls drawn over an attachment, whatever the theme.
+export const Overlay = { scrim: 'rgba(0,0,0,0.6)', onScrim: '#fff' } as const;
+
 export const Shadow = {
   raised: '0 2px 8px rgba(0, 0, 0, 0.2)',
   overlay: '0 4px 12px rgba(0, 0, 0, 0.3)',
