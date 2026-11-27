@@ -191,6 +191,10 @@ const MIGRATIONS: &[&[&str]] = &[
            checked_at INTEGER NOT NULL
          )",
     ],
+    &[
+        // Cached bodies hid images marked inline that no HTML showed.
+        "DELETE FROM bodies",
+    ],
 ];
 
 pub(super) async fn migrate(exec: &Exec) -> Result<(), CoreError> {

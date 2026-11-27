@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use base64::{Engine, engine::general_purpose::STANDARD};
 use mail_parser::{MessageParser, MessagePart, MessageRef, PartKind};
@@ -25,13 +25,14 @@ pub(crate) fn message_body(
         .and_then(|part| part.text())
         .map(|html| sanitize_html_with(&html, allow_remote, inline_images(&message)));
 
+    let attachments = attachments(root, html.as_ref().map(|html| &html.shown));
     Ok(MessageBody {
         uid,
         text: root.body_text(0).map(Into::into),
         has_remote_content: html.as_ref().is_some_and(|html| html.has_remote_content),
         blocked_remote: html.as_ref().map_or(0, |html| html.blocked_remote),
         html: html.map(|html| html.html),
-        attachments: attachments(root),
+        attachments,
         list_unsubscribe: root.headers().list_unsubscribe().map_or_default(|urls| {
             urls.mailboxes()
                 .filter_map(|url| url.address().map(Into::into))
@@ -76,7 +77,7 @@ fn inline_images(message: &mail_parser::Message<'_>) -> HashMap<String, String> 
 }
 
 /// The downloadable parts plus the images an HTML body shows inline.
-fn attachments(root: MessageRef<'_>) -> Vec<AttachmentInfo> {
+fn attachments(root: MessageRef<'_>, shown: Option<&HashSet<String>>) -> Vec<AttachmentInfo> {
     let inline_media = root
         .html_body()
         .filter(|part| !matches!(part.kind(), PartKind::Html | PartKind::Text));
@@ -84,7 +85,12 @@ fn attachments(root: MessageRef<'_>) -> Vec<AttachmentInfo> {
     let mut infos: Vec<AttachmentInfo> = Vec::new();
     for part in root.attachments().chain(inline_media) {
         if infos.iter().all(|info| info.index != part.id()) {
-            infos.push(info(&part));
+            let mut info = info(&part);
+            // Not the part's own disposition: iPhone Mail marks a photo inline in a plain-text message.
+            info.inline = shown
+                .zip(info.content_id.as_ref())
+                .is_some_and(|(shown, id)| shown.contains(id));
+            infos.push(info);
         }
     }
     infos
@@ -108,7 +114,7 @@ fn info(part: &MessagePart<'_>) -> AttachmentInfo {
         content_id: part
             .content_id()
             .map(|id| id.trim_matches(['<', '>']).to_owned()),
-        inline: part.is_inline(),
+        inline: false,
         section: section(part),
     }
 }
@@ -209,6 +215,38 @@ mod tests {
             "{html}"
         );
         assert_eq!(body.blocked_remote, 0);
+        assert!(body.attachments.iter().all(|attachment| attachment.inline));
+    }
+
+    #[test]
+    fn an_image_marked_inline_that_no_html_shows_is_an_attachment() {
+        let plain = concat!(
+            "Subject: photo\r\n",
+            "Content-Type: multipart/mixed; boundary=b\r\n\r\n",
+            "--b\r\nContent-Type: text/plain\r\n\r\nSee the photo.\r\n",
+            "--b\r\nContent-Type: image/png; name=image.png\r\n",
+            "Content-Disposition: inline; filename=image.png\r\n",
+            "Content-Transfer-Encoding: base64\r\n\r\niVBORw==\r\n",
+            "--b--\r\n",
+        );
+        let unused = concat!(
+            "Subject: logo\r\n",
+            "Content-Type: multipart/related; boundary=b\r\n\r\n",
+            "--b\r\nContent-Type: text/html\r\n\r\n<p>hi</p>\r\n",
+            "--b\r\nContent-Type: image/png\r\nContent-ID: <logo@example>\r\n",
+            "Content-Disposition: inline\r\n",
+            "Content-Transfer-Encoding: base64\r\n\r\niVBORw==\r\n",
+            "--b--\r\n",
+        );
+        for raw in [plain, unused] {
+            let body = message_body(1, raw.as_bytes(), false).expect("a body");
+            let image = body
+                .attachments
+                .iter()
+                .find(|attachment| attachment.mime_type == "image/png")
+                .expect("the image");
+            assert!(!image.inline, "{raw}");
+        }
     }
 
     #[test]

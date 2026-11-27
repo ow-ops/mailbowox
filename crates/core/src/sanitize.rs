@@ -5,10 +5,10 @@
 
 use std::{
     borrow::Cow,
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     sync::{
         Arc,
-        atomic::{AtomicU32, Ordering},
+        atomic::{AtomicBool, AtomicU32, Ordering},
     },
 };
 
@@ -20,6 +20,7 @@ pub(crate) struct Sanitized {
     pub html: String,
     pub has_remote_content: bool,
     pub blocked_remote: u32,
+    pub shown: HashSet<String>,
 }
 
 #[cfg(test)]
@@ -37,6 +38,13 @@ pub(crate) fn sanitize_html_with(
 ) -> Sanitized {
     let remote = Arc::new(AtomicU32::new(0));
     let seen = remote.clone();
+    let inline = Arc::new(
+        inline
+            .into_iter()
+            .map(|(id, data)| (id, (data, AtomicBool::new(false))))
+            .collect::<HashMap<_, _>>(),
+    );
+    let images = inline.clone();
 
     let html = Builder::default()
         // Its text would otherwise show above the message.
@@ -48,9 +56,10 @@ pub(crate) fn sanitize_html_with(
         .attribute_filter(move |element, attribute, value| {
             if element == "img"
                 && attribute == "src"
-                && let Some(data) = inline_source(value, &inline)
+                && let Some((data, shown)) = inline_source(value, &images)
             {
-                return Some(data.to_owned().into());
+                shown.store(true, Ordering::Relaxed);
+                return Some(data.clone().into());
             }
             filter_attribute(attribute, value, allow_remote, &seen)
         })
@@ -62,6 +71,11 @@ pub(crate) fn sanitize_html_with(
         html,
         has_remote_content: remote > 0,
         blocked_remote: if allow_remote { 0 } else { remote },
+        shown: inline
+            .iter()
+            .filter(|(_, (_, shown))| shown.load(Ordering::Relaxed))
+            .map(|(id, _)| id.clone())
+            .collect(),
     }
 }
 
@@ -97,13 +111,16 @@ fn filter_attribute<'u>(
     allow_remote.then_some(value.into())
 }
 
-fn inline_source<'a>(value: &str, inline: &'a HashMap<String, String>) -> Option<&'a str> {
+fn inline_source<'a>(
+    value: &str,
+    inline: &'a HashMap<String, (String, AtomicBool)>,
+) -> Option<&'a (String, AtomicBool)> {
     let (scheme, id) = value.trim().split_once(':')?;
     if !scheme.eq_ignore_ascii_case("cid") {
         return None;
     }
     let id = percent_decode_str(id).decode_utf8().ok()?;
-    inline.get(id.as_ref()).map(String::as_str)
+    inline.get(id.as_ref())
 }
 
 /// Stands for the message itself, which has no address: a URL that resolves

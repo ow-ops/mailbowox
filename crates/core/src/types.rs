@@ -153,6 +153,7 @@ pub struct AttachmentInfo {
     pub mime_type: String,
     pub size: u32,
     pub content_id: Option<String>,
+    /// Shown in the HTML body, so not offered as an attachment.
     pub inline: bool,
     /// Where the part is in the message as IMAP numbers it ("2", "1.3"),
     /// for fetching it alone. `None` for a part that has no such number of
