@@ -60,6 +60,15 @@ sudo dnf install mailbowox
 - There are no analytics. Crash reports are opt-in, off by default, and only in builds made with a Sentry DSN.
 - Account sync and new-mail notifications are opt-in. Sync encrypts account settings on your device before upload. The push gateway holds your IMAP password to watch the inbox, so its operator can access your mail. See [SECURITY.md](SECURITY.md) for details.
 
+## Delete your data
+
+- Notifications: turn them off for the account, or remove the account. The gateway deletes its address, server, username, password and device token. It also deletes them when the password stops working, or after the app is uninstalled.
+- Sync: Settings, Devices, Delete synced data. The gateway deletes the vault. With a passphrase, the blob holding the old vault key stays.
+- Crash reports: turn them off in Settings. Sent reports are deleted when Sentry's retention period ends.
+- Everything else is on your device: remove the account or uninstall the app.
+
+If you no longer have the app, open an [issue](https://git.ow-ops.eu/ow-ops/mailbowox/issues), without your address in it.
+
 ## Feedback
 
 Report a bug or ask for a feature in the [issue tracker](https://git.ow-ops.eu/ow-ops/mailbowox/issues). For a security problem, follow [SECURITY.md](SECURITY.md) instead.
