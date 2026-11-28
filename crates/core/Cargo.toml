@@ -34,7 +34,7 @@ thiserror = "2.0.21"
 unicode-normalization = "0.1.26"
 tokio = { version = "1.48.0", features = ["io-util"] }
 tokio-rustls = { version = "0.26.6", default-features = false, features = ["ring", "tls12", "logging"] }
-uniffi = "=0.31"
+uniffi = "=0.33.0"
 url = "2.5.7"
 uuid = { version = "1.18.1", features = ["v4"] }
 web-time = "1.1.0"
@@ -46,7 +46,7 @@ argon2 = { version = "0.6.0", default-features = false, features = ["alloc"] }
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 futures-util = { version = "0.3.31", default-features = false, features = ["sink"] }
 # calcard pulls in ahash, which needs getrandom 0.3's browser backend.
-getrandom = { version = "0.3", features = ["wasm_js"] }
+getrandom = { version = "0.4", features = ["wasm_js"] }
 gloo-net = { version = "0.8.0", default-features = false, features = ["json", "websocket", "io-util"] }
 gloo-timers = { version = "0.4.1", features = ["futures"] }
 hex = "0.4.3"
@@ -55,7 +55,7 @@ log = { version = "0.4.35", features = ["release_max_level_off"] }
 ring = { version = "0.17.14", features = ["wasm32_unknown_unknown_js"] }
 rustls-pki-types = { version = "1.16.0", features = ["web"] }
 tokio-util = { version = "0.7.20", features = ["compat"] }
-uniffi = { version = "=0.31", features = ["wasm-unstable-single-threaded"] }
+uniffi = { version = "=0.33.0", features = ["wasm-unstable-single-threaded"] }
 uniffi-runtime-wasm = "0.31.0-7"
 uuid = { version = "1.18.1", features = ["js"] }
 
@@ -64,7 +64,7 @@ mailbowox-sql = { path = "../sql", features = ["engine"] }
 rusqlite = { version = "0.43.0", default-features = false, features = ["bundled", "cache"] }
 tokio = { version = "1.48.0", features = ["rt-multi-thread", "net", "time", "macros", "sync"] }
 tokio-happy-eyeballs = "0.1.0"
-uniffi = { version = "=0.31", features = ["tokio"] }
+uniffi = { version = "=0.33.0", features = ["tokio"] }
 
 [dev-dependencies]
 proptest = "1.12.0"
